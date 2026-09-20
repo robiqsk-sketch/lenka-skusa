@@ -21,7 +21,8 @@ const initialState = () => ({
   // company
   fobStep: 1, fobName: '', fobIco: '', fobLogo: '', fobLogoFile: null, fobFields: [], fobContact: '', fobEmail: '', fobPass: '', fobTerms: false,
   fpName: '', fpDesc: '', fpLogo: '', fpVerified: false,
-  offers: [], candidates: [], contacted: [], blocked: [], fchats: [], activeFChat: 0, fdraft: '',
+  offers: [], candidates: [], suggestions: {}, contacted: [], blocked: [], fchats: [], activeFChat: 0, fdraft: '',
+  invitedPostingIds: [],                                   // student: postings whose company reached out first
   fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false,
 });
 let state = initialState();
@@ -113,11 +114,13 @@ async function loadMe() {                                  // who is signed in, 
 }
 
 async function loadStudent() {
-  const [{ data: s }, { data: ints }, { data: skips }] = await Promise.all([
+  const [{ data: s }, { data: ints }, { data: skips }, { data: invites }] = await Promise.all([
     sb.from('students').select('*').eq('id', state.uid).single(),
     sb.from('interests').select('posting_id, postings(id, title, pay, companies(name, logo_url))').eq('student_id', state.uid),
     sb.from('skips').select('posting_id').eq('student_id', state.uid),
+    sb.from('company_interests').select('posting_id').eq('student_id', state.uid),
   ]);
+  state.invitedPostingIds = (invites || []).map(x => x.posting_id);
   if (s) Object.assign(state, { obName: s.name, obSkills: s.skills || [], obHours: s.hours, availDays: s.avail_days || [],
     availTimes: s.avail_times || [], birth: s.birth || '', bio: s.bio || '', avatarPath: s.avatar_path || null });
   await resolveAvatars([state.avatarPath]);
@@ -140,7 +143,17 @@ async function loadCompany() {
     likes: p.interests?.[0]?.count || 0, m: p.matches?.[0]?.count || 0, need: p.need, on: p.active }));
   state.contacted = (cints || []).map(x => x.student_id + ':' + x.posting_id);
   await loadCandidates();
+  await loadSuggestions();
   await loadMatches();
+}
+
+// Anonymous suggestions per posting (suggest_candidates): skills, hours, availability, score — no name or photo.
+async function loadSuggestions() {
+  state.suggestions = {};
+  await Promise.all(state.offers.filter(o => o.on).map(async o => {
+    const { data } = await sb.rpc('suggest_candidates', { p_posting: o.id });
+    state.suggestions[o.id] = (data || []).filter(r => !r.interested);   // those who already liked are in Brigádnici with a name
+  }));
 }
 
 // Firma vidí o kandidátovi len to, čo je v pohľade candidate_profiles (meno, zručnosti, hodiny) — nie dátum narodenia ani bio.
@@ -201,6 +214,12 @@ function subscribe() {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matches' }, async ({ new: m }) => {
       if (m.student_id !== state.uid && m.company_id !== state.uid) return;
       await onNewMatch(m.id);
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'company_interests' }, ({ new: ci }) => {
+      if (!isStudent() || ci.student_id !== state.uid || state.invitedPostingIds.includes(ci.posting_id)) return;
+      state.invitedPostingIds.push(ci.posting_id);
+      const j = state.postings.find(p => p.id === ci.posting_id);
+      showToast(j ? `${j.f} ťa oslovila: ${j.t}` : 'Firma ťa oslovila — pozri Objavuj.');
     })
     .subscribe();
 }
@@ -338,8 +357,11 @@ const go = {
       const { error } = await sb.from('postings').insert({ company_id: state.uid, title: state.fT.trim(), pay: state.fPay.trim() || '8',
         need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote });
       if (error) throw error;
-      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, ftab: 2 });
+      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, ftab: 0 });   // straight to candidates
       await loadCompany(); await loadPostings();
+      const n = Object.values(state.suggestions)[0]?.length ?? 0;
+      const first = state.offers[0] && state.suggestions[state.offers[0].id] ? state.suggestions[state.offers[0].id].length : n;
+      showToast(first ? `Inzerát zverejnený — ${first} ${first === 1 ? 'kandidát sedí' : first < 5 ? 'kandidáti sedia' : 'kandidátov sedí'} na profil pozície.` : 'Inzerát zverejnený. Kandidátov navrhneme, hneď ako sa objavia.');
     } catch (e) { fail(e); }
   },
   // account deletion — GDPR right to erasure; everything cascades in the database
@@ -510,9 +532,10 @@ function ageOf(iso) {                                      // full years from an
 function isAdult() { const a = ageOf(state.birth); return a !== null && a >= 18; }
 function remaining() {                                     // l.1243–1245
   const adult = isAdult();
+  const inv = id => state.invitedPostingIds.includes(id) ? 1 : 0;
   return state.postings
     .filter(j => !state.skippedIds.includes(j.id) && !state.blockedFirms.includes(j.f) && (!j.only18 || adult))
-    .sort(state.authed ? (a, b) => (b.id - a.id) : (a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+    .sort(state.authed ? (a, b) => (inv(b) - inv(a)) || (b.id - a.id) : (a, b) => order.indexOf(a.id) - order.indexOf(b.id));   // invitations first
 }
 function aiJob() { return remaining().find(j => !state.likedIds.includes(j.id)) || null; }
 
@@ -546,7 +569,9 @@ function jobCard(j) {                                      // l.425–463
       <button data-job="${j.id}" data-act="report">Nahlásiť inzerát</button>
       <button class="danger" data-job="${j.id}" data-act="block">Zablokovať firmu</button>
     </div>`;
-  return `<div class="job">
+  const invited = state.invitedPostingIds.includes(j.id) && !liked;
+  return `<div class="job ${invited ? 'invited' : ''}">
+    ${invited ? `<div class="invite-badge">✦ Firma ťa oslovila — sedíš na túto pozíciu</div>` : ''}
     <div class="top"><div class="posted">${esc(j.posted)}</div>
       <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-job="${j.id}" data-act="menu">⋯</button>${menu}</div></div>
     <div class="who" data-job="${j.id}" data-act="open">
@@ -670,20 +695,43 @@ function brig() {
       <button class="btn-violet" data-go="goNova">＋ Nový inzerát</button></div>`;
   else {
     const visible = s.candidates.filter(c => !s.blocked.includes(c.id));
-    if (!visible.length) body = `<div class="empty-card narrow">
+    const groups = s.offers.filter(o => o.on).map(o => {
+      const cands = visible.filter(c => c.postingId === o.id).sort((a, b) => new Date(b.at) - new Date(a.at));
+      const sugg = s.suggestions[o.id] || [];
+      if (!cands.length && !sugg.length) return '';
+      const count = cands.length ? cands.length + (cands.length === 1 ? ' kandidát' : cands.length < 5 ? ' kandidáti' : ' kandidátov') : '';
+      return `<div class="cgroup">
+        <div class="cgroup-head"><div class="t">${esc(o.t)}</div>${count ? `<span class="c">${count}</span>` : ''}</div>
+        ${cands.length ? `<div class="cards">${cands.map(candCard).join('')}</div>` : ''}
+        ${sugg.length ? `
+          <div class="sugg-head"><span class="eb">✦ Navrhovaní kandidáti</span><span class="s">Sedia na inzerát podľa zručností a dostupnosti. Meno a fotku uvidíte, keď prejavia záujem.</span></div>
+          <div class="cards">${sugg.map(r => suggCard(o, r)).join('')}</div>` : ''}
+      </div>`;
+    }).join('');
+    body = groups || `<div class="empty-card narrow">
       <div class="h">Zatiaľ nikto neprejavil záujem</div>
       <div class="p">Kandidáti sa tu objavia, keď klepnú „Mám záujem" na niektorý z vašich inzerátov.</div></div>`;
-    else body = [...new Set(visible.map(c => c.offer))].map(off => {
-      const cands = visible.filter(c => c.offer === off).sort((a, b) => new Date(b.at) - new Date(a.at));
-      const count = cands.length + (cands.length === 1 ? ' kandidát' : cands.length < 5 ? ' kandidáti' : ' kandidátov');
-      return `<div class="cgroup"><div class="cgroup-head"><div class="t">${esc(off)}</div><span class="c">${count}</span></div>
-        <div class="cards">${cands.map(candCard).join('')}</div></div>`;
-    }).join('');
   }
-  const has = s.authed && s.candidates.length > 0;
+  const has = s.authed && (s.candidates.length > 0 || Object.values(s.suggestions).some(l => l.length));
   return `<div class="a-wrap">
-    <div class="a-title" style="align-items:center"><h2>Ponuka <b>brigádnikov</b></h2>${has ? '<span class="sorted">✦ zoradené podľa AI zhody s vašimi ponukami</span>' : ''}</div>
+    <div class="a-title" style="align-items:center"><h2>Ponuka <b>brigádnikov</b></h2>${has ? '<span class="sorted">✦ zoradené podľa zhody s vašimi ponukami</span>' : ''}</div>
     ${body}</div>`;
+}
+// Anonymous suggestion card: no name, no photo — skills, hours, availability, match score, "Osloviť".
+function suggCard(o, r) {
+  const key = r.student_id + ':' + o.id, done = r.contacted || state.contacted.includes(key);
+  const days = (r.avail_days || []).length === 7 ? 'každý deň' : (r.avail_days || []).join(', ');
+  const times = (r.avail_times || []).map(t => t.toLowerCase()).join(', ');
+  const avail = [days, times].filter(Boolean).join(' · ') || 'dostupnosť neuvedená';
+  return `<div class="cand sugg">
+    <div class="top">
+      <div class="av anon">${PERSON}</div>
+      <div><div class="n">Brigádnik</div><div class="s">${esc(HOURS[r.hours] || '')}</div><div class="s">${esc(avail)}</div></div>
+      <div class="score">${r.score} %<small>zhoda</small></div>
+    </div>
+    ${(r.skills || []).length ? `<div class="skills">${r.skills.map(k => `<span>${esc(k)}</span>`).join('')}</div>` : ''}
+    ${done ? `<div class="sent">✓ Oslovený — čaká sa na odpoveď</div>` : `<button class="contact" data-sugg="${key}" data-act="invite">✦ Osloviť</button>`}
+  </div>`;
 }
 function candCard(c) {                                     // l.674–699
   const key = c.id + ':' + c.postingId, done = state.contacted.includes(key);
@@ -852,6 +900,16 @@ document.getElementById('a-main').addEventListener('click', async e => {
         if (m) await onNewMatch(m.id);
       } catch (err) { fail(err); }
     }
+  }
+  else if (d.sugg && a === 'invite') {                                          // firm reaches out first
+    const [sid, pid] = d.sugg.split(':');
+    try {
+      const { error } = await sb.from('company_interests').insert({ company_id: state.uid, student_id: sid, posting_id: +pid });
+      if (error) throw error;
+      state.contacted.push(d.sugg);
+      const r = (state.suggestions[+pid] || []).find(x => x.student_id === sid); if (r) r.contacted = true;
+      render(); showToast('Oslovené. Keď brigádnik prejaví záujem, vznikne zhoda a uvidíte jeho profil.');
+    } catch (err) { fail(err); }
   }
   else if (d.offer) {
     const i = +d.offer, o = state.offers[i];
