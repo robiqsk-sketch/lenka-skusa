@@ -2,6 +2,7 @@
 Thumbs.db
 desktop.ini
 .DS_Store
+~$*
 
 # Claude Code local settings
 .claude/
