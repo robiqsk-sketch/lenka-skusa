@@ -8,6 +8,7 @@ const sb = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
 // `screen` decides which <section> is visible: app · login · pick · ob · fob
 const initialState = () => ({
   screen: 'app', authed: false, role: 'student', uid: null, pendingJob: null, gate: false,
+  oauth: false, oauthEmail: '',                            // signed in with Google but no profile yet → finish registration in-app
   tab: 0, ftab: 0, loading: false, accMenu: false, notifOn: true, rowMenu: null,
   detail: null, toast: '', banner: false, bannerName: '', delIdx: null, delAccount: false,
   // feed (guest + student)
@@ -99,7 +100,14 @@ async function loadMe() {                                  // who is signed in, 
   if (!session) { state.authed = false; state.uid = null; return; }
   state.uid = session.user.id;
   const { data: prof } = await sb.from('profiles').select('role').eq('id', state.uid).maybeSingle();
-  if (!prof) { state.authed = false; return; }             // profile trigger not run yet — treat as guest
+  if (!prof) {                                             // Google sign-in without a profile yet → finish registration
+    const u = session.user, meta = u.user_metadata || {};
+    state.authed = false; state.oauth = true; state.oauthEmail = u.email || '';
+    if (!state.obName)  state.obName  = meta.full_name || meta.name || '';
+    if (!state.fobContact) state.fobContact = meta.full_name || meta.name || '';
+    return;
+  }
+  state.oauth = false;
   state.authed = true; state.role = prof.role;
   if (prof.role === 'student') await loadStudent(); else await loadCompany();
 }
@@ -277,6 +285,12 @@ const go = {
   goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
   // "← Späť" on login and account-type screens: login → feed; pick → wherever it was opened from
   back:        () => { state.screen = state.screen === 'pick' ? (state.pickFrom || 'app') : 'app'; },
+  // Google sign-in: Supabase redirects to Google and back to this page; loadMe() then decides
+  // whether the user already has a profile (→ app) or has to pick an account type (→ pick).
+  google: async () => {
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+    if (error) fail(error);
+  },
   goPonuky:    () => { state.ftab = 2; },
   // gate — l.1444–1446
   gateClose:   () => { state.gate = false; state.pendingJob = null; },
@@ -414,6 +428,12 @@ document.getElementById('login-form').addEventListener('submit', e => { e.preven
 // ═══════════ Render ═══════════
 function render() {
   for (const s of ['app', 'login', 'pick', 'ob', 'fob']) document.getElementById('scr-' + s).hidden = state.screen !== s;
+  if (state.screen === 'pick') {
+    const note = document.getElementById('pick-note');
+    note.hidden = !state.oauth;
+    if (state.oauth) note.innerHTML = `Prihlásený cez Google ako <b>${esc(state.oauthEmail)}</b>. Vyber, aký účet chceš vytvoriť — alebo <button class="link" data-go="logout" style="padding:0">sa odhlás</button>.`;
+    document.getElementById('pick-links').hidden = state.oauth;
+  }
   if (state.screen === 'app') renderApp();
   if (state.screen === 'ob')  renderOb();
   if (state.screen === 'fob') renderFob();
@@ -932,7 +952,7 @@ function layers() {                                        // banner l.946, toas
 // Privacy policy §10: Robiq is for people aged 16+, younger cannot register.
 const MIN_AGE = 16;
 function obCanContinue() {
-  if (state.obStep === 1) return state.obName.trim() && state.obEmail.trim() && state.obPass.length >= 6 && (ageOf(state.birth) ?? -1) >= MIN_AGE;
+  if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && (ageOf(state.birth) ?? -1) >= MIN_AGE;
   if (state.obStep === 2) return state.obSkills.length > 0;
   return true;
 }
@@ -944,6 +964,16 @@ document.getElementById('ob-next').addEventListener('click', async () => {      
 });
 async function registerStudent() {
   const btn = document.getElementById('ob-next'); btn.disabled = true; setErr('ob-err', '');
+  if (state.oauth) {                                       // account exists (Google) — create the profile rows directly
+    const p = await sb.from('profiles').insert({ id: state.uid, role: 'student' });
+    const s = p.error ? p : await sb.from('students').insert({ id: state.uid, name: state.obName.trim(), birth: state.birth || null,
+      skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes });
+    btn.disabled = false;
+    if (s.error) { setErr('ob-err', s.error.message); return; }
+    if (state.obPhotoFile) { try { await uploadAvatar(state.obPhotoFile); } catch (e) { console.warn('avatar upload failed', e); } state.obPhotoFile = null; state.obPhotoPreview = ''; }
+    await enterApp({ tab: 0 });
+    return;
+  }
   const { data, error } = await sb.auth.signUp({ email: state.obEmail.trim(), password: state.obPass,
     options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes } } });
   btn.disabled = false;
@@ -977,8 +1007,9 @@ function obStep1() {                                       // l.111–119 + e-ma
     <p class="desc" style="margin-bottom:26px">Žiadne CV, žiadny motivačný list. Stačí meno a e-mail.</p>
     <div class="s1-row">${avatarHtml('avatar', state.obPhotoPreview, initials(), ' id="avatar"')}
       <div class="col"><input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
+        ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
         <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
-        <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">
+        <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
         <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" autocomplete="bday"></label>
         <div class="ob-age-note" id="ob-age-note">Robiq je pre ľudí od ${MIN_AGE} rokov.</div>
         <label class="photo-btn">${state.obPhotoFile ? 'Zmeniť fotku' : 'Nahrať fotku (voliteľné)'}<input type="file" accept="image/*" id="ob-photo" hidden></label>
@@ -991,8 +1022,8 @@ function obStep1() {                                       // l.111–119 + e-ma
   };
   const nameEl = document.getElementById('ob-name');
   nameEl.addEventListener('input', () => { state.obName = nameEl.value; document.getElementById('avatar').textContent = initials(); upd(); });
-  const emailEl = document.getElementById('ob-email'); emailEl.addEventListener('input', () => { state.obEmail = emailEl.value; upd(); });
-  const passEl = document.getElementById('ob-pass');    passEl.addEventListener('input', () => { state.obPass = passEl.value; upd(); });
+  const emailEl = document.getElementById('ob-email'); if (emailEl) emailEl.addEventListener('input', () => { state.obEmail = emailEl.value; upd(); });
+  const passEl = document.getElementById('ob-pass');    if (passEl) passEl.addEventListener('input', () => { state.obPass = passEl.value; upd(); });
   const birthEl = document.getElementById('ob-birth');  birthEl.addEventListener('input', () => { state.birth = birthEl.value; upd(); });
   document.getElementById('ob-photo').addEventListener('change', e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
@@ -1108,7 +1139,7 @@ function availSummary() {                                  // l.1558–1563
 function fobCanContinue() {
   if (state.fobStep === 1) return state.fobName.trim() !== '';
   if (state.fobStep === 2) return state.fobFields.length > 0;
-  return state.fobTerms && state.fobEmail.trim() && state.fobPass.length >= 6;
+  return state.fobTerms && (state.oauth || (state.fobEmail.trim() && state.fobPass.length >= 6));
 }
 document.getElementById('fob-back').addEventListener('click', () => { if (state.fobStep > 1) state.fobStep--; else state.screen = 'pick'; render(); });
 document.getElementById('fob-next').addEventListener('click', async () => {          // l.1480–1490
@@ -1118,6 +1149,16 @@ document.getElementById('fob-next').addEventListener('click', async () => {     
 });
 async function registerCompany() {
   const btn = document.getElementById('fob-next'); btn.disabled = true; setErr('fob-err', '');
+  if (state.oauth) {                                       // account exists (Google) — create the profile rows directly
+    const p = await sb.from('profiles').insert({ id: state.uid, role: 'firm' });
+    const c = p.error ? p : await sb.from('companies').insert({ id: state.uid, name: state.fobName.trim(), ico: state.fobIco.trim(),
+      fields: state.fobFields, contact_name: state.fobContact.trim() });
+    btn.disabled = false;
+    if (c.error) { setErr('fob-err', c.error.message); return; }
+    if (state.fobLogoFile) { try { const url = await uploadLogo(state.fobLogoFile); await sb.from('companies').update({ logo_url: url }).eq('id', state.uid); } catch (e) { console.warn(e); } }
+    await enterApp({ ftab: 0 });
+    return;
+  }
   const { data, error } = await sb.auth.signUp({ email: state.fobEmail.trim(), password: state.fobPass,
     options: { data: { role: 'firm', name: state.fobName.trim(), ico: state.fobIco.trim(), fields: state.fobFields, contact_name: state.fobContact.trim() } } });
   btn.disabled = false;
@@ -1177,12 +1218,14 @@ function fobStep3() {                                      // l.272–282
     <h2>Kontaktná <b>osoba</b></h2>
     <p class="desc" style="margin-bottom:24px">Komu majú chodiť správy od záujemcov.</p>
     <div class="f3-col"><input class="input" id="fob-contact" placeholder="Meno a priezvisko" value="${esc(state.fobContact)}" autocomplete="name">
+      ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
-      <input class="input" id="fob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.fobPass)}" autocomplete="new-password"></div>
+      <input class="input" id="fob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.fobPass)}" autocomplete="new-password">`}</div>
     <button type="button" class="terms ${state.fobTerms ? 'on' : ''}" id="terms"><span class="box">${state.fobTerms ? '✓' : ''}</span>
       <span class="txt">Súhlasím s <a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">podmienkami Robiq</a> a potvrdzujem, že som oprávnený zastupovať túto firmu.</span></button>`;
   const upd = () => { document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
-  bindInput('fob-contact', 'fobContact'); bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd);
+  bindInput('fob-contact', 'fobContact');
+  if (!state.oauth) { bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd); }
   document.getElementById('terms').addEventListener('click', e => {
     if (e.target.closest('a')) return;                     // the link opens the terms; it must not toggle the checkbox
     state.fobTerms = !state.fobTerms; render();
@@ -1234,5 +1277,7 @@ requestAnimationFrame(loop);
   try { await loadMe(); await loadPostings(); } catch (e) { fail(e); }
   state.loading = false;
   subscribe();
+  if (state.oauth) { state.pickFrom = 'app'; state.screen = 'pick'; }   // back from Google, no profile yet
+  if (location.hash.includes('access_token') || location.search.includes('code=')) history.replaceState(null, '', location.pathname);
   render();
 })();

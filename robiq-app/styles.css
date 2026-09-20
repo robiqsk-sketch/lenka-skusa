@@ -552,6 +552,10 @@ h2 b { font-weight: 700; color: #40319F; }
 .divider span { flex: 1; height: 1px; background: rgba(36,27,69,.07); }
 .secondary { width: 100%; background: transparent; color: #000000; border: 1px solid #DEDBEC; border-radius: 12px; padding: 13px 0; font-size: 14px; font-weight: 700; cursor: pointer; }
 .secondary:hover { border-color: #40319F; }
+.secondary.google { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+.secondary.google svg { width: 18px; height: 18px; flex-shrink: 0; }
+.oauth-note { background: rgba(124,108,224,.1); border: 1px solid rgba(124,108,224,.35); border-radius: 12px; padding: 10px 14px; font-size: 12.5px; color: #3F3A55; margin: -10px 0 18px; text-align: center; }
+.oauth-note b { color: #000000; }
 
 /* ═══════════ PICK — l.199–228 ═══════════ */
 #scr-pick { padding: 40px 24px; }

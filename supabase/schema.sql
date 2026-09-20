@@ -137,8 +137,10 @@ create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
   d jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
-  r text  := coalesce(d->>'role', 'student');
+  r text  := d->>'role';
 begin
+  -- Google (OAuth) používatelia prídu bez roly → profil vytvorí aplikácia po výbere typu účtu a onboardingu.
+  if r is null then return new; end if;
   insert into profiles (id, role) values (new.id, r);
   if r = 'firm' then
     insert into companies (id, name, ico, fields, contact_name)
