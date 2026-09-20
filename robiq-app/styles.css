@@ -90,6 +90,12 @@ h2 b { font-weight: 700; color: #40319F; }
   .a-art g.drift, .sphere, .seam { animation: none !important; }
 }
 .a-content { padding: 14px 32px 100px; position: relative; z-index: 1; }
+/* Sticky footer: with little content the footer stays at the bottom of the screen (above the dock);
+   with a lot of content it simply follows the content. */
+.a-content { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+#a-main { flex: 1 0 auto; }
+.a-footer { margin-top: auto; padding-top: 14px; }
+#a-main + .a-footer { margin-top: auto; }
 /* Installed on a phone (standalone), the page runs under the status bar / notch — keep content and the sticky bar below it. */
 .a-content { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
 #scr-login, #scr-pick, #scr-ob, #scr-fob { padding-top: calc(28px + env(safe-area-inset-top, 0px)); padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
@@ -680,7 +686,8 @@ input[type="range"] { width: 100%; accent-color: #40319F; cursor: pointer; margi
 .terms .txt a { color: #40319F; font-weight: 700; text-decoration: none; }
 .terms .txt a:hover { color: #5546C4; }
 /* Compact footer: one row on desktop (brand · links · contact), wraps on phones */
-.a-footer { margin: 36px auto 0; padding: 14px 4px 0; font-size: 11.5px; gap: 8px 22px; align-items: center; }
+.a-footer { margin: auto auto 0; padding: 14px 4px 0; font-size: 11.5px; gap: 8px 22px; align-items: center; width: 100%; }
+#a-main { padding-bottom: 36px; }                          /* gap between content and footer when the page is long */
 .a-footer nav { gap: 16px; }
 /* Contact: label · e-mail · the two phones side by side. Desktop: one row; phone: label, e-mail line, phones line. */
 .a-contact { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
@@ -691,7 +698,8 @@ input[type="range"] { width: 100%; accent-color: #40319F; cursor: pointer; margi
 .a-contact a:hover svg { color: #40319F; }
 .a-contact .phones { display: flex; align-items: center; gap: 14px; }
 @media (max-width: 640px) {
-  .a-footer { margin-top: 28px; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .a-footer { flex-direction: column; align-items: flex-start; gap: 10px; }
+  #a-main { padding-bottom: 28px; }
   .a-contact { flex-direction: column; align-items: flex-start; gap: 6px; }
   .a-contact .phones { gap: 16px; flex-wrap: wrap; }
 }
