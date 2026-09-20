@@ -121,6 +121,8 @@ h2 b { font-weight: 700; color: #40319F; }
 .a-menu button.notif .st { font-size: 11px; font-weight: 700; }
 .a-menu button.out { font-weight: 700; color: #DC2626; }
 .a-menu button.out:hover { background: rgba(220,38,38,.08); }
+.a-menu button.del { color: #6E688C; font-size: 12.5px; }
+.a-menu button.del:hover { color: #DC2626; background: rgba(220,38,38,.06); }
 
 .a-footer {
   max-width: 1040px; margin: 70px auto 0; padding: 22px 4px 0; border-top: 1px solid rgba(36,27,69,.12);

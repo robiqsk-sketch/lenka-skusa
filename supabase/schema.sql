@@ -205,9 +205,8 @@ alter table public.messages          enable row level security;
 create policy "profiles: own read"   on public.profiles for select using (auth.uid() = id);
 create policy "profiles: own insert" on public.profiles for insert with check (auth.uid() = id);
 
--- students: vlastný riadok; firma vidí študentov, ktorí dali záujem o jej inzerát (README: hosť nevidí nič)
+-- students: len vlastný riadok. Firma kandidátov vidí cez pohľad candidate_profiles (nižšie) — bez dátumu narodenia a bia.
 create policy "students: own"  on public.students for all using (auth.uid() = id) with check (auth.uid() = id);
-create policy "students: firm sees candidates" on public.students for select using (public.is_my_candidate(id));
 
 -- companies: verejne čitateľné (meno firmy na karte ponuky), upravuje len vlastník
 create policy "companies: public read" on public.companies for select using (true);
@@ -239,6 +238,31 @@ create policy "matches: parties read" on public.matches for select using (studen
 -- messages: obe strany zhody čítajú a píšu
 create policy "messages: parties read"  on public.messages for select using (public.is_match_party(match_id));
 create policy "messages: parties write" on public.messages for insert with check (sender_id = auth.uid() and public.is_match_party(match_id));
+
+-- ─────────────────────────── Pohľad pre firmy: kandidáti ───────────────────────────
+-- Firma vidí o študentovi len meno, zručnosti a hodiny — a len ak študent dal záujem o jej inzerát.
+
+create or replace view public.candidate_profiles as
+  select s.id, s.name, s.skills, s.hours
+  from public.students s
+  where s.id = auth.uid() or public.is_my_candidate(s.id);
+
+grant select on public.candidate_profiles to anon, authenticated;
+
+-- ─────────────────────────── Zmazanie účtu ───────────────────────────
+-- Používateľ zmaže sám seba. Kaskády v tabuľkách zmažú profil, inzeráty, záujmy, zhody a správy.
+-- Súbory v Storage (logo) maže klient pred volaním.
+
+create or replace function public.delete_my_account() returns void
+language plpgsql security definer set search_path = public, auth as $$
+begin
+  if auth.uid() is null then raise exception 'Nie ste prihlásený.'; end if;
+  delete from storage.objects where bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text;
+  delete from auth.users where id = auth.uid();
+end $$;
+
+revoke all on function public.delete_my_account() from public;
+grant execute on function public.delete_my_account() to authenticated;
 
 -- ─────────────────────────── Realtime ───────────────────────────
 -- Chat a banner „Máte zhodu!" počúvajú na nové riadky.

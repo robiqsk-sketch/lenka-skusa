@@ -9,7 +9,7 @@ const sb = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
 const initialState = () => ({
   screen: 'app', authed: false, role: 'student', uid: null, pendingJob: null, gate: false,
   tab: 0, ftab: 0, loading: false, accMenu: false, notifOn: true, rowMenu: null,
-  detail: null, toast: '', banner: false, bannerName: '', delIdx: null,
+  detail: null, toast: '', banner: false, bannerName: '', delIdx: null, delAccount: false,
   // feed (guest + student)
   postings: [], likedIds: [], skippedIds: [], blockedFirms: [],
   // student
@@ -98,23 +98,34 @@ async function loadCompany() {
   await loadMatches();
 }
 
+// Firma vidí o kandidátovi len to, čo je v pohľade candidate_profiles (meno, zručnosti, hodiny) — nie dátum narodenia ani bio.
+async function loadCandidateProfiles(ids) {
+  if (!ids.length) return {};
+  const { data } = await sb.from('candidate_profiles').select('id, name, skills, hours').in('id', ids);
+  return Object.fromEntries((data || []).map(s => [s.id, s]));
+}
 async function loadCandidates() {                          // students who liked one of my postings, grouped later by posting
   const { data } = await sb.from('interests')
-    .select('posting_id, created_at, postings!inner(title, company_id), students(id, name, skills, hours)')
+    .select('posting_id, student_id, created_at, postings!inner(title, company_id)')
     .eq('postings.company_id', state.uid);
-  state.candidates = (data || []).filter(r => r.students).map(r => ({
-    id: r.students.id, n: r.students.name || 'Študent', ini: initialsOf(r.students.name), hrs: HOURS[r.students.hours] || '',
-    skills: (r.students.skills || []).map(k => k.n), offer: r.postings.title, postingId: r.posting_id, at: r.created_at,
-    g: `linear-gradient(135deg, ${colorFor(r.students.name)}, #9F8FF2)` }));
+  const rows = data || [];
+  const profiles = await loadCandidateProfiles([...new Set(rows.map(r => r.student_id))]);
+  state.candidates = rows.filter(r => profiles[r.student_id]).map(r => {
+    const s = profiles[r.student_id];
+    return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: HOURS[s.hours] || '',
+      skills: (s.skills || []).map(k => k.n), offer: r.postings.title, postingId: r.posting_id, at: r.created_at,
+      g: `linear-gradient(135deg, ${colorFor(s.name)}, #9F8FF2)` };
+  });
 }
 
 async function loadMatches() {
   const col = isStudent() ? 'student_id' : 'company_id';
   const { data } = await sb.from('matches')
-    .select('id, posting_id, student_id, company_id, created_at, postings(title), companies(name, logo_url), students(name)')
+    .select('id, posting_id, student_id, company_id, created_at, postings(title), companies(name, logo_url)')
     .eq(col, state.uid).order('created_at');
+  const names = isStudent() ? {} : await loadCandidateProfiles([...new Set((data || []).map(m => m.student_id))]);
   const list = (data || []).map(m => {
-    const other = isStudent() ? (m.companies?.name || 'Firma') : (m.students?.name || 'Študent');
+    const other = isStudent() ? (m.companies?.name || 'Firma') : (names[m.student_id]?.name || 'Študent');
     return { id: m.id, postingId: m.posting_id, name: other, job: m.postings?.title || '', msgs: [],
       ini: isStudent() ? other[0].toUpperCase() : initialsOf(other),
       lg: isStudent() ? colorFor(other) : `linear-gradient(135deg, ${colorFor(other)}, #9F8FF2)` };
@@ -275,6 +286,23 @@ const go = {
       await loadCompany(); await loadPostings();
     } catch (e) { fail(e); }
   },
+  // account deletion — GDPR right to erasure; everything cascades in the database
+  askDeleteAccount: () => { state.accMenu = false; state.delAccount = true; },
+  delAccountCancel: () => { state.delAccount = false; },
+  delAccountConfirm: async () => {
+    state.delAccount = false;
+    try {
+      const { error } = await sb.rpc('delete_my_account');
+      if (error) throw error;
+      await sb.auth.signOut();
+      state = initialState(); order = [];
+      subscribe();
+      state.loading = true; render();
+      try { await loadPostings(); } catch (e) { fail(e); }
+      state.loading = false;
+      showToast('Účet bol zmazaný.');
+    } catch (e) { fail(e); }
+  },
   // delete confirm — l.1638–1639
   delCancel:  () => { state.delIdx = null; },
   delConfirm: async () => {
@@ -377,6 +405,7 @@ function renderHeader() {                                  // l.342–372
         <span class="st" style="color:${state.notifOn ? '#15803D' : '#6E688C'}">${state.notifOn ? 'Zap.' : 'Vyp.'}</span></button>
       <button data-go="menuClose"><span class="ic">?</span>Pomoc a podpora</button><hr>
       <button class="out" data-go="logout"><span class="ic">→</span>Odhlásiť sa</button>
+      <button class="del" data-go="askDeleteAccount"><span class="ic">✕</span>Zmazať účet</button>
     </div>`;
   r.innerHTML = `${nova}<div class="a-acc"><button class="a-ava" aria-label="Účet" data-go="menuToggle">${avaInit()}</button>${menu}</div>`;
 }
@@ -792,6 +821,12 @@ function layers() {                                        // banner l.946, toas
     <div class="h">Zmazať „${esc(state.offers[state.delIdx].t)}"?</div>
     <div class="p">Inzerát aj jeho zhody sa nedajú vrátiť. Ak ho chcete len stiahnuť, použite Pozastaviť.</div>
     <div class="col"><button class="b1" data-go="delConfirm">Zmazať natrvalo</button><button class="b2" data-go="delCancel">Zrušiť</button></div></div></div>`;
+  if (state.delAccount) h += `<div class="overlay del" data-go="delAccountCancel"><div class="delm" data-go="noop">
+    <div class="h">${isStudent() ? 'Zmazať tvoj účet?' : 'Zmazať firemný účet?'}</div>
+    <div class="p">${isStudent()
+      ? 'Natrvalo sa zmaže tvoj profil, záujmy, zhody aj správy. Toto sa nedá vrátiť.'
+      : 'Natrvalo sa zmaže profil firmy, všetky inzeráty, zhody aj správy s uchádzačmi. Toto sa nedá vrátiť.'}</div>
+    <div class="col"><button class="b1" data-go="delAccountConfirm">Zmazať natrvalo</button><button class="b2" data-go="delAccountCancel">Zrušiť</button></div></div></div>`;
   if (state.gate) h += `<div class="overlay" data-go="gateClose"><div class="gate" data-go="noop">
     <div class="ic">♥</div>
     <div class="h">Ešte krôčik — potrebujeme vedieť, kto si</div>
