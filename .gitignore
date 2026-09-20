@@ -1,0 +1,12 @@
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Claude Code local settings
+.claude/
+
+# Future: dependencies and secrets
+node_modules/
+.env
+.env.*

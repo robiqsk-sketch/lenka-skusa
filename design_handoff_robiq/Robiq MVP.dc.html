@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/open-sauce-one">
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/satoshi">
+<style>
+  body{margin:0;background:#F0EFF5;font-family:'Satoshi',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-weight:500;-webkit-font-smoothing:antialiased;color:#000000}
+  *{box-sizing:border-box}
+  ::selection{background:rgba(85,70,196,.45)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes waveDrift{0%,100%{transform:translate(0,0)}50%{transform:translate(-16px,12px)}}
+  @keyframes orbPulse{0%,100%{opacity:.9;transform:scale(1)}50%{opacity:.55;transform:scale(1.07)}}
+  @keyframes blobA{0%,100%{border-radius:58% 42% 55% 45%/55% 48% 52% 45%;transform:translate(0,0) rotate(0deg) scale(1)}33%{border-radius:46% 54% 48% 52%/60% 42% 58% 40%;transform:translate(3%,-2%) rotate(6deg) scale(1.06)}66%{border-radius:52% 48% 60% 40%/48% 56% 44% 52%;transform:translate(-2%,3%) rotate(-5deg) scale(1.02)}}
+  @keyframes blobB{0%,100%{border-radius:60% 40% 52% 48%/58% 46% 54% 42%;transform:translate(0,0) rotate(0deg)}50%{border-radius:48% 52% 46% 54%/50% 58% 42% 50%;transform:translate(-2.5%,2%) rotate(-6deg)}}
+  @keyframes blobC{0%,100%{border-radius:52% 48% 60% 40%/70% 62% 42% 35%;transform:translate(0,0) scale(1)}50%{border-radius:58% 42% 46% 54%/58% 55% 46% 44%;transform:translate(4%,-3%) scale(1.09)}}
+  @keyframes hueA{from{filter:blur(54px) saturate(1.25) hue-rotate(0deg)}to{filter:blur(54px) saturate(1.25) hue-rotate(360deg)}}
+  @keyframes hueC{from{filter:blur(42px) saturate(1.3) hue-rotate(0deg)}to{filter:blur(42px) saturate(1.3) hue-rotate(360deg)}}
+  @keyframes sheen{0%,100%{transform:translate(0,0);opacity:.5}50%{transform:translate(26%,18%);opacity:.8}}
+  @keyframes waveBand{0%,100%{transform:translate(0,0) scaleY(1);border-radius:46% 54% 50% 50%/60% 58% 42% 40%}50%{transform:translate(-4%,-3%) scaleY(1.08);border-radius:52% 48% 46% 54%/64% 54% 46% 36%}}
+  @keyframes floatL{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(10%,-6%) scale(1.08)}}
+  @keyframes floatR{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-10%,7%) scale(1.06)}}
+  @keyframes floatLC{0%,100%{transform:translateY(-50%) translateX(0)}50%{transform:translateY(-52%) translateX(22px)}}
+  @keyframes floatRC{0%,100%{transform:translateY(-50%) translateX(0)}50%{transform:translateY(-48%) translateX(-22px)}}
+  @keyframes dotDrift{0%,100%{background-position:0 0,11px 9px}50%{background-position:26px 14px,-14px 22px}}
+  @keyframes sphereSpinL{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+  @keyframes sphereSpinR{0%,100%{transform:scaleX(-1) rotate(7deg)}50%{transform:scaleX(-1) rotate(-7deg)}}
+  @keyframes dotWaveL{0%{-webkit-mask-position:0 0;mask-position:0 0}100%{-webkit-mask-position:340px 0,0 0;mask-position:340px 0}}
+  @keyframes dotWaveR{0%{-webkit-mask-position:0 0;mask-position:0 0}100%{-webkit-mask-position:-340px 0;mask-position:-340px 0}}
+  @keyframes seam{0%,100%{opacity:.72;transform:translate(-50%,-50%) scaleY(1)}50%{opacity:1;transform:translate(-50%,-50%) scaleY(1.14)}}
+  @keyframes skShine{0%{background-position:100% 0}100%{background-position:0 0}}
+  @keyframes bannerIn{from{transform:translate(-50%,-140%);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+  input:focus,textarea:focus{outline:none;border-color:#40319F !important}
+  input::placeholder,textarea::placeholder{color:#3F3A55}
+  [data-screen-label="Login"] input::placeholder{color:#000000}
+  @media (max-width:960px){ [data-mq="cards"]{grid-template-columns:repeat(2,1fr) !important} }
+  @media (max-width:640px){
+    [data-mq="cards"]{grid-template-columns:1fr !important}
+    [data-mq="chat"]{grid-template-columns:1fr !important;height:auto !important;min-height:0 !important}
+    [data-mq="chatlist"]{flex-direction:row !important;overflow-x:auto !important;overflow-y:hidden !important;padding:8px !important}
+    [data-mq="chatlist"] > button{flex-shrink:0}
+    [data-mq="chatbox"]{height:56vh !important}
+    [data-mq="two"]{grid-template-columns:1fr !important}
+    [data-mq="day"],[data-mq="offer"]{grid-template-columns:1fr 1fr !important}
+    [data-mq="content"]{padding:12px 16px 150px !important}
+    [data-mq="hdr"]{padding:0 16px !important;width:100% !important;gap:10px !important}
+    [data-mq="dock"]{width:min(430px, calc(100% - 20px)) !important}
+    [data-mq="hidemob"]{display:none !important}
+  }
+</style>
+</helmet>
+
+<!-- ═══ LOGIN ═══ -->
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Login" style="position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#F0EFF5;padding:28px">
+  <div aria-hidden="true" style="position:absolute;inset:22px;border-radius:34px;overflow:hidden;pointer-events:none;background:radial-gradient(120% 120% at 50% 50%, #1c1540 0%, #120d2b 55%, #08050f 100%)">
+    <div style="position:absolute;left:-560px;top:50%;transform:translateY(-50%);width:760px;height:820px;border-radius:50%;border:2px solid rgba(159,143,242,.10);filter:blur(2px)"></div>
+    <div style="position:absolute;right:-560px;top:50%;transform:translateY(-50%);width:760px;height:820px;border-radius:50%;border:2px solid rgba(203,192,255,.09);filter:blur(2px)"></div>
+    <div style="position:absolute;left:-725px;top:50%;transform:translateY(-50%);width:900px;height:900px;border-radius:50%;animation:floatLC 16s ease-in-out infinite">
+      <div style="position:absolute;inset:0;border-radius:50%;overflow:hidden;-webkit-mask:radial-gradient(88% 104% at 74% 50%, #000 0%, rgba(0,0,0,.75) 58%, rgba(0,0,0,.3) 86%, transparent 100%);mask:radial-gradient(88% 104% at 74% 50%, #000 0%, rgba(0,0,0,.75) 58%, rgba(0,0,0,.3) 86%, transparent 100%)">
+        <canvas data-dot="L" width="900" height="900" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+      </div>
+    </div>
+    <div style="position:absolute;right:-725px;top:50%;transform:translateY(-50%);width:900px;height:900px;border-radius:50%;animation:floatRC 18s ease-in-out infinite">
+      <div style="position:absolute;inset:0;border-radius:50%;overflow:hidden;-webkit-mask:radial-gradient(88% 104% at 26% 50%, #000 0%, rgba(0,0,0,.75) 58%, rgba(0,0,0,.3) 86%, transparent 100%);mask:radial-gradient(88% 104% at 26% 50%, #000 0%, rgba(0,0,0,.75) 58%, rgba(0,0,0,.3) 86%, transparent 100%)">
+        <canvas data-dot="R" width="900" height="900" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+      </div>
+    </div>
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100px;height:120%;border-radius:50%;background:radial-gradient(closest-side, rgba(240,236,255,.9), rgba(159,143,242,.35) 45%, rgba(124,108,224,0) 80%);filter:blur(16px);animation:seam 6s ease-in-out infinite"></div>
+  </div>
+  <div style="position:relative;z-index:2;width:436px;background:#FFFFFF;border-radius:24px;padding:40px 54px 34px;color:#000000;box-shadow:0 24px 60px -28px rgba(23,18,46,.45);-webkit-mask:radial-gradient(1100px 1100px at -1074px 50%,transparent 1099px,#000 1101px),radial-gradient(1100px 1100px at calc(100% + 1074px) 50%,transparent 1099px,#000 1101px);-webkit-mask-composite:source-in;mask:radial-gradient(1100px 1100px at -1074px 50%,transparent 1099px,#000 1101px),radial-gradient(1100px 1100px at calc(100% + 1074px) 50%,transparent 1099px,#000 1101px);mask-composite:intersect">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px">
+      <span style="font-family:'Open Sauce One',sans-serif;font-size:26px;font-weight:700;letter-spacing:.01em;color:#000000">Robiq<b style="font-weight:700;color:#5546C4">.</b></span>
+    </div>
+    <div style="text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#40319F;margin-bottom:28px">Nehľadaj brigádu. Nechaj ju nájsť teba.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+      <input type="email" placeholder="E-mail" style="background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000">
+      <input type="password" placeholder="Heslo" style="background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000">
+    </div>
+    <button onClick="{{ doLogin }}" style="width:100%;background:#40319F;color:#fff;border:none;border-radius:12px;padding:14px 0;font-size:15px;font-weight:700;cursor:pointer" style-hover="background:#5546C4">Prihlásiť sa</button>
+    <div style="display:flex;align-items:center;gap:12px;margin:20px 0;color:#3F3A55;font-size:11px;letter-spacing:.14em;text-transform:uppercase"><span style="flex:1;height:1px;background:rgba(36,27,69,.07)"></span>alebo<span style="flex:1;height:1px;background:rgba(36,27,69,.07)"></span></div>
+    <button onClick="{{ goRegister }}" style="width: 100%; background: transparent; color: #000000; border: 1px solid #DEDBEC; border-radius: 12px; padding: 13px 0; font-size: 14px; font-weight: 700; cursor: pointer" style-hover="color:#000000;border-color:#40319F">Vytvoriť účet</button>
+    
+    <div style="margin-top:20px;padding-top:18px;border-top:1px solid rgba(36,27,69,.08);text-align:center">
+      <button onClick="{{ goFirmReg }}" style="background:none;border:none;font-size:12.5px;color:#40319F;font-weight:700;cursor:pointer;padding:4px" style-hover="color:#5546C4">Ste firma? Vytvorte si firemný účet →</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ ONBOARDING ═══ -->
+<sc-if value="{{ isOb }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Onboarding" style="min-height:100vh;display:flex;align-items:center;justify-content:center">
+  <div style="width:540px;background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:24px;padding:38px 42px 34px;color:#000000">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#40319F">Krok {{ obStep }} / 3</div>
+      <div style="display:flex;gap:7px">
+        <span style="width:26px;height:4px;border-radius:99px;transition:background .2s;background: {{ dot1 }}"></span>
+        <span style="width:26px;height:4px;border-radius:99px;transition:background .2s;background: {{ dot2 }}"></span>
+        <span style="width:26px;height:4px;border-radius:99px;transition:background .2s;background: {{ dot3 }}"></span>
+      </div>
+    </div>
+
+    <sc-if value="{{ obS1 }}" hint-placeholder-val="{{ false }}">
+      <h2 style="font-size:26px;font-weight:700;margin:0 0 6px">Ako sa <b style="font-weight:700;color:#40319F">voláš?</b></h2>
+      <p style="color:#3F3A55;font-size:13.5px;margin:0 0 26px">Žiadne CV, žiadny motivačný list. Stačí meno a fotka.</p>
+      <div style="display:flex;gap:22px;align-items:center;margin-bottom:26px">
+        <div style="width:84px;height:84px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#5546C4,#9F8FF2);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700">{{ obInit }}</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+          <input value="{{ obName }}" onChange="{{ setObName }}" placeholder="Meno a priezvisko" style="background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000">
+          <button style="background:rgba(36,27,69,.05);border:1px dashed #DEDBEC;border-radius:12px;padding:11px 0;font-size:12.5px;color:#3F3A55;cursor:pointer" style-hover="border-color:#40319F;color:#40319F">Nahrať fotku (voliteľné)</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obS2 }}" hint-placeholder-val="{{ false }}">
+      <h2 style="font-size:26px;font-weight:700;margin:0 0 6px">Čo ti <b style="font-weight:700;color:#40319F">ide?</b></h2>
+      <p style="color:#3F3A55;font-size:13.5px;margin:0 0 22px">Vyber si koľko chceš — a pri každej nastav, ako dobre ju ovládaš. Robiq sa učí z každého kliku.</p>
+
+      <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+          <sc-for list="{{ selRows }}" as="sr" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(85,70,196,.35);background:rgba(85,70,196,.06);border-radius:13px;padding:9px 10px 9px 16px">
+              <div style="flex:1;font-size:13.5px;font-weight:700;color:#000000">{{ sr.n }}</div>
+              <button onClick="{{ sr.speakTgl }}" style="display: {{ sr.speakDisp }};border:1px solid {{ sr.speakBd }};background: {{ sr.speakBg }};color: {{ sr.speakFg }};border-radius:99px;padding:6px 13px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s">{{ sr.speakLabel }}</button>
+              <div style="display:flex;background:rgba(36,27,69,.06);border-radius:9px;padding:3px">
+                <sc-for list="{{ sr.lvls }}" as="lv" hint-placeholder-count="3">
+                  <button onClick="{{ lv.click }}" style="border:none;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;transition:background .15s;background: {{ lv.bg }};color: {{ lv.fg }}">{{ lv.label }}</button>
+                </sc-for>
+              </div>
+              <button onClick="{{ sr.remove }}" aria-label="Odstrániť" style="background:none;border:none;color:#3F3A55;font-size:13px;cursor:pointer;padding:4px 6px" style-hover="color:#DC2626">✕</button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;flex-direction:column;gap:32px;margin-bottom:30px">
+        <sc-for list="{{ baseGroups }}" as="gr" hint-placeholder-count="3">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:12px">{{ gr.g }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px">
+              <sc-for list="{{ gr.chips }}" as="ch" hint-placeholder-count="5">
+                <button onClick="{{ ch.click }}" style="padding:9px 16px;border-radius:99px;font-size:13.5px;cursor:pointer;transition:all .15s;border: {{ ch.border }};background: {{ ch.bg }};color: {{ ch.fg }}" style-hover="filter:brightness(.95)">{{ ch.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:12px">Niečo iné?</div>
+          <div style="display:flex;gap:10px">
+            <input value="{{ customSkill }}" onChange="{{ setCustomSkill }}" onKeyDown="{{ customKey }}" placeholder="Napíš vlastnú zručnosť a stlač Enter…" style="flex:1;background:rgba(36,27,69,.04);border:1px solid #DEDBEC;border-radius:12px;padding:12px 16px;font-size:13.5px;color:#000000">
+            <button onClick="{{ addCustom }}" style="background:#40319F;color:#fff;border:none;border-radius:12px;padding:0 22px;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#5546C4">Pridať</button>
+          </div>
+          <div style="font-size:11.5px;color:#3F3A55;margin-top:9px">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami.</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obS3 }}" hint-placeholder-val="{{ false }}">
+      <h2 style="font-size:26px;font-weight:700;margin:0 0 6px">Koľko hodín <b style="font-weight:700;color:#40319F">máš?</b></h2>
+      <p style="color:#3F3A55;font-size:13.5px;margin:0 0 30px">Ponuky uvidíš len podľa svojej reálnej dostupnosti.</p>
+      <div style="text-align:center;font-size:30px;font-weight:700;color:#000000;margin-bottom:18px">{{ hoursLabel }}</div>
+      <input type="range" min="0" max="3" step="1" value="{{ obHours }}" onChange="{{ setObHours }}" style="width:100%;accent-color:#40319F;cursor:pointer;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#3F3A55;margin-bottom:26px"><span>5 h</span><span>10 h</span><span>20 h</span><span>Fulltime</span></div>
+
+      <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:9px">Ktoré dni?</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:20px">
+        <sc-for list="{{ availDays }}" as="ad" hint-placeholder-count="7">
+          <button onClick="{{ ad.tgl }}" style="height:42px;border-radius:11px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;transition:background .18s,color .18s;background: {{ ad.bg }};color: {{ ad.fg }};border: {{ ad.bd }}">{{ ad.d }}</button>
+        </sc-for>
+      </div>
+
+      <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:9px">Kedy počas dňa?</div>
+      <div data-mq="two" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <sc-for list="{{ availTimes }}" as="at" hint-placeholder-count="4">
+          <button onClick="{{ at.tgl }}" style="text-align:left;border-radius:12px;cursor:pointer;font-family:inherit;padding:11px 14px;transition:background .18s,color .18s;background: {{ at.bg }};color: {{ at.fg }};border: {{ at.bd }}">
+            <span style="display:block;font-size:13px;font-weight:700">{{ at.t }}</span>
+            <span style="display:block;font-size:11px;color:#6E688C;margin-top:2px">{{ at.sub }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="font-size:11.5px;color:#3F3A55;margin-bottom:26px">{{ availSummary }}</div>
+    </sc-if>
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <button onClick="{{ obBack }}" style="background:none;border:none;color:#3F3A55;font-size:13px;cursor:pointer;padding:10px 4px" style-hover="color:#000000">← Späť</button>
+      <button onClick="{{ obNext }}" style="background:#40319F;color:#fff;border:none;border-radius:12px;padding:13px 30px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;opacity: {{ obNextOp }}" style-hover="background:#5546C4">{{ obNextLabel }}</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ VÝBER TYPU ÚČTU ═══ -->
+<sc-if value="{{ isPick }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Výber účtu" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 24px">
+  <div style="width:560px;max-width:100%;background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:24px;padding:38px 42px 32px;color:#000000">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px">
+      <span style="font-family:'Open Sauce One',sans-serif;font-size:24px;font-weight:700;color:#000000">Robiq<b style="font-weight:700;color:#5546C4">.</b></span>
+    </div>
+    <div style="text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#40319F;margin-bottom:26px">Aký účet si vytvárate?</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <button onClick="{{ pickStudent }}" style="display:flex;gap:16px;align-items:flex-start;text-align:left;background:rgba(36,27,69,.03);border:1px solid #DEDBEC;border-radius:16px;padding:20px 22px;cursor:pointer;transition:border-color .15s,background .15s" style-hover="border-color:#40319F;background:rgba(124,108,224,.07)">
+        <span style="width:42px;height:42px;flex-shrink:0;border-radius:13px;background:rgba(124,108,224,.16);color:#40319F;display:flex;align-items:center;justify-content:center;font-size:18px">◇</span>
+        <span style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:15.5px;font-weight:700;color:#000000">Hľadám prácu</span>
+          <span style="font-size:12.5px;line-height:1.5;color:#3F3A55">3 kroky, bez CV. Ponuky ťa nájdu samy.</span>
+        </span>
+      </button>
+      <button onClick="{{ pickFirm }}" style="display:flex;gap:16px;align-items:flex-start;text-align:left;background:rgba(36,27,69,.03);border:1px solid #DEDBEC;border-radius:16px;padding:20px 22px;cursor:pointer;transition:border-color .15s,background .15s" style-hover="border-color:#40319F;background:rgba(124,108,224,.07)">
+        <span style="width:42px;height:42px;flex-shrink:0;border-radius:13px;background:rgba(124,108,224,.16);color:#40319F;display:flex;align-items:center;justify-content:center;font-size:18px">◈</span>
+        <span style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:15.5px;font-weight:700;color:#000000">Ponúkam prácu — firma</span>
+          <span style="font-size:12.5px;line-height:1.5;color:#3F3A55">Firemný profil, inzeráty a AI výber kandidátov.</span>
+        </span>
+      </button>
+    </div>
+    <div style="text-align:center;margin-top:22px;padding-top:18px;border-top:1px solid rgba(36,27,69,.08)">
+      <button onClick="{{ goLogin }}" style="background:none;border:none;font-size:12.5px;color:#40319F;font-weight:700;cursor:pointer;padding:4px" style-hover="color:#5546C4">Už mám účet — prihlásiť sa</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ FIREMNÁ REGISTRÁCIA ═══ -->
+<sc-if value="{{ isFob }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Firemná registrácia" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 24px">
+  <div style="width:560px;max-width:100%;background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:24px;padding:38px 42px 34px;color:#000000">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#40319F">Firemný účet · krok {{ fobStep }} / 3</div>
+      <div style="display:flex;gap:7px">
+        <span style="width:26px;height:4px;border-radius:99px;transition:background .2s;background: {{ fdot1 }}"></span>
+        <span style="width:26px;height:4px;border-radius:99px;transition:background .2s;background: {{ fdot2 }}"></span>
+        <span style="width:26px;height:4px;border-radius:99px;transition:background .2s;background: {{ fdot3 }}"></span>
+      </div>
+    </div>
+
+    <sc-if value="{{ fobS1 }}" hint-placeholder-val="{{ true }}">
+      <h2 style="font-size:26px;font-weight:700;margin:0 0 6px">Kto <b style="font-weight:700;color:#40319F">ste?</b></h2>
+      <p style="color:#3F3A55;font-size:13.5px;margin:0 0 24px">Overíme firmu podľa IČO — ľudia tak vedia, že píšu reálnemu zamestnávateľovi.</p>
+      <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:22px">
+        <label title="Nahrať logo" style="position:relative;width:82px;height:82px;border-radius:20px;flex-shrink:0;overflow:hidden;cursor:pointer;background-color:#5546C4;background-repeat:no-repeat;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;border:1px solid rgba(85,70,196,.3);background-image: {{ fobLogoBg }}">
+          <span style="display: {{ fobInitDisp }}">{{ fobInit }}</span>
+          <span style="position:absolute;left:0;right:0;bottom:0;padding:5px 0;text-align:center;font-size:10px;font-weight:700;letter-spacing:.04em;background:rgba(23,18,46,.62);color:#fff">LOGO</span>
+          <input type="file" accept="image/*" onChange="{{ setFobLogo }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+        </label>
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+          <input value="{{ fobName }}" onChange="{{ setFobName }}" placeholder="Názov firmy" style="background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000">
+          <input value="{{ fobIco }}" onChange="{{ setFobIco }}" placeholder="IČO" style="background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000">
+        </div>
+      </div>
+      
+    </sc-if>
+
+    <sc-if value="{{ fobS2 }}" hint-placeholder-val="{{ false }}">
+      <h2 style="font-size:26px;font-weight:700;margin:0 0 6px">Koho <b style="font-weight:700;color:#40319F">hľadáte?</b></h2>
+      <p style="color:#3F3A55;font-size:13.5px;margin:0 0 22px">Podľa toho vám Robiq predvyberie ľudí. Dá sa kedykoľvek zmeniť.</p>
+      <div style="font-size:13px;font-weight:700;margin-bottom:11px">Odvetvie</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:26px">
+        <sc-for list="{{ fobFields }}" as="ff" hint-placeholder-count="6">
+          <button onClick="{{ ff.click }}" style="padding:9px 16px;border-radius:99px;font-size:13.5px;cursor:pointer;transition:all .15s;border: {{ ff.border }};background: {{ ff.bg }};color: {{ ff.fg }}" style-hover="filter:brightness(.95)">{{ ff.label }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ fobS3 }}" hint-placeholder-val="{{ false }}">
+      <h2 style="font-size:26px;font-weight:700;margin:0 0 6px">Kontaktná <b style="font-weight:700;color:#40319F">osoba</b></h2>
+      <p style="color:#3F3A55;font-size:13.5px;margin:0 0 24px">Komu majú chodiť správy od záujemcov.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+        <input value="{{ fobContact }}" onChange="{{ setFobContact }}" placeholder="Meno a priezvisko" style="background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000">
+        <input type="email" value="{{ fobEmail }}" onChange="{{ setFobEmail }}" placeholder="Pracovný e-mail" style="background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000">
+        <input type="password" value="{{ fobPass }}" onChange="{{ setFobPass }}" placeholder="Heslo" style="background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000">
+      </div>
+      <button onClick="{{ fobTermsTgl }}" style="width:100%;text-align:left;display:flex;gap:12px;align-items:flex-start;background:rgba(36,27,69,.04);border:1px solid {{ fobTermsBd }};border-radius:13px;padding:14px 16px;cursor:pointer;margin-bottom:22px;transition:border-color .15s">
+        <span style="width:19px;height:19px;flex-shrink:0;border-radius:6px;border:1px solid {{ fobTermsBd }};background: {{ fobTermsBg }};color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:1px">{{ fobTermsMark }}</span>
+        <span style="font-size:12.5px;line-height:1.5;color:#3F3A55">Súhlasím s podmienkami Robiq a potvrdzujem, že som oprávnený zastupovať túto firmu.</span>
+      </button>
+    </sc-if>
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <button onClick="{{ fobBack }}" style="background:none;border:none;color:#3F3A55;font-size:13px;cursor:pointer;padding:10px 4px" style-hover="color:#000000">← Späť</button>
+      <button onClick="{{ fobNext }}" style="background:#40319F;color:#fff;border:none;border-radius:12px;padding:13px 30px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;opacity: {{ fobNextOp }}" style-hover="background:#5546C4">{{ fobNextLabel }}</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ APP ═══ -->
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+<div style="height:100vh;max-height:100vh;display:flex;flex-direction:column;background:#F7F6FB;overflow:hidden">
+
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0">
+    <defs>
+      <linearGradient id="aart" x1="0" y1="900" x2="1440" y2="0">
+        <stop offset="0" stop-color="#7C6CE0" stop-opacity="0"></stop><stop offset=".32" stop-color="#7C6CE0" stop-opacity=".85"></stop><stop offset=".6" stop-color="#CBC0FF"></stop><stop offset="1" stop-color="#9F8FF2" stop-opacity="0"></stop>
+      </linearGradient>
+      <linearGradient id="aart2" x1="0" y1="900" x2="1440" y2="0">
+        <stop offset="0" stop-color="#40319F" stop-opacity="0"></stop><stop offset=".5" stop-color="#9F8FF2" stop-opacity=".6"></stop><stop offset="1" stop-color="#CBC0FF" stop-opacity="0"></stop>
+      </linearGradient>
+      <linearGradient id="aart3" x1="1440" y1="0" x2="0" y2="900">
+        <stop offset="0" stop-color="#5546C4" stop-opacity="0"></stop><stop offset=".5" stop-color="#7C6CE0" stop-opacity=".5"></stop><stop offset="1" stop-color="#40319F" stop-opacity="0"></stop>
+      </linearGradient>
+      <filter id="aws" x="-20%" y="-80%" width="140%" height="260%"><feGaussianBlur stdDeviation="9"></feGaussianBlur></filter>
+    </defs>
+    <g fill="none" style="animation:waveDrift 22s ease-in-out infinite;transform-origin:720px 450px">
+      <g stroke="url(#aart)">
+        <path d="M-80,880 C280,760 560,810 760,660 C980,490 900,320 1120,200 C1290,105 1400,85 1560,20" stroke-width="34" opacity=".08" filter="url(#aws)"></path>
+        <path d="M-80,850 C300,740 580,780 780,635 C1000,472 920,312 1135,190 C1300,96 1410,72 1560,-4" stroke-width="13" opacity=".16" filter="url(#aws)"></path>
+        <path d="M-80,832 C315,725 595,760 795,618 C1012,458 935,300 1148,180 C1308,88 1415,60 1560,-16" stroke-width="4" opacity=".38" filter="url(#aws)"></path>
+        <path d="M-80,820 C325,715 605,745 805,605 C1022,448 945,290 1158,170 C1315,80 1420,50 1560,-26" stroke-width="1.4" opacity=".7"></path>
+      </g>
+      <g stroke="url(#aart2)">
+        <path d="M-80,905 C260,790 530,845 720,700 C955,520 880,340 1100,215 C1280,113 1395,105 1560,45" stroke-width="1.8" opacity=".5"></path>
+        <path d="M-80,780 C320,690 600,720 800,585 C1030,435 960,285 1175,168 C1330,78 1430,44 1560,-30" stroke-width="1.2" opacity=".42"></path>
+        <path d="M-80,960 C240,835 520,880 720,735 C980,545 1000,360 1200,220 C1350,118 1440,96 1560,50" stroke-width="1" opacity=".32"></path>
+      </g>
+      <g stroke="url(#aart3)">
+        <path d="M1520,-40 C1240,90 1060,150 900,320 C720,510 760,660 560,820 C420,930 300,950 120,980" stroke-width="1.4" opacity=".4"></path>
+        <path d="M1520,10 C1270,140 1090,210 940,370 C760,560 800,700 610,860 C470,970 340,985 150,1010" stroke-width="1" opacity=".3"></path>
+        <path d="M1500,-70 C1230,70 1030,120 880,300 C700,510 720,690 520,840" stroke-width=".8" opacity=".26"></path>
+      </g>
+      <g stroke="#CBC0FF" opacity=".16" stroke-width=".8">
+        <path d="M805,605 C900,540 980,470 1060,470 C1160,470 1210,540 1300,540"></path>
+        <path d="M600,700 C700,640 760,560 860,560"></path>
+        <path d="M400,780 C520,720 600,640 700,660"></path>
+      </g>
+    </g>
+  </svg>
+
+  <!-- content -->
+  <div data-mq="content" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 32px 130px;position:relative;z-index:1">
+  <div data-mq="hdr" style="position:relative;z-index:30;flex-shrink:0;width:100%;max-width:1040px;margin:0 auto 24px;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:#241D45;border:1px solid rgba(159,143,242,.28);border-radius:22px;filter:drop-shadow(0 8px 16px rgba(23,18,46,.18))">
+    <span style="position:absolute;left:26px;right:26px;bottom:0;height:2px;border-radius:99px;background:linear-gradient(90deg,rgba(124,108,224,0),#7C6CE0 30%,#CBC0FF 50%,#7C6CE0 70%,rgba(124,108,224,0));opacity:.85;pointer-events:none"></span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-family:'Open Sauce One',sans-serif;font-size:19px;font-weight:700;letter-spacing:.01em;color:#FFFFFF">Robiq<b style="font-weight:700;color:#CBC0FF">.</b></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:18px">
+      <sc-if value="{{ novaHdrOn }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ goNova }}" style="background:#40319F;color:#fff;border:1px solid rgba(159,143,242,.4);border-radius:99px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer" style-hover="background:#5546C4">＋ Nový inzerát</button>
+      </sc-if>
+      <sc-if value="{{ guestOn }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:9px">
+          <button onClick="{{ goLogin }}" style="background:transparent;color:#CBC0FF;border:1px solid rgba(159,143,242,.42);border-radius:99px;padding:7px 15px;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .2s,color .2s" style-hover="background:rgba(159,143,242,.14);color:#FFFFFF">Prihlásiť sa</button>
+          <button onClick="{{ goSignup }}" style="background:#40319F;color:#fff;border:1px solid rgba(159,143,242,.4);border-radius:99px;padding:7px 16px;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .2s" style-hover="background:#5546C4">Vytvoriť účet</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ authedOn }}" hint-placeholder-val="{{ false }}">
+      <div style="position:relative">
+        <button onClick="{{ menuToggle }}" aria-label="Účet" style="width:32px;height:32px;border:none;padding:0;border-radius:50%;background:linear-gradient(135deg,#5546C4,#9F8FF2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 0 0 0 rgba(203,192,255,0);transition:box-shadow .2s" style-hover="box-shadow:0 0 0 3px rgba(203,192,255,.28)">{{ avaInit }}</button>
+        <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:44px;right:0;z-index:60;width:216px;background:#FFFFFF;border:1px solid #CEC6E4;border-radius:16px;box-shadow:0 20px 44px -14px rgba(23,18,46,.38);padding:7px;display:flex;flex-direction:column;gap:1px;color:#000000">
+            <div style="padding:11px 13px 9px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-size:13.5px;font-weight:700;line-height:1.2">{{ menuName }}</div>
+              
+            </div>
+            <span style="height:1px;background:#EDEAF6;margin:4px 6px 5px;display:block"></span>
+            <button onClick="{{ menuProfile }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;border-radius:10px;padding:10px 13px;font-size:13.5px;font-weight:500;color:#17122E;cursor:pointer" style-hover="background:rgba(64,49,159,.07)"><span style="font-size:14px;width:16px;display:inline-block">◔</span>Môj profil</button>
+            <button onClick="{{ menuSettings }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;border-radius:10px;padding:10px 13px;font-size:13.5px;font-weight:500;color:#17122E;cursor:pointer" style-hover="background:rgba(64,49,159,.07)"><span style="font-size:14px;width:16px;display:inline-block">⚙</span>Nastavenia</button>
+            <button onClick="{{ menuNotif }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;background:none;border:none;border-radius:10px;padding:10px 13px;font-size:13.5px;font-weight:500;color:#17122E;cursor:pointer" style-hover="background:rgba(64,49,159,.07)"><span style="display:flex;align-items:center;gap:10px"><span style="font-size:14px;width:16px;display:inline-block">◇</span>Notifikácie</span><span style="font-size:11px;font-weight:700;color: {{ notifFg }}">{{ notifTxt }}</span></button>
+            <button onClick="{{ menuHelp }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;border-radius:10px;padding:10px 13px;font-size:13.5px;font-weight:500;color:#17122E;cursor:pointer" style-hover="background:rgba(64,49,159,.07)"><span style="font-size:14px;width:16px;display:inline-block">?</span>Pomoc a podpora</button>
+            <span style="height:1px;background:#EDEAF6;margin:5px 6px;display:block"></span>
+            <button onClick="{{ logout }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;border-radius:10px;padding:10px 13px;font-size:13.5px;font-weight:700;color:#DC2626;cursor:pointer" style-hover="background:rgba(220,38,38,.08)"><span style="font-size:14px;width:16px;display:inline-block">→</span>Odhlásiť sa</button>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+
+    <!-- ── SKELETON ── -->
+    <sc-if value="{{ skeleton }}" hint-placeholder-val="{{ false }}">
+    <div aria-busy="true" style="max-width:1040px;margin:0 auto;padding-top:36px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+        <div style="width:236px;height:26px;border-radius:8px;background:linear-gradient(90deg,#DCD7EC 25%,#EAE6F5 37%,#DCD7EC 63%);background-size:400% 100%;animation:skShine 1.25s ease-in-out infinite"></div>
+        <div style="width:132px;height:13px;border-radius:99px;background:linear-gradient(90deg,#DCD7EC 25%,#EAE6F5 37%,#DCD7EC 63%);background-size:400% 100%;animation:skShine 1.25s ease-in-out infinite"></div>
+      </div>
+      <div data-mq="cards" style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
+        <sc-for list="{{ skRows }}" as="sk" hint-placeholder-count="4">
+          <div style="background:#FFFFFF;border:1px solid #E4E0F0;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="width:44px;height:44px;border-radius:12px;flex-shrink:0;background:linear-gradient(90deg,#DCD7EC 25%,#EAE6F5 37%,#DCD7EC 63%);background-size:400% 100%;animation:skShine 1.25s ease-in-out infinite"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                <div style="width:62%;height:16px;border-radius:6px;background:linear-gradient(90deg,#DCD7EC 25%,#EAE6F5 37%,#DCD7EC 63%);background-size:400% 100%;animation:skShine 1.25s ease-in-out infinite"></div>
+                <div style="width:44%;height:12px;border-radius:99px;background:linear-gradient(90deg,#E3DFF0 25%,#EFECF8 37%,#E3DFF0 63%);background-size:400% 100%;animation:skShine 1.25s ease-in-out infinite"></div>
+              </div>
+            </div>
+            <div style="width:34%;height:24px;border-radius:8px;background:linear-gradient(90deg,#DCD7EC 25%,#EAE6F5 37%,#DCD7EC 63%);background-size:400% 100%;animation:skShine 1.25s ease-in-out infinite"></div>
+            <div style="height:7px;border-radius:99px;background:#E9E5F4"></div>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ skLines }}" as="sl" hint-placeholder-count="3">
+                <div style="width:74px;height:26px;border-radius:99px;background:linear-gradient(90deg,#E9E5F4 25%,#F3F1FA 37%,#E9E5F4 63%);background-size:400% 100%;animation:skShine 1.25s ease-in-out infinite"></div>
+              </sc-for>
+            </div>
+            <div style="height:44px;border-radius:12px;background:linear-gradient(90deg,#DCD7EC 25%,#EAE6F5 37%,#DCD7EC 63%);background-size:400% 100%;animation:skShine 1.25s ease-in-out infinite"></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ── STUDENT · OBJAVUJ ── -->
+    <sc-if value="{{ vObjavuj }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Objavuj" style="max-width:1040px;margin:0 auto;padding-top:36px">
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:20px"><h2 style="font-size:24px;font-weight:700;margin:0;color:#000000">Ponuky <b style="font-weight: 700; color: #000000">pre teba</b></h2><sc-if value="{{ authedOn }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#15803D">✦ zoradené podľa zhody s tvojím profilom</span></sc-if><sc-if value="{{ guestOn }}" hint-placeholder-val="{{ true }}"></sc-if></div>
+
+      <sc-if value="{{ aiTipOn }}" hint-placeholder-val="{{ false }}">
+        <div style="background:linear-gradient(160deg,#F0FBF3,#E7F6EC);border:1px solid rgba(21,128,61,.25);border-radius:18px;padding:16px 22px;color:#000000;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+          <div style="font-size: 10.5px; letter-spacing:.14em; text-transform: uppercase; color: #15803D; font-weight: 700">✦ Toto by ti sedelo</div>
+          <div style="display:flex;gap:11px;align-items:center;flex:1;min-width:240px">
+            <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0;background: {{ aiLg }}">{{ aiIni }}</div>
+            <div><div style="font-size:14px;font-weight:700">{{ aiT }}</div><div style="font-size:11.5px;color:#3F3A55">{{ aiFirm }} · <b style="color:#40319F;font-weight:700">{{ aiPay }}/hod</b></div></div>
+          </div>
+          <button onClick="{{ aiOpen }}" style="background:rgba(21,128,61,.1);color:#15803D;border:1px solid rgba(21,128,61,.25);border-radius:10px;padding:9px 18px;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:rgba(21,128,61,.18)">Pozrieť detail</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ deckHas }}" hint-placeholder-val="{{ true }}">
+        <div data-mq="cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <sc-for list="{{ jobCards }}" as="jb" hint-placeholder-count="6">
+            <div style="zoom:.874;background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:18px;color:#000000;transition:border-color .2s,box-shadow .2s" style-hover="border-color:rgba(124,108,224,.5);box-shadow:0 16px 40px -20px rgba(91,33,182,.25)">
+              <div style="display:flex;align-items:flex-start;gap:8px">
+                <div style="font-size:11.5px;font-weight:500;color:#3F3A55">{{ jb.posted }}</div>
+                <div style="margin-left:auto;position:relative">
+                  <button onClick="{{ jb.menuTgl }}" data-rowmenu="1" aria-label="Ďalšie možnosti" style="width:28px;height:28px;border:none;border-radius:9px;background:transparent;color:#6E688C;font-size:15px;line-height:1;cursor:pointer;transition:background .15s,color .15s;margin:-4px -4px 0 0" style-hover="background:rgba(36,27,69,.07);color:#17122E">⋯</button>
+                  <sc-if value="{{ jb.menuOn }}" hint-placeholder-val="{{ false }}">
+                    <div data-rowmenu="1" style="position:absolute;right:0;top:32px;z-index:20;width:196px;background:#FFFFFF;border:1px solid #CEC6E4;border-radius:13px;padding:6px;box-shadow:0 16px 36px -10px rgba(48,36,110,.32);display:flex;flex-direction:column">
+                      <button onClick="{{ jb.report }}" style="text-align:left;background:none;border:none;border-radius:9px;padding:10px 12px;font-size:13px;font-weight:500;color:#17122E;cursor:pointer;transition:background .15s" style-hover="background:rgba(36,27,69,.06)">Nahlásiť inzerát</button>
+                      <button onClick="{{ jb.block }}" style="text-align:left;background:none;border:none;border-radius:9px;padding:10px 12px;font-size:13px;font-weight:500;color:#B4232A;cursor:pointer;transition:background .15s" style-hover="background:rgba(180,35,42,.08)">Zablokovať firmu</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+              <div onClick="{{ jb.open }}" style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;margin-top:-8px">
+                <div style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;color:#fff;flex-shrink:0;background: {{ jb.lg }}">{{ jb.ini }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:17.5px;font-weight:700;line-height:1.25">{{ jb.t }}</div>
+                  <div style="font-size:14px;font-weight:500;color:#000000;margin-top:2px">{{ jb.f }}</div>
+                  <div style="font-size:12px;color:#000000;margin-top:3px"><b style="color:#000000;font-weight:700">★ {{ jb.rat }}</b> ({{ jb.ratN }} hodnotení)</div>
+                </div>
+              </div>
+              <div style="font-size:22px;font-weight:700;color:#000000;white-space:nowrap">{{ jb.pay }} <small style="font-size:12px;color:#3F3A55;font-weight:400">/ hod</small></div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#3F3A55"><span style="white-space:nowrap">{{ jb.needTxt }}</span><span style="flex:1;height:4px;border-radius:99px;background:rgba(36,27,69,.08);overflow:hidden;display:block"><span style="display: block; height: 100%; border-radius: 99px; width: {{ jb.needPct }}; background-color: #0F0F13"></span></span></div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <sc-for list="{{ jb.tags }}" as="tg" hint-placeholder-count="3">
+                  <span style="font-size:12px;font-weight:500;padding:5px 12px;border-radius:99px;background:rgba(36,27,69,.06);color:#3F3A55">{{ tg }}</span>
+                </sc-for>
+              </div>
+              <div style="font-size:13px;color:#3F3A55;margin-top:auto">Nástup <b style="font-weight:700;color:#000000">{{ jb.start }}</b></div>
+              <sc-if value="{{ jb.notLiked }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;gap:8px">
+                  <button onClick="{{ jb.like }}" style="flex:1;background:#40319F;color:#fff;border:none;border-radius:11px;padding:11px 0;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#5546C4">♥ Mám záujem</button>
+                  <button onClick="{{ jb.skip }}" aria-label="Preskočiť" style="background:rgba(220,38,38,.08);color:#DC2626;border:none;border-radius:11px;padding:11px 17px;font-size:17px;cursor:pointer" style-hover="background:rgba(220,38,38,.16)">✕</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ jb.liked }}" hint-placeholder-val="{{ false }}">
+                <div style="border:1px solid rgba(21,128,61,.3);color:#15803D;border-radius:11px;padding:11px 0;font-size:13px;font-weight:700;text-align:center;background:rgba(21,128,61,.08)">✓ Záujem odoslaný</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ deckEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius:20px;border:1px dashed #DEDBEC;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:60px 30px">
+          <div style="font-size:20px;font-weight:700;color:#000000">Na dnes si videl <b style="font-weight:700;color:#40319F">všetko</b></div>
+          <p style="font-size:13px;color:#3F3A55;margin:0;max-width:32ch">Robiq medzitým aktívne hľadá ďalšie ponuky, ktoré ti sadnú. Vráť sa večer.</p>
+          <button onClick="{{ resetDeck }}" style="background:transparent;color:#3F3A55;border:1px solid #DEDBEC;border-radius:12px;padding:10px 22px;font-size:13px;cursor:pointer" style-hover="color:#000000;border-color:#40319F">Prezrieť znova</button>
+        </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ── STUDENT · ZHODY ── -->
+    <sc-if value="{{ vZhody }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Zhody" style="max-width:980px;margin:0 auto;padding-top:36px">
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:20px"><h2 style="font-size:24px;font-weight:700;margin:0;color:#000000">Tvoje <b style="font-weight:700;color:#000000">správy</b></h2><span style="font-size:12px;color:#3F3A55">každý chat = obojstranný záujem</span></div>
+      <div data-mq="chat" style="display:grid;grid-template-columns:300px 1fr;gap:16px;height:calc(100vh - 340px);min-height:340px">
+        <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:18px;padding:10px;overflow:auto;display:flex;flex-direction:column;gap:6px" data-mq="chatlist">
+          <sc-for list="{{ matchList }}" as="mt" hint-placeholder-count="2">
+            <button onClick="{{ mt.go }}" style="display:flex;gap:12px;align-items:center;text-align:left;border:none;border-radius:13px;padding:12px 14px;cursor:pointer;transition:background .15s;background: {{ mt.bg }}">
+              <div style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0;background: {{ mt.lg }}">{{ mt.ini }}</div>
+              <div style="min-width:0"><div style="font-size:13.5px;font-weight:700;color:#000000">{{ mt.name }}</div><div style="font-size:11.5px;color:#3F3A55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ mt.job }}</div></div>
+            </button>
+          </sc-for>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:18px;display:flex;flex-direction:column;overflow:hidden;color:#000000" data-mq="chatbox">
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(36,27,69,.07);display:flex;gap:12px;align-items:center">
+            <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;background: {{ chatLg }}">{{ chatIni }}</div>
+            <div><div style="font-size:14px;font-weight:700">{{ chatName }}</div><div style="font-size:11.5px;color:#15803D">✓ Zhoda · {{ chatJob }}</div></div>
+          </div>
+          <div ref="{{ chatRef }}" style="flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ chatMsgs }}" as="m" hint-placeholder-count="3">
+              <sc-if value="{{ m.me }}" hint-placeholder-val="{{ false }}">
+                <div style="align-self:flex-end;max-width:70%;background:#144F9E;color:#fff;border-radius:16px 16px 4px 16px;padding:10px 15px;font-size:13.5px;line-height:1.5">{{ m.txt }}</div>
+              </sc-if>
+              <sc-if value="{{ m.them }}" hint-placeholder-val="{{ true }}">
+                <div style="align-self:flex-start;max-width:70%;background:rgba(36,27,69,.07);border-radius:16px 16px 16px 4px;padding:10px 15px;font-size:13.5px;line-height:1.5;color:#000000">{{ m.txt }}</div>
+              </sc-if>
+            </sc-for>
+          </div>
+          <div style="padding:14px 16px;border-top:1px solid rgba(36,27,69,.07);display:flex;gap:10px">
+            <input value="{{ draft }}" onChange="{{ setDraft }}" onKeyDown="{{ draftKey }}" placeholder="Napíš správu…" style="flex:1;background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:12px 16px;font-size:13.5px;color:#000000">
+            <button onClick="{{ sendMsg }}" style="background:#144F9E;color:#fff;border:none;border-radius:12px;padding:0 22px;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#1B6AD1">Odoslať</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ── STUDENT · PROFIL ── -->
+    <sc-if value="{{ vProfil }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Profil" style="max-width:640px;margin:0 auto;padding-top:44px;display:flex;flex-direction:column;gap:16px">
+      <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:22px;padding:34px 36px;color:#000000">
+        <div style="display:flex;gap:20px;align-items:center;margin-bottom:26px">
+          <div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#5546C4,#9F8FF2);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;flex-shrink:0">{{ obInit }}</div>
+          <div style="flex:1;min-width:0"><div style="font-size:22px;font-weight:700">{{ profName }}</div><div style="font-size:13px;color:#3F3A55">Študent · {{ hoursLabel }}</div></div>
+          <button onClick="{{ profEditToggle }}" style="background:transparent;border:1px solid #DEDBEC;border-radius:11px;padding:9px 18px;font-size:12.5px;font-weight:700;color:#3F3A55;cursor:pointer;flex-shrink:0" style-hover="color:#40319F;border-color:#40319F">{{ profEditLabel }}</button>
+        </div>
+
+        <sc-if value="{{ profView }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ hasBio }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:8px">O mne</div>
+            <p style="font-size:13.5px;line-height:1.6;color:#3F3A55;margin:0 0 24px">{{ profBio }}</p>
+          </sc-if>
+          <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:12px">Zručnosti</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px">
+            <sc-for list="{{ profSkills }}" as="sk" hint-placeholder-count="3">
+              <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:99px;background:rgba(124,108,224,.18);color:#17122E">{{ sk.n }} <b style="font-size:10px;letter-spacing:.14em;font-weight:500;opacity:.8">{{ sk.dots }}</b></span>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ profEditing }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;border:1px solid #DEDBEC;border-radius:13px;padding:12px 16px">
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#000000">Dátum narodenia</div></div>
+            <input type="date" value="{{ profBirth }}" onChange="{{ setBirth }}" style="background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:10px;padding:10px 12px;font-size:13.5px;font-weight:700;color:#000000;font-family:'Satoshi',sans-serif">
+          </div>
+          <div style="margin-bottom:22px">
+            <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:8px">Bio</div>
+            <textarea value="{{ profBio }}" onChange="{{ setBio }}" rows="3" maxLength="240" placeholder="Napíš pár viet o sebe — čo študuješ, čo ťa baví, kedy máš čas…" style="width:100%;background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:12px 15px;font-size:13.5px;line-height:1.55;color:#000000;font-family:'Satoshi',sans-serif;resize:vertical"></textarea>
+          </div>
+          <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:12px">Tvoje zručnosti — nastav úroveň</div>
+          <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+              <sc-for list="{{ selRows }}" as="sr" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(85,70,196,.35);background:rgba(85,70,196,.06);border-radius:13px;padding:8px 10px 8px 15px">
+                  <div style="flex:1;font-size:13px;font-weight:700;color:#000000">{{ sr.n }}</div>
+                  <button onClick="{{ sr.speakTgl }}" style="display: {{ sr.speakDisp }};border:1px solid {{ sr.speakBd }};background: {{ sr.speakBg }};color: {{ sr.speakFg }};border-radius:99px;padding:5px 12px;font-size:10.5px;font-weight:700;cursor:pointer;transition:all .15s">{{ sr.speakLabel }}</button>
+                  <div style="display:flex;background:rgba(36,27,69,.06);border-radius:9px;padding:3px">
+                    <sc-for list="{{ sr.lvls }}" as="lv" hint-placeholder-count="3">
+                      <button onClick="{{ lv.click }}" style="border:none;border-radius:7px;padding:5px 11px;font-size:10.5px;font-weight:700;cursor:pointer;transition:background .15s;background: {{ lv.bg }};color: {{ lv.fg }}">{{ lv.label }}</button>
+                    </sc-for>
+                  </div>
+                  <button onClick="{{ sr.remove }}" aria-label="Odstrániť" style="background:none;border:none;color:#3F3A55;font-size:12px;cursor:pointer;padding:4px 6px" style-hover="color:#DC2626">✕</button>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:30px;margin-bottom:28px">
+            <sc-for list="{{ baseGroups }}" as="gr" hint-placeholder-count="3">
+              <div>
+                <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:12px">{{ gr.g }}</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <sc-for list="{{ gr.chips }}" as="ch" hint-placeholder-count="5">
+                    <button onClick="{{ ch.click }}" style="padding:9px 16px;border-radius:99px;font-size:13.5px;cursor:pointer;transition:all .15s;border: {{ ch.border }};background: {{ ch.bg }};color: {{ ch.fg }}" style-hover="filter:brightness(.95)">{{ ch.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:12px">Niečo iné?</div>
+              <div style="display:flex;gap:10px">
+                <input value="{{ customSkill }}" onChange="{{ setCustomSkill }}" onKeyDown="{{ customKey }}" placeholder="Napíš vlastnú zručnosť a stlač Enter…" style="flex:1;background:rgba(36,27,69,.04);border:1px solid #DEDBEC;border-radius:12px;padding:11px 15px;font-size:13px;color:#000000">
+                <button onClick="{{ addCustom }}" style="background:#40319F;color:#fff;border:none;border-radius:12px;padding:0 20px;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:#5546C4">Pridať</button>
+              </div>
+              <div style="font-size:11px;color:#3F3A55;margin-top:8px">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami.</div>
+            </div>
+          </div>
+          <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:10px">Dostupnosť</div>
+          <input type="range" min="0" max="3" step="1" value="{{ obHours }}" onChange="{{ setObHours }}" style="width:100%;accent-color:#40319F;cursor:pointer;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#3F3A55;margin-bottom:20px"><span>5 h</span><span>10 h</span><span>20 h</span><span>Fulltime</span></div>
+
+          <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:9px">Ktoré dni?</div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:18px">
+            <sc-for list="{{ availDays }}" as="ad" hint-placeholder-count="7">
+              <button onClick="{{ ad.tgl }}" style="height:40px;border-radius:11px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;transition:background .18s,color .18s;background: {{ ad.bg }};color: {{ ad.fg }};border: {{ ad.bd }}">{{ ad.d }}</button>
+            </sc-for>
+          </div>
+
+          <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:9px">Kedy počas dňa?</div>
+          <div data-mq="two" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+            <sc-for list="{{ availTimes }}" as="at" hint-placeholder-count="4">
+              <button onClick="{{ at.tgl }}" style="text-align:left;border-radius:12px;cursor:pointer;font-family:inherit;padding:11px 14px;transition:background .18s,color .18s;background: {{ at.bg }};color: {{ at.fg }};border: {{ at.bd }}">
+                <span style="display:block;font-size:13px;font-weight:700">{{ at.t }}</span>
+                <span style="display:block;font-size:11px;color:#6E688C;margin-top:2px">{{ at.sub }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font-size:11.5px;color:#3F3A55;margin-bottom:24px">{{ availSummary }}</div>
+        </sc-if>
+
+        <div style="display:flex;gap:0;border-top:1px solid rgba(36,27,69,.07);padding-top:18px">
+          <div style="flex:1"><div style="font-size:20px;font-weight:700;color:#000000">{{ viewed }}</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">prezreté</div></div>
+          <div style="flex:1;border-left:1px solid rgba(36,27,69,.07);padding-left:18px"><div style="font-size:20px;font-weight:700;color:#000000">{{ likedCount }}</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">záujmy</div></div>
+          <div style="flex:1;border-left:1px solid rgba(36,27,69,.07);padding-left:18px"><div style="font-size:20px;font-weight:700;color:#000000">{{ matchCount }}</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">zhody</div></div>
+        </div>
+      </div>
+
+      <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:22px;padding:26px 30px;color:#000000">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px">
+          <div style="font-size:17px;font-weight:700;color:#000000">Moje <b style="font-weight: 700; color: #000000">záujmy</b></div>
+          <span style="font-size:11.5px;color:#3F3A55">na čo si klikol „Mám záujem"</span>
+        </div>
+        <sc-if value="{{ hasInterests }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ myInterests }}" as="it" hint-placeholder-count="2">
+              <div style="display:flex;gap:13px;align-items:center;border:1px solid rgba(36,27,69,.07);border-radius:14px;padding:13px 16px">
+                <div style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0;background: {{ it.lg }}">{{ it.ini }}</div>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ it.t }}</div><div style="font-size:11.5px;color:#3F3A55">{{ it.f }} · <b style="color:#40319F;font-weight:700">{{ it.pay }}/hod</b></div></div>
+                <span style="font-size:11px;padding:5px 12px;border-radius:99px;flex-shrink:0;background: {{ it.stBg }};color: {{ it.stFg }}">{{ it.status }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noInterests }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px dashed #DEDBEC;border-radius:14px;padding:22px;text-align:center;font-size:12.5px;color:#3F3A55">Zatiaľ žiadne. Prejdi na <b style="color:#40319F;font-weight:700">Objavuj</b> a označ ponuky, ktoré ťa zaujali.</div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ── FIRMA · BRIGÁDNICI ── -->
+    <sc-if value="{{ vBrig }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Brigádnici" style="max-width:1040px;margin:0 auto;padding-top:36px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+        <h2 style="font-size:24px;font-weight:700;margin:0;color:#000000">Ponuka <b style="font-weight:700;color:#000000">brigádnikov</b></h2>
+        <sc-if value="{{ candHas }}" hint-placeholder-val="{{ true }}"><span style="font-size:12px;color:#15803D">✦ zoradené podľa AI zhody s vašimi ponukami</span></sc-if>
+      </div>
+
+      <sc-if value="{{ guestOn }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:20px;padding:44px 38px;text-align:center;max-width:520px;margin:20px auto 0">
+          <div style="width:52px;height:52px;border-radius:15px;background:rgba(124,108,224,.16);color:#40319F;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 20px">◎</div>
+          <div style="font-size:21px;font-weight:700;color:#000000;line-height:1.2;margin-bottom:10px">Profily brigádnikov sú len pre prihlásené firmy</div>
+          <div style="font-size:13.5px;line-height:1.55;color:#3F3A55;margin-bottom:24px;text-wrap:pretty">Chránime súkromie ľudí — ich profily uvidíte po prihlásení firemného účtu.</div>
+          <div style="display:flex;flex-direction:column;gap:9px;max-width:300px;margin:0 auto">
+            <button onClick="{{ goSignup }}" style="width:100%;background:#40319F;color:#fff;border:none;border-radius:13px;padding:13px 0;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s" style-hover="background:#5546C4">Vytvoriť firemný účet</button>
+            <button onClick="{{ goLogin }}" style="width:100%;background:transparent;color:#40319F;border:1px solid rgba(64,49,159,.35);border-radius:13px;padding:12px 0;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s" style-hover="background:rgba(124,108,224,.1)">Už mám účet — prihlásiť sa</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ candEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px dashed #CEC6E4;border-radius:18px;padding:44px 38px;text-align:center;color:#000000;max-width:520px;margin:20px auto 0">
+          <div style="font-size:18px;font-weight:700;margin-bottom:8px">Zatiaľ nie sú koho ukázať</div>
+          <div style="font-size:13.5px;color:#3F3A55;margin-bottom:22px;text-wrap:pretty">Pridajte prvý inzerát — kandidátov začneme párovať hneď po zverejnení.</div>
+          <button onClick="{{ goNova }}" style="background:#40319F;color:#fff;border:none;border-radius:12px;padding:12px 26px;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:#5546C4">＋ Nový inzerát</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ candHas }}" hint-placeholder-val="{{ true }}">
+      <sc-for list="{{ candGroups }}" as="gr" hint-placeholder-count="2">
+      <div style="margin-bottom:34px">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(36,27,69,.1)">
+        <div style="font-size:16px;font-weight:700;color:#000000">{{ gr.offer }}</div>
+        <span style="font-size:12px;color:#3F3A55">{{ gr.count }}</span>
+      </div>
+      <div data-mq="cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <sc-for list="{{ gr.cands }}" as="cd" hint-placeholder-count="3">
+          <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px;color:#000000;transition:border-color .2s" style-hover="border-color:rgba(124,108,224,.5)">
+            <div style="display:flex;gap:13px;align-items:center;position:relative">
+              <div style="width:48px;height:48px;border-radius:50%;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background: {{ cd.g }}"><span style="font-weight:700;font-size:16px;color:#fff;filter: {{ cd.avBlur }}">{{ cd.avTxt }}</span></div>
+              <div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:15.5px;font-weight:700">{{ cd.nDisp }}</span></div><sc-if value="{{ cd.detailOn }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#3F3A55">{{ cd.school }} · {{ cd.hrs }}</div></sc-if><sc-if value="{{ cd.detailOff }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;color:#3F3A55">{{ cd.hrs }} · <span style="color:#6E688C">detaily po prihlásení</span></div></sc-if><div style="font-size:12px;color:#3F3A55;margin-top:2px"><b style="color:#000000;font-weight:700">★ {{ cd.rat }}</b> ({{ cd.ratN }} hodnotení)</div></div>
+              <div style="margin-left:auto;align-self:flex-start;position:relative">
+                <button onClick="{{ cd.menuTgl }}" data-rowmenu="1" aria-label="Ďalšie možnosti" style="width:28px;height:28px;border:none;border-radius:9px;background:transparent;color:#6E688C;font-size:15px;line-height:1;cursor:pointer;transition:background .15s,color .15s" style-hover="background:rgba(36,27,69,.07);color:#17122E">⋯</button>
+                <sc-if value="{{ cd.menuOn }}" hint-placeholder-val="{{ false }}">
+                  <div data-rowmenu="1" style="position:absolute;right:0;top:32px;z-index:20;width:186px;background:#FFFFFF;border:1px solid #CEC6E4;border-radius:13px;padding:6px;box-shadow:0 16px 36px -10px rgba(48,36,110,.32);display:flex;flex-direction:column">
+                    <button onClick="{{ cd.report }}" style="text-align:left;background:none;border:none;border-radius:9px;padding:10px 12px;font-size:13px;font-weight:500;color:#17122E;cursor:pointer;transition:background .15s" style-hover="background:rgba(36,27,69,.06)">Nahlásiť profil</button>
+                    <button onClick="{{ cd.block }}" style="text-align:left;background:none;border:none;border-radius:9px;padding:10px 12px;font-size:13px;font-weight:500;color:#B4232A;cursor:pointer;transition:background .15s" style-hover="background:rgba(180,35,42,.08)">Zablokovať</button>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ cd.skills }}" as="sk" hint-placeholder-count="3">
+                <span style="font-size:10.5px;padding:4px 10px;border-radius:99px;background:rgba(36,27,69,.07);color:#3F3A55">{{ sk }}</span>
+              </sc-for>
+            </div>
+            <sc-if value="{{ cd.notDone }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ cd.contact }}" style="background:#40319F;color:#fff;border:none;border-radius:11px;padding:11px 0;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#5546C4">♥ Prejaviť záujem</button>
+            </sc-if>
+            <sc-if value="{{ cd.done }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1px solid rgba(21,128,61,.3);color:#15803D;border-radius:11px;padding:11px 0;font-size:13px;font-weight:700;text-align:center;background:rgba(21,128,61,.08)">✓ Záujem odoslaný</div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      </div>
+      </sc-for>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ── FIRMA · SPRÁVY ── -->
+    <sc-if value="{{ vFSpravy }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Správy firmy" style="max-width:980px;margin:0 auto;padding-top:36px">
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:20px"><h2 style="font-size:24px;font-weight:700;margin:0;color:#000000">Vaše <b style="font-weight:700;color:#000000">správy</b></h2><span style="font-size:12px;color:#3F3A55">konverzácie s uchádzačmi</span></div>
+      <div data-mq="chat" style="display:grid;grid-template-columns:300px 1fr;gap:16px;height:calc(100vh - 340px);min-height:340px">
+        <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:18px;padding:10px;overflow:auto;display:flex;flex-direction:column;gap:6px" data-mq="chatlist">
+          <sc-for list="{{ fMatchList }}" as="mt" hint-placeholder-count="2">
+            <button onClick="{{ mt.go }}" style="display:flex;gap:12px;align-items:center;text-align:left;border:none;border-radius:13px;padding:12px 14px;cursor:pointer;transition:background .15s;background: {{ mt.bg }}">
+              <div style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;background: {{ mt.lg }}">{{ mt.ini }}</div>
+              <div style="min-width:0"><div style="font-size:13.5px;font-weight:700;color:#000000">{{ mt.name }}</div><div style="font-size:11.5px;color:#3F3A55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ mt.job }}</div></div>
+            </button>
+          </sc-for>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:18px;display:flex;flex-direction:column;overflow:hidden;color:#000000" data-mq="chatbox">
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(36,27,69,.07);display:flex;gap:12px;align-items:center">
+            <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;background: {{ fChatLg }}">{{ fChatIni }}</div>
+            <div><div style="font-size:14px;font-weight:700">{{ fChatName }}</div><div style="font-size:11.5px;color:#3F3A55">Uchádzač · {{ fChatJob }}</div></div>
+          </div>
+          <div ref="{{ chatRef }}" style="flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ fChatMsgs }}" as="m" hint-placeholder-count="3">
+              <sc-if value="{{ m.me }}" hint-placeholder-val="{{ false }}">
+                <div style="align-self:flex-end;max-width:70%;background:#144F9E;color:#fff;border-radius:16px 16px 4px 16px;padding:10px 15px;font-size:13.5px;line-height:1.5">{{ m.txt }}</div>
+              </sc-if>
+              <sc-if value="{{ m.them }}" hint-placeholder-val="{{ true }}">
+                <div style="align-self:flex-start;max-width:70%;background:rgba(36,27,69,.07);border-radius:16px 16px 16px 4px;padding:10px 15px;font-size:13.5px;line-height:1.5;color:#000000">{{ m.txt }}</div>
+              </sc-if>
+            </sc-for>
+          </div>
+          <div style="padding:14px 16px;border-top:1px solid rgba(36,27,69,.07);display:flex;gap:10px">
+            <input value="{{ fDraft }}" onChange="{{ setFDraft }}" onKeyDown="{{ fDraftKey }}" placeholder="Napíš správu…" style="flex:1;background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:12px 16px;font-size:13.5px;color:#000000">
+            <button onClick="{{ fSendMsg }}" style="background:#144F9E;color:#fff;border:none;border-radius:12px;padding:0 22px;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#1B6AD1">Odoslať</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ── FIRMA · PONUKY ── -->
+    <sc-if value="{{ vPonuky }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Ponuky firmy" style="max-width:860px;margin:0 auto;padding-top:36px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px">
+        <h2 style="font-size:24px;font-weight:700;margin:0;color:#000000">Vaše <b style="font-weight:700;color:#000000">inzeráty</b></h2>
+      </div>
+
+      <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:16px;padding:18px 26px;display:flex;color:#000000;margin-bottom:14px">
+        <div style="flex:1"><div style="font-size:22px;font-weight:700;color:#000000">{{ sumActive }}</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">aktívne inzeráty</div></div>
+        <div style="flex:1;border-left:1px solid rgba(36,27,69,.07);padding-left:22px"><div style="font-size:22px;font-weight:700">{{ sumViews }}</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">zobrazenia spolu</div></div>
+        <div style="flex:1;border-left:1px solid rgba(36,27,69,.07);padding-left:22px"><div style="font-size:22px;font-weight:700;color:#000000">{{ sumLikes }}</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">záujmy spolu</div></div>
+        <div style="flex:1;border-left:1px solid rgba(36,27,69,.07);padding-left:22px"><div style="font-size:22px;font-weight:700;color:#15803D">{{ sumM }}</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">zhody spolu</div></div>
+      </div>
+
+      <sc-if value="{{ noOffers }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px dashed #CEC6E4;border-radius:18px;padding:44px 38px;text-align:center;color:#000000">
+          <div style="font-size:18px;font-weight:700;margin-bottom:8px">Zatiaľ nemáte žiadny inzerát</div>
+          <div style="font-size:13.5px;color:#3F3A55;margin-bottom:22px">Pridajte prvý — kandidátov vám Robiq začne párovať hneď po zverejnení.</div>
+          <button onClick="{{ goNova }}" style="background:#40319F;color:#fff;border:none;border-radius:12px;padding:12px 26px;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:#5546C4">＋ Nový inzerát</button>
+        </div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ offerList }}" as="of" hint-placeholder-count="3">
+          <div data-mq="offer" style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:16px;padding:20px 24px;display:grid;grid-template-columns:1fr auto auto auto auto auto auto;gap:24px;align-items:center;color:#000000;transition:opacity .2s;opacity: {{ of.op }}">
+            <div><div style="font-size:15.5px;font-weight:700;margin-bottom:3px">{{ of.t }}</div><div style="font-size:12.5px;color:#3F3A55">{{ of.pay }}</div></div>
+            <div style="text-align:center"><div style="font-size:16px;font-weight:700">{{ of.views }}</div><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">zobrazenia</div></div>
+            <div style="text-align:center"><div style="font-size:16px;font-weight:700;color:#000000">{{ of.likes }}</div><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">záujmy</div></div>
+            <div style="text-align:center"><div style="font-size:16px;font-weight:700;color:#15803D">{{ of.m }}</div><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">zhody</div></div>
+            <div style="text-align:center"><div style="font-size:16px;font-weight:700">{{ of.filled }}</div><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">obsadené</div></div>
+            <span style="font-size:11px;padding:5px 12px;border-radius:99px;background: {{ of.stBg }};color: {{ of.stFg }}">{{ of.status }}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button onClick="{{ of.toggle }}" style="background:transparent;border:1px solid #DEDBEC;border-radius:10px;padding:8px 14px;font-size:11.5px;font-weight:700;color:#3F3A55;cursor:pointer" style-hover="color:#40319F;border-color:#40319F">{{ of.tgLabel }}</button>
+              <div style="position:relative">
+                <button onClick="{{ of.menuTgl }}" data-rowmenu="1" aria-label="Ďalšie možnosti" style="width:28px;height:28px;border:none;border-radius:9px;background:transparent;color:#6E688C;font-size:15px;line-height:1;cursor:pointer;transition:background .15s,color .15s" style-hover="background:rgba(36,27,69,.07);color:#17122E">⋯</button>
+                <sc-if value="{{ of.menuOn }}" hint-placeholder-val="{{ false }}">
+                  <div data-rowmenu="1" style="position:absolute;right:0;top:32px;z-index:20;width:186px;background:#FFFFFF;border:1px solid #CEC6E4;border-radius:13px;padding:6px;box-shadow:0 16px 36px -10px rgba(48,36,110,.32);display:flex;flex-direction:column">
+                    <button onClick="{{ of.dup }}" style="text-align:left;background:none;border:none;border-radius:9px;padding:10px 12px;font-size:13px;font-weight:500;color:#17122E;cursor:pointer;transition:background .15s" style-hover="background:rgba(36,27,69,.06)">Duplikovať</button>
+                    <button onClick="{{ of.askDel }}" style="text-align:left;background:none;border:none;border-radius:9px;padding:10px 12px;font-size:13px;font-weight:500;color:#B4232A;cursor:pointer;transition:background .15s" style-hover="background:rgba(180,35,42,.08)">Zmazať inzerát</button>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ── FIRMA · NOVÁ PONUKA ── -->
+    <sc-if value="{{ vNova }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Nová ponuka" style="max-width:560px;margin:0 auto;padding-top:36px">
+      <h2 style="font-size:24px;font-weight:700;margin:0 0 6px;color:#000000">Nový <b style="font-weight:700;color:#000000">inzerát</b></h2>
+      <p style="color:#3F3A55;font-size:13px;margin:0 0 24px">Robiq ju aktívne doručí študentom, ktorí sedia na profil pozície.</p>
+      <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:22px;padding:30px 32px;display:flex;flex-direction:column;gap:18px;color:#000000">
+        <div><div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:8px">Názov pozície</div>
+          <input value="{{ fT }}" onChange="{{ setFT }}" placeholder="napr. Barista — víkendy" style="width:100%;background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000"></div>
+        <div data-mq="two" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div><div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:8px">Hodinová sadzba (€)</div>
+            <input value="{{ fPay }}" onChange="{{ setFPay }}" placeholder="napr. 8,50" style="width:100%;background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000"></div>
+          <div><div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:8px">Koľko ľudí hľadáte?</div>
+            <input type="number" min="1" value="{{ fNeed }}" onChange="{{ setFNeed }}" placeholder="napr. 3" style="width:100%;background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000"></div>
+        </div>
+        <div><div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:8px">Vek kandidátov</div>
+          <div style="display:flex;background:rgba(36,27,69,.05);border-radius:12px;padding:4px">
+            <button onClick="{{ set18All }}" style="flex:1;padding:10px 0;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;transition:background .2s;background: {{ a18AllBg }};color: {{ a18AllFg }}">Bez obmedzenia</button>
+            <button onClick="{{ set18Only }}" style="flex:1;padding:10px 0;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;transition:background .2s;background: {{ a18OnlyBg }};color: {{ a18OnlyFg }}">Len 18+</button>
+          </div>
+          <div style="font-size:11.5px;color:#6E688C;margin-top:7px">Platí pre tento inzerát — kandidáti mladší ako 18 ho neuvidia.</div></div>
+        <div><div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:10px">Typ brigády</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ typeChips }}" as="ch" hint-placeholder-count="5">
+              <button onClick="{{ ch.click }}" style="padding:8px 15px;border-radius:99px;font-size:12.5px;cursor:pointer;transition:all .15s;border:1px solid {{ ch.bd }};background: {{ ch.bg }};color: {{ ch.fg }}">{{ ch.label }}</button>
+            </sc-for>
+          </div></div>
+        <div><div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:4px">✦ Povedzte AI, koho hľadáte</div>
+          <div style="font-size:12px;color:#3F3A55;margin-bottom:10px">Vlastnými slovami — AI podľa toho vyberie a zoradí kandidátov pre tento inzerát.</div>
+          <textarea value="{{ aiNote }}" onChange="{{ setAiNote }}" rows="3" placeholder="napr. Potrebujem niekoho komunikatívneho na ranné zmeny, ideálne so skúsenosťou z gastra. Výhodou angličtina kvôli turistom…" style="width:100%;background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:12px 15px;font-size:13px;line-height:1.55;color:#000000;font-family:'Satoshi',sans-serif;resize:vertical"></textarea></div>
+        <div style="border:1px dashed #DEDBEC;border-radius:14px;padding:16px 18px;font-size:12px;color:#3F3A55;line-height:1.6">
+          <b style="color: rgb(64, 49, 159); font-weight: 700;">Tip:</b> pridajte 3 fotky „deň v práci" — reálne zábery z prevádzky zvyšujú záujem pracovníkov.
+        </div>
+        <button onClick="{{ publish }}" style="background:#40319F;color:#fff;border:none;border-radius:12px;padding:14px 0;font-size:14.5px;font-weight:700;cursor:pointer;opacity: {{ pubOp }}" style-hover="background:#5546C4">Zverejniť ponuku</button>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ── FIRMA · PROFIL ── -->
+    <sc-if value="{{ vFProfil }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Firemný profil" style="max-width:560px;margin:0 auto;padding-top:44px;display:flex;flex-direction:column;gap:16px">
+      <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:22px;padding:34px 36px;color:#000000">
+        <div style="display:flex;gap:20px;align-items:center;margin-bottom:26px">
+          <label title="Zmeniť logo" style="position:relative;width:76px;height:76px;border-radius:18px;flex-shrink:0;overflow:hidden;cursor:pointer;border:1px solid rgba(85,70,196,.28);background-color:#5546C4;background-repeat:no-repeat;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;background-image: {{ fpLogoBg }}">
+            <span style="display: {{ fpInitDisp }}">{{ avaInit }}</span>
+            <input type="file" accept="image/*" onChange="{{ setFpLogo }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+          </label>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:22px;font-weight:700">{{ fpName }}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+              <sc-if value="{{ fpVerified }}" hint-placeholder-val="{{ true }}"><span style="font-size:11px;padding:4px 11px;border-radius:99px;background:rgba(21,128,61,.12);color:#15803D">✓ Overená firma</span></sc-if>
+              <sc-if value="{{ fpPending }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;padding:4px 11px;border-radius:99px;background:rgba(124,108,224,.14);color:#40319F">◷ Overenie prebieha</span></sc-if>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:30px;margin-bottom:28px">
+          <div><div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:8px">Názov firmy</div>
+            <input value="{{ fpName }}" onChange="{{ setFpName }}" style="width:100%;background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000"></div>
+          <div><div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:8px">O firme — uvidia to študenti na karte</div>
+            <textarea value="{{ fpDesc }}" onChange="{{ setFpDesc }}" rows="3" style="width:100%;resize:vertical;background:rgba(36,27,69,.05);border:1px solid #DEDBEC;border-radius:12px;padding:13px 16px;font-size:14px;color:#000000;font-family:inherit;line-height:1.55"></textarea></div>
+        </div>
+        <div style="display:flex;gap:0;border-top:1px solid rgba(36,27,69,.07);padding-top:18px">
+          <div style="flex:1"><div style="font-size:20px;font-weight:700;color:#000000">{{ sumActive }}</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">aktívne inzeráty</div></div>
+          <div style="flex:1;border-left:1px solid rgba(36,27,69,.07);padding-left:18px"><div style="font-size:20px;font-weight:700;color:#15803D">{{ sumM }}</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">zhody spolu</div></div>
+          <div style="flex:1;border-left:1px solid rgba(36,27,69,.07);padding-left:18px"><div style="font-size:20px;font-weight:700;color:#000000">~2 h</div><div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3F3A55">čas odpovede</div></div>
+        </div>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #CEC6E4;box-shadow:0 12px 34px -12px rgba(48,36,110,.24);border-radius:22px;padding:28px 30px;color:#000000">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:20px">
+          <div style="font-size:16px;font-weight:700">Kalendár inzerátov</div>
+          <div style="font-size:12.5px;color:#6E688C">September 2026</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+          <sc-for list="{{ calDows }}" as="dw" hint-placeholder-count="7">
+            <div style="text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#6E688C;padding-bottom:4px">{{ dw.d }}</div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+          <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="31">
+            <button onClick="{{ c.pick }}" style="height:52px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;padding:7px 8px 6px;font-family:inherit;font-size:14px;line-height:1;transition:background .18s,color .18s;background: {{ c.bg }};color: {{ c.fg }};border: {{ c.bd }};font-weight: {{ c.fw }}">
+              <span style="text-align:left">{{ c.day }}</span>
+              <span style="display:flex;flex-direction:column;gap:2px">
+                <sc-for list="{{ c.bars }}" as="bar" hint-placeholder-count="0">
+                  <span style="height:3px;border-radius:2px;background: {{ bar.c }};opacity: {{ bar.op }}"></span>
+                </sc-for>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-top:18px">
+          <sc-for list="{{ calLegend }}" as="lg" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:9px;font-size:12px;color:#3F3A55;opacity: {{ lg.op }}">
+              <span style="width:14px;height:3px;border-radius:2px;flex-shrink:0;background: {{ lg.c }}"></span>
+              <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ lg.t }}</span>
+              <span style="color:#6E688C;flex-shrink:0">{{ lg.range }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:22px;border-top:1px solid rgba(36,27,69,.07);padding-top:18px">
+          <div style="font-size:12.5px;font-weight:700;color:#3F3A55;margin-bottom:12px">{{ calLabel }}</div>
+          <sc-if value="{{ calEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:13px;color:#6E688C;line-height:1.55">V tento deň nebeží žiadny inzerát.</div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ calSel }}" as="cs" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:12px;background:rgba(36,27,69,.04);border:1px solid rgba(36,27,69,.07);border-radius:13px;padding:12px 15px">
+                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background: {{ cs.dot }}"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;font-weight:700">{{ cs.t }}</div>
+                  <div style="font-size:11.5px;color:#6E688C;margin-top:2px">{{ cs.range }} · {{ cs.pay }}</div>
+                </div>
+                <span style="font-size:11px;font-weight:700;flex-shrink:0;color: {{ cs.statFg }}">{{ cs.stat }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="border:1px dashed #DEDBEC;border-radius:16px;padding:16px 20px;font-size:12px;color:#3F3A55;line-height:1.6">
+        <b style="color:#40319F;font-weight:700">Tip:</b> firmy s vyplneným profilom a fotkami majú o 40 % viac zhôd. Študent vidí profil pri každej vašej ponuke.
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- footer -->
+    <div style="max-width:1040px;margin:70px auto 0;padding:22px 4px 0;border-top:1px solid rgba(36,27,69,.12);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:12px;color:#6E688C">
+      <span style="font-family:'Open Sauce One',sans-serif;font-weight:700;color:#17122E">Robiq<b style="color:#5546C4">.</b> <span style="font-family:'Satoshi',sans-serif;font-weight:400;color:#6E688C">© 2026</span></span>
+      <div style="display:flex;gap:22px;flex-wrap:wrap">
+        <a href="#" style="color:#6E688C;text-decoration:none" style-hover="color:#40319F">Ochrana osobných údajov</a>
+        <a href="#" style="color:#6E688C;text-decoration:none" style-hover="color:#40319F">Obchodné podmienky</a>
+        <a href="#" style="color:#6E688C;text-decoration:none" style-hover="color:#40319F">Kontakt</a>
+      </div>
+      <span>hello@robiq.sk · +421 900 123 456</span>
+    </div>
+  </div>
+
+  <!-- ── NOTCH DOCK ── -->
+  <sc-if value="{{ dockOn }}" hint-placeholder-val="{{ false }}">
+  <div data-mq="dock" style="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);width:430px;height:66px;z-index:40;filter:drop-shadow(0 10px 18px rgba(23,18,46,.22))">
+    <div style="position:absolute;inset:0;border-radius:22px;overflow:visible">
+      <div style="position:absolute;inset:0;background:#241D45;border:1px solid rgba(159,143,242,.28);border-radius:22px;mask:radial-gradient(circle 37px at 37px 37px, #000 0 99%, transparent 100%) no-repeat, linear-gradient(#000 0 0);mask-size:74px 74px, auto;mask-composite:exclude;mask-position: {{ notchLeft }} -38px, 0 0;transition:mask-position .38s cubic-bezier(.55,0,.3,1.4)"></div>
+      <div style="position:absolute;inset:0;display:flex">
+      <sc-for list="{{ dockTabs }}" as="tb" hint-placeholder-count="3">
+        <button onClick="{{ tb.go }}" style="flex:1 1 0;min-width:0;height:58px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+          <span style="display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; font-size: 19px; transition: transform .38s cubic-bezier(.55,0,.3,1.4),background .3s,color .3s; transform: translateY({{ tb.ty }}px); background: {{ tb.bg }}; color: {{ tb.fg }}; box-shadow: {{ tb.sh }}">{{ tb.glyph }}</span><span style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;transition:opacity .3s,color .3s;margin-top:-6px;opacity: {{ tb.lo }};color: {{ tb.lfg }}">{{ tb.label }}</span>
+          
+        </button>
+      </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ── MATCH BANNER ── -->
+  <sc-if value="{{ banner }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:60;background:#FFFFFF;border:1px solid rgba(124,108,224,.4);border-radius:16px;padding:14px 18px;display:flex;gap:14px;align-items:center;box-shadow:0 30px 70px -20px rgba(91,33,182,.35);animation:bannerIn .28s ease;color:#000000">
+      <div style="width:38px;height:38px;border-radius:50%;background:rgba(21,128,61,.15);color:#15803D;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">✓</div>
+      <div><b style="font-size:13.5px;font-weight:700;display:block">Máte zhodu!</b><span style="font-size:12px;color:#3F3A55">{{ bannerName }} má o teba záujem.</span></div>
+      <button onClick="{{ bannerGo }}" style="background:#40319F;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:12.5px;font-weight:700;cursor:pointer;margin-left:8px" style-hover="background:#5546C4">Napísať správu</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;transform:translateX(-50%);bottom:104px;z-index:70;background:#17122E;color:#FFFFFF;border:1px solid rgba(159,143,242,.34);border-radius:14px;padding:13px 22px;font-size:13px;font-weight:500;box-shadow:0 18px 40px -12px rgba(23,18,46,.5)">{{ toastTxt }}</div>
+  </sc-if>
+
+  <sc-if value="{{ delOn }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ delCancel }}" style="position:fixed;inset:0;z-index:82;background:rgba(23,18,46,.5);backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:26px">
+      <div onClick="{{ stop }}" data-screen-label="Zmazať inzerát" style="width:400px;max-width:100%;background:#FFFFFF;border:1px solid rgba(124,108,224,.35);border-radius:22px;padding:30px 28px 24px;color:#000000;box-shadow:0 26px 60px rgba(23,18,46,.3)">
+        <div style="font-size:19px;font-weight:700;line-height:1.25;margin-bottom:8px">Zmazať „{{ delName }}"?</div>
+        <div style="font-size:13.5px;line-height:1.55;color:#3F3A55;margin-bottom:22px;text-wrap:pretty">Inzerát aj jeho zhody sa nedajú vrátiť. Ak ho chcete len stiahnuť, použite Pozastaviť.</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <button onClick="{{ delConfirm }}" style="width:100%;background:#B4232A;color:#fff;border:none;border-radius:12px;padding:12px 0;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s" style-hover="background:#961B21">Zmazať natrvalo</button>
+          <button onClick="{{ delCancel }}" style="width:100%;background:transparent;color:#3F3A55;border:1px solid #DEDBEC;border-radius:12px;padding:11px 0;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s" style-hover="background:rgba(36,27,69,.05)">Zrušiť</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ── AUTH GATE ── -->
+  <sc-if value="{{ gateOn }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ gateClose }}" style="position:fixed;inset:0;z-index:80;background:rgba(23,18,46,.5);backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:26px">
+      <div onClick="{{ stop }}" data-screen-label="Prihlásenie potrebné" style="width:420px;max-width:100%;background:#FFFFFF;border:1px solid rgba(124,108,224,.35);border-radius:24px;padding:32px 30px 26px;color:#000000;box-shadow:0 26px 60px rgba(23,18,46,.3)">
+        <div style="width:46px;height:46px;border-radius:14px;background:rgba(124,108,224,.16);color:#40319F;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:18px">♥</div>
+        <div style="font-size:21px;font-weight:700;line-height:1.2;margin-bottom:9px">Ešte krôčik — potrebujeme vedieť, kto si</div>
+        <div style="font-size:13.5px;line-height:1.55;color:#3F3A55;margin-bottom:24px;text-wrap:pretty">Bez účtu nevieme komu ponuku priradiť. Registrácia trvá pár sekúnd a tvoj záujem odošleme hneď po nej.</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <button onClick="{{ gateSignup }}" style="width:100%;background:#40319F;color:#fff;border:none;border-radius:13px;padding:13px 0;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s" style-hover="background:#5546C4">Vytvoriť účet</button>
+          <button onClick="{{ gateLogin }}" style="width:100%;background:transparent;color:#40319F;border:1px solid rgba(64,49,159,.35);border-radius:13px;padding:12px 0;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s" style-hover="background:rgba(124,108,224,.1)">Už mám účet — prihlásiť sa</button>
+          <button onClick="{{ gateClose }}" style="width:100%;background:transparent;color:#6E688C;border:none;padding:9px 0;font-size:13px;font-weight:500;cursor:pointer;transition:color .2s" style-hover="color:#17122E">Zrušiť</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ── DETAIL MODAL ── -->
+  <sc-if value="{{ detailOn }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeDetail }}" style="position:fixed;inset:0;z-index:70;background:rgba(27,21,51,.45);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:30px">
+      <div onClick="{{ stop }}" data-screen-label="Detail ponuky" style="width:720px;max-height:86vh;overflow:auto;background:#FFFFFF;border:1px solid rgba(124,108,224,.35);border-radius:24px;padding:34px 38px;color:#000000">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+          <div style="display:flex;gap:16px;align-items:center">
+            <div style="width:56px;height:56px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:#fff;background: {{ dLg }}">{{ dIni }}</div>
+            <div><div style="font-size:24px;font-weight:700;line-height:1.15">{{ dT }}</div><div style="font-size:13.5px;color:#3F3A55">{{ dFirm }} · <b style="color:#000000;font-weight:700">★ {{ dRat }}</b> ({{ dRatN }} hodnotení)</div></div>
+          </div>
+          <button onClick="{{ closeDetail }}" style="background:rgba(36,27,69,.07);border:none;color:#3F3A55;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:14px" style-hover="color:#000000">✕</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+          <sc-for list="{{ dBadges }}" as="bd" hint-placeholder-count="2"><span style="font-size:11px;padding:5px 12px;border-radius:99px;background:rgba(124,108,224,.18);color:#40319F">{{ bd }}</span></sc-for>
+          <sc-for list="{{ dTags }}" as="tg" hint-placeholder-count="3"><span style="font-size:11px;padding:5px 12px;border-radius:99px;background:rgba(36,27,69,.07);color:#3F3A55">{{ tg }}</span></sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div style="font-size:28px;font-weight:700;color:#000000">{{ dPay }} <small style="font-size:13px;color:#3F3A55;font-weight:500">/ hod</small></div><span style="font-size:13px;font-weight:700;color:#000000">{{ dNeed }}</span></div>
+        <p style="font-size:14px;color:#4A4468;line-height:1.65;margin:0 0 26px">{{ dDesc }}</p>
+        <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:12px">Icebreakery</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:26px">
+          <sc-for list="{{ dIce }}" as="ic" hint-placeholder-count="3">
+            <div style="background:rgba(36,27,69,.04);border:1px solid rgba(36,27,69,.07);border-radius:14px;padding:14px 18px;font-size:13px;line-height:1.55;color:#4A4468">{{ ic }}</div>
+          </sc-for>
+        </div>
+        <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:12px">Deň v práci</div>
+        <div data-mq="day" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:28px">
+          <div style="height:110px;border-radius:14px;background:repeating-linear-gradient(45deg,rgba(36,27,69,.05) 0 10px,rgba(36,27,69,.02) 10px 20px);border:1px dashed #DEDBEC;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#3F3A55">foto 1</div>
+          <div style="height:110px;border-radius:14px;background:repeating-linear-gradient(45deg,rgba(36,27,69,.05) 0 10px,rgba(36,27,69,.02) 10px 20px);border:1px dashed #DEDBEC;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#3F3A55">foto 2</div>
+          <div style="height:110px;border-radius:14px;background:repeating-linear-gradient(45deg,rgba(36,27,69,.05) 0 10px,rgba(36,27,69,.02) 10px 20px);border:1px dashed #DEDBEC;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#3F3A55">foto 3</div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <button onClick="{{ detailLike }}" style="flex:1;background:#40319F;color:#fff;border:none;border-radius:13px;padding:14px 0;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:#5546C4">♥ Mám záujem</button>
+          <button onClick="{{ detailSkip }}" style="background:rgba(220,38,38,.12);color:#DC2626;border:none;border-radius:13px;padding:14px 24px;font-size:14px;font-weight:700;cursor:pointer" style-hover="filter:brightness(1.3)">✕ Preskočiť</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showStreak&quot;: {&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prvky&quot;}}">
+class Component extends DCLogic {
+  JOBS = [
+    {id:1,t:'Barista — víkendy',f:'Kavey Coffee · Bratislava',pay:'7,50 €',need:2,taken:1,posted:'pred 2 dňami',start:'18. júla',lg:'#5546C4',ini:'K',rat:'4,8',ratN:23,score:87,ai:false,match:false,
+     badges:['✓ Overená firma','⚡ Rýchla odpoveď'],tags:['Víkendy','Bez praxe','Staré Mesto'],
+     desc:'Ranné a víkendové zmeny v specialty kaviarni v centre. Skúsenosti netreba — zaškolíme ťa, latte art zvládneš za mesiac.',
+     ice:['Čo ťa naučíme za prvý mesiac? — Latte art a prácu s espresso strojom La Marzocco.','Aký je tím? — Šiesti, väčšina študenti. Playlist si volíme spoločne.','Najlepší benefit? — Káva zadarmo aj mimo zmeny.']},
+    {id:2,t:'Junior frontend výpomoc',f:'TechLink s.r.o. · remote',pay:'12 €',need:1,taken:0,posted:'včera',start:'ihneď',lg:'#0EA5E9',ini:'T',rat:'4,9',ratN:11,score:94,ai:true,match:true,
+     badges:['✓ Overená firma','Nástup ASAP'],tags:['React','Remote','10 h / týž.'],
+     desc:'Pomáhaj nášmu tímu s React komponentami a drobnými fixami. Ideálne popri škole — úlohy si plánuješ sám, code review dostaneš na každý PR.',
+     ice:['Čo ťa naučíme za prvý mesiac? — Prácu v reálnom git flow a code review kultúru.','Aký je tím? — 4 devi, štandup 2× týždenne, inak async.','Najlepší benefit? — Referencia a mentoring od seniora.']},
+    {id:3,t:'Hosteska — eventy',f:'Eventix · Bratislava',pay:'9 €',need:8,taken:3,posted:'pred 4 dňami',start:'24. júla',lg:'#9F8FF2',ini:'E',rat:'4,3',ratN:41,score:71,ai:false,match:false,
+     badges:['⚡ Rýchla odpoveď'],tags:['Večery','Flexibilné','Tímové'],
+     desc:'Vítanie hostí a registrácia na firemných eventoch a konferenciách. Večerné akcie, výber termínov je na tebe.',
+     ice:['Čo ťa naučíme za prvý mesiac? — Prácu s registračným systémom a event etiketu.','Aký je tím? — Mladý, na každej akcii iná zostava.','Najlepší benefit? — Catering a networking zadarmo.']},
+    {id:4,t:'Doučovanie matematiky',f:'SmartKids · online',pay:'15 €',need:3,taken:1,posted:'pred 3 hodinami',start:'od septembra',lg:'#7C6CE0',ini:'S',rat:'4,7',ratN:18,score:89,ai:true,match:true,
+     badges:['✓ Overená firma'],tags:['Online','VŠ študent','Poobede'],
+     desc:'Online doučovanie stredoškolákov, 60-minútové bloky poobede. Materiály dostaneš, ty dodáš trpezlivosť.',
+     ice:['Čo ťa naučíme za prvý mesiac? — Didaktiku a prácu s našou online tabuľou.','Aký je tím? — 30+ doučovateľov, komunita na Discorde.','Najlepší benefit? — Sám si volíš počet žiakov.']},
+    {id:5,t:'Skladová výpomoc — víkendy',f:'LogisPack · Trnava',pay:'8,20 €',need:5,taken:4,posted:'pred 6 dňami',start:'12. júla',lg:'#40319F',ini:'L',rat:'4,1',ratN:35,score:64,ai:false,match:false,
+     badges:['⚡ Rýchla odpoveď'],tags:['Víkendy','Fyzická práca','Trnava'],
+     desc:'Kompletizácia objednávok v modernom sklade. Sobota alebo nedeľa, 8-hodinové zmeny, doprava z centra Trnavy zdarma.',
+     ice:['Čo ťa naučíme za prvý mesiac? — Prácu so skenerom a logistiku e-shopu.','Aký je tím? — Zmena 10 ľudí, polovica brigádnici.','Najlepší benefit? — Príplatok 20 % za nedeľu.']},
+    {id:6,t:'Social media asistent',f:'Mode Studio · Bratislava',pay:'10 €',need:1,taken:0,posted:'včera',start:'ihneď',lg:'#7C6CE0',ini:'M',rat:'4,6',ratN:9,score:82,ai:true,match:false,
+     badges:['✓ Overená firma'],tags:['Instagram','Kreatívne','Hybrid'],
+     desc:'Príprava reels a stories pre módne značky. Hybrid — natáčanie v štúdiu, strih z domu.',
+     ice:['Čo ťa naučíme za prvý mesiac? — Strih v CapCute na profi úrovni.','Aký je tím? — Kreatívne duo + ty.','Najlepší benefit? — Vlastné portfólio kampaní.']}
+  ];
+  CANDS = [
+    {id:1,adult:true,n:'Marek K.',ini:'MK',school:'FIIT STU',role:'Frontend',offer:'Barista — víkendy',hrs:'10 h / týž.',rat:'4,9',ratN:7,skills:['React','TypeScript','Figma'],score:92,g:'linear-gradient(135deg,#5546C4,#9F8FF2)'},
+    {id:2,adult:true,n:'Laura B.',ini:'LB',school:'EUBA',role:'Marketing',offer:'Hosteska — letné eventy',hrs:'20 h / týž.',rat:'4,8',ratN:12,skills:['Instagram','Copywriting','Canva'],score:88,g:'linear-gradient(135deg,#5546C4,#40319F)'},
+    {id:3,adult:true,n:'Adam V.',ini:'AV',school:'FMFI UK',role:'Doučovanie',offer:'Barista — víkendy',hrs:'flexibilne',rat:'5,0',ratN:5,skills:['Matematika','Fyzika','AJ B2'],score:85,g:'linear-gradient(135deg,#7C6CE0,#9F8FF2)'},
+    {id:4,adult:false,n:'Samuel T.',ini:'ST',school:'SPŠE',role:'Sklad',offer:'Skladová výpomoc',hrs:'víkendy',rat:'4,6',ratN:14,skills:['VZV preukaz','Spoľahlivosť'],score:81,g:'linear-gradient(135deg,#40319F,#5546C4)'},
+    {id:5,adult:false,n:'Nina H.',ini:'NH',school:'ŠUP J. Vydru',role:'Grafika',offer:'Hosteska — letné eventy',hrs:'poobede',rat:'4,7',ratN:6,skills:['Illustrator','Photoshop'],score:77,g:'linear-gradient(135deg,#7C6CE0,#7C6CE0)'},
+    {id:6,adult:true,n:'Ema S.',ini:'ES',school:'FiF UK',role:'Eventy',offer:'Hosteska — letné eventy',hrs:'večery',rat:'4,8',ratN:19,skills:['Komunikácia','AJ C1','NJ B2'],score:74,g:'linear-gradient(135deg,#9F8FF2,#7C6CE0)'}
+  ];
+  GROUPS = [
+    {g:'Pracovné pozície', items:['Barista','Čašník / Servírka','Predaj','Pokladňa','Sklad','Eventy','Hostesing','Promo akcie','Doučovanie','Kuriér','Rozvoz','Recepcia','Kuchyňa','Upratovanie','Administratíva']},
+    {g:'Digitálne zručnosti', items:['React','Tvorba webu','Grafika','Figma','Canva','Photoshop','Video strih','Copywriting','Sociálne siete','Excel','Dátová analýza','AI nástroje']},
+    {g:'Jazyky', items:['Angličtina','Nemčina','Španielčina','Francúzština','Taliančina','Ruština','Ukrajinčina','Maďarčina','Poľština','Čínština']},
+    {g:'Vlastnosti a iné', items:['Vodičák B','Komunikatívnosť','Spoľahlivosť','Práca v tíme','Fyzická kondícia','Flexibilita','Práca pod tlakom','Organizovanosť','Rýchle učenie']}
+  ];
+  SKILLS = this.GROUPS.flatMap(x => x.items);
+  LANGS = this.GROUPS.find(x => x.g === 'Jazyky').items;
+  LANG_LVLS = ['A1–A2','B1–B2','C1–C2'];
+  RELATED = {
+    'Barista':['Obsluha','Latte art','Príprava nápojov'],
+    'Čašník / Servírka':['Obsluha','Someliérstvo','Barmanstvo'],
+    'Predaj':['Obsluha','Merchandising','Reklamácie'],
+    'Pokladňa':['Obsluha','Inventúra'],
+    'Sklad':['VZV preukaz','Inventúra','Balenie objednávok'],
+    'Eventy':['Stavba pódia','Šatňa','Vstupenky'],
+    'Hostesing':['Modeling','Degustácie'],
+    'Promo akcie':['Letáky','Sampling'],
+    'Doučovanie':['Matematika','Fyzika','Slovenčina','Programovanie pre deti'],
+    'Kuriér':['Vlastné auto','Bicykel','Skúter'],
+    'Rozvoz':['Vlastné auto','Navigácia'],
+    'Recepcia':['Rezervácie','Telefonovanie'],
+    'Kuchyňa':['Príprava jedál','Hygienické minimum','Umývanie riadu'],
+    'Administratíva':['Fakturácia','Dátové tabuľky','Telefonovanie'],
+    'React':['TypeScript','CSS','Git','Next.js'],
+    'Tvorba webu':['WordPress','HTML/CSS','SEO'],
+    'Grafika':['Illustrator','Branding','Tlačoviny'],
+    'Figma':['Prototypovanie','UI dizajn'],
+    'Canva':['Prezentácie','Social media grafika'],
+    'Photoshop':['Retuš','Fotografovanie'],
+    'Video strih':['CapCut','Premiere','Reels'],
+    'Copywriting':['SEO texty','Blog','Newslettre'],
+    'Sociálne siete':['Reels','TikTok','Community management'],
+    'Excel':['PowerPoint','Dátové tabuľky','Google Sheets'],
+    'Dátová analýza':['SQL','Power BI'],
+    'AI nástroje':['ChatGPT','Midjourney','Automatizácie'],
+    'Vodičák B':['Vlastné auto','Rozvoz'],
+    'Angličtina':['Preklady','Zákaznícka podpora'],
+    'Nemčina':['Preklady','Zákaznícka podpora'],
+    'Španielčina':['Preklady'],
+    'Francúzština':['Preklady'],
+    'Ukrajinčina':['Tlmočenie'],
+    'Komunikatívnosť':['Telefonovanie','Zákaznícka podpora'],
+    'Práca v tíme':['Vedenie zmeny'],
+    'Fyzická kondícia':['Sťahovanie','Stavba pódia']
+  };
+  LVLS = ['Základy','Dobré','Top'];
+  TYPES = ['Víkendy','Poobede','Večery','Remote','Flexibilné'];
+
+  state = {
+    screen:'app', authed:false, pendingJob:null, gate:false, role:'student',
+    rowMenu:null, blocked:[], blockedFirms:[], delIdx:null, toast:'',
+    fobStep:1, fobName:'', fobIco:'', fobLogo:'', fobContact:'', fobEmail:'', fobPass:'', fobTerms:false, fobFields:[],
+    obStep:1, obName:'', obSkills:[], obHours:1, availDays:['So','Ne'], availTimes:['Poobede'], birth:'2006-03-14', bio:'Študent FIIT, hľadám brigády popri škole — najradšej víkendy. Rýchlo sa učím a nevadí mi fyzická práca.', only18:false,
+    tab:0, ftab:0, accMenu:false, notifOn:true,
+    handled:[], viewed:0, liked:0, likedIds:[], profEdit:false,
+    fpName:'Kavey Coffee s.r.o.', fpVerified:true, fpLogo:'',
+    fpDesc:'Specialty kaviareň v centre. Mladý tím, väčšina študenti — zmeny si plánuješ podľa rozvrhu.',
+    banner:false, bannerName:'',
+    matches:[{jobId:1,name:'Kavey Coffee',job:'Barista — víkendy',ini:'K',lg:'#5546C4',
+      msgs:[{me:false,txt:'Ahoj! Videli sme tvoj profil — kedy by si sa vedel zastaviť na skúšobnú zmenu?'},
+            {me:true,txt:'Ahoj! Pokojne tento víkend, sobota ráno?'},
+            {me:false,txt:'Sobota 9:00 znie super. Laurinská 4, pýtaj si Petru.'}]}],
+    activeChat:0, draft:'',
+    fchats:[{candId:1,name:'Marek K.',job:'Barista — víkendy',ini:'MK',lg:'linear-gradient(135deg,#5546C4,#9F8FF2)',
+      msgs:[{me:true,txt:'Dobrý deň Marek, váš profil nám sedí na víkendové zmeny. Máte čas tento týždeň na krátky hovor?'},
+            {me:false,txt:'Dobrý deň! Áno, vo štvrtok poobede alebo v piatok kedykoľvek.'}]}],
+    activeFChat:0, fdraft:'', aiNote:'', aiApplied:'',
+    detail:null,
+    contacted:[],
+    offers:[{t:'Barista — víkendy',pay:'7,50 € / hod',views:412,likes:38,m:6,need:2,on:true,d1:5,d2:12},
+            {t:'Hosteska — letné eventy',pay:'9 € / hod',views:230,likes:21,m:3,need:8,on:true,d1:10,d2:19},
+            {t:'Skladová výpomoc',pay:'8,20 € / hod',views:145,likes:9,m:1,need:5,on:false,d1:22,d2:26}],
+    calDay:10,
+    fT:'', fPay:'', fNeed:'', fTypes:[]
+  };
+
+  dotRefL = React.createRef();
+  dotRefR = React.createRef();
+
+  startLoad(ms){
+    clearTimeout(this._ldT);
+    this.setState({loading:true});
+    this._ldT = setTimeout(() => this.setState({loading:false}), ms || 900);
+  }
+  showToast(msg){
+    clearTimeout(this._toastT);
+    this.setState({rowMenu:null, toast:msg});
+    this._toastT = setTimeout(() => this.setState({toast:''}), 2600);
+  }
+
+  componentDidMount(){
+    this._closeMenus = (e) => {
+      if(!this.state.rowMenu) return;
+      const t = e.target;
+      if(t && t.closest && t.closest('[data-rowmenu]')) return;
+      this.setState({rowMenu:null});
+    };
+    document.addEventListener('pointerdown', this._closeMenus, true);
+    this._init = JSON.parse(JSON.stringify({
+      handled:this.state.handled, viewed:this.state.viewed, liked:this.state.liked, likedIds:this.state.likedIds,
+      matches:this.state.matches, contacted:this.state.contacted, fchats:this.state.fchats, offers:this.state.offers
+    }));
+    const v = new URLSearchParams(location.search).get('view');
+    if(v){
+      const map = {objavuj:0, spravy:1, profil:2};
+      if(map[v] !== undefined){ this.setState({screen:'app', tab:map[v], ftab:0}); this.startLoad(760); }
+    }
+    this._closeAcc = () => { if(this.state.accMenu) this.setState({accMenu:false}); };
+    document.addEventListener('click', this._closeAcc);
+    // rippling circles: concentric rings expanding outward like water ripples,
+    // each ring gently waving (radius modulated around the circle)
+    const M = 12, R = 430, CX = 450, CY = 450, SEG = 90;
+    const draw = (cv, t, mirror) => {
+      if(!cv) return;
+      const ctx = cv.getContext('2d');
+      ctx.clearRect(0,0,900,900);
+      const g = ctx.createLinearGradient(mirror? CX+R : CX-R, 0, mirror? CX-R : CX+R, 0);
+      g.addColorStop(0, 'rgba(64,49,159,.55)');
+      g.addColorStop(.5, 'rgba(124,108,224,.8)');
+      g.addColorStop(1, 'rgba(203,192,255,.95)');
+      ctx.strokeStyle = g;
+      const T = t*60;
+      for(let k=0; k<M; k++){
+        const p = ((k/M + T*0.05) % 1 + 1) % 1;      // 0..1 expanding phase
+        const r = 40 + p * (R-40);
+        const fade = Math.sin(p*Math.PI);            // fade in / out
+        ctx.globalAlpha = fade * 0.85;
+        ctx.lineWidth = 1 + fade*1.2;
+        const amp = 6 + 10*p;                        // wave grows with radius
+        ctx.beginPath();
+        for(let i=0; i<=SEG; i++){
+          const a = (i/SEG)*Math.PI*2;
+          const rr = r + amp*Math.sin(a*5 + T*0.9 + k*1.7) + amp*0.5*Math.sin(a*3 - T*0.6 + k);
+          const x = CX + rr*Math.cos(a), y = CY + rr*Math.sin(a);
+          i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    };
+    const loop = (now) => {
+      this._dotRaf = requestAnimationFrame(loop);
+      if(!this._cvL || !this._cvL.isConnected) this._cvL = document.querySelector('canvas[data-dot="L"]');
+      if(!this._cvR || !this._cvR.isConnected) this._cvR = document.querySelector('canvas[data-dot="R"]');
+      const t = now*0.000016;
+      draw(this._cvL, t, false);
+      draw(this._cvR, 1e6 - t*0.85, true);
+    };
+    this._dotRaf = requestAnimationFrame(loop);
+
+  }
+
+  componentWillUnmount(){ cancelAnimationFrame(this._dotRaf); document.removeEventListener('pointerdown', this._closeMenus, true); clearTimeout(this._toastT); }
+
+  act(job, dir){
+    if (!this.state.authed && dir === 'like') { this.setState({gate:true, pendingJob: job, detail:null}); return; }
+    if (this.state.handled.includes(job.id)) return;
+    const upd = {handled:[...this.state.handled, job.id], viewed:this.state.viewed+1};
+    if (dir === 'like') {
+      upd.liked = this.state.liked + 1;
+      upd.likedIds = [...this.state.likedIds, job.id];
+      if (job.match && !this.state.matches.some(m => m.jobId === job.id)) {
+        upd.matches = [...this.state.matches, {jobId:job.id, name:job.f.split(' · ')[0], job:job.t, ini:job.ini, lg:job.lg,
+          msgs:[{me:false, txt:'Ahoj! Tvoj profil nám sedí — kedy máš čas na krátky call?'}]}];
+        upd.banner = true;
+        upd.bannerName = job.f.split(' · ')[0];
+      }
+    }
+    this.setState(upd);
+    if (upd.banner) { clearTimeout(this._bt); this._bt = setTimeout(() => this.setState({banner:false}), 3500); }
+  }
+
+  renderVals(){
+    const s = this.state, P = this.props;
+    const showStreak = P.showStreak ?? true;
+    const isStudent = s.role === 'student';
+    if(!this._order){ this._order = this.JOBS.map(j => j.id).sort(() => Math.random() - .5); }
+    const ord = this._order;
+    const remaining = this.JOBS.filter(j => !s.handled.includes(j.id) || s.likedIds.includes(j.id)).slice()
+      .filter(j => !s.blockedFirms.includes(j.f))
+      .sort(s.authed ? (a,b) => b.score - a.score : (a,b) => ord.indexOf(a.id) - ord.indexOf(b.id));
+
+    const name = s.obName.trim() || 'Tomáš Novák';
+    const init = name.split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+    const hoursOpts = ['5 h / týždeň','10 h / týždeň','20 h / týždeň','Fulltime cez leto'];
+
+    const chip = on => ({
+      bd: on ? '#40319F' : '#DEDBEC',
+      bg: on ? 'rgba(85,70,196,.12)' : 'rgba(36,27,69,.04)',
+      fg: on ? '#33277F' : '#6E688C'
+    });
+    const selNames = s.obSkills.map(x => x.n);
+    const addSkill = n => {
+      if (!this.state.obSkills.some(x => x.n === n)) this.setState({obSkills: [...this.state.obSkills, {n, lvl: 2, speak: true}], customSkill: ''});
+    };
+    const addCustom = () => {
+      const n = (this.state.customSkill || '').trim();
+      if (n) addSkill(n);
+    };
+    const baseGroups = this.GROUPS.map(gr => {
+      const sugg = [];
+      s.obSkills.forEach(x => {
+        if (!gr.items.includes(x.n)) return;
+        (this.RELATED[x.n] || []).forEach(r => {
+          if (!selNames.includes(r) && !this.SKILLS.includes(r) && !sugg.includes(r)) sugg.push(r);
+        });
+      });
+      const chips = gr.items.filter(n => !selNames.includes(n)).map(n => ({
+        label: '＋ ' + n, border: '1px solid #DEDBEC', bg: 'rgba(36,27,69,.04)', fg: '#6E688C', click: () => addSkill(n)
+      })).concat(sugg.map(n => ({
+        label: '✦ ' + n, border: '1px dashed rgba(124,108,224,.55)', bg: 'rgba(124,108,224,.1)', fg: '#5546C4', click: () => addSkill(n)
+      })));
+      return {g: gr.g, chips};
+    }).filter(gr => gr.chips.length > 0);
+    const selRows = s.obSkills.map((x, i) => {
+      const isLang = this.LANGS.includes(x.n);
+      const speakOn = x.speak !== false;
+      return {
+        n: x.n,
+        lvls: (isLang ? this.LANG_LVLS : this.LVLS).map((L, li) => ({label: L,
+          bg: x.lvl === li + 1 ? '#40319F' : 'transparent',
+          fg: x.lvl === li + 1 ? '#fff' : '#6E688C',
+          click: () => this.setState({obSkills: this.state.obSkills.map((y, j) => j === i ? {...y, lvl: li + 1} : y)})})),
+        speakDisp: isLang ? 'inline-block' : 'none',
+        speakLabel: speakOn ? '✓ Rozprávam' : 'Rozprávam',
+        speakBd: speakOn ? '#40319F' : '#DEDBEC',
+        speakBg: speakOn ? 'rgba(85,70,196,.12)' : 'transparent',
+        speakFg: speakOn ? '#33277F' : '#6E688C',
+        speakTgl: () => this.setState({obSkills: this.state.obSkills.map((y, j) => j === i ? {...y, speak: !(y.speak !== false)} : y)}),
+        remove: () => this.setState({obSkills: this.state.obSkills.filter((_, j) => j !== i)})
+      };
+    });
+    const typeChips = this.TYPES.map(tp => {
+      const on = s.fTypes.includes(tp);
+      return {label: tp, ...chip(on), click: () => {
+        const cur = this.state.fTypes;
+        this.setState({fTypes: cur.includes(tp) ? cur.filter(x => x !== tp) : [...cur, tp]});
+      }};
+    });
+
+    const personIcon = React.createElement('svg', {width:21, height:21, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:1.9, strokeLinecap:'round', strokeLinejoin:'round', key:'p'},
+      React.createElement('circle', {cx:12, cy:8, r:3.6, key:'h'}),
+      React.createElement('path', {d:'M4.6 20c0-3.6 3.3-5.6 7.4-5.6s7.4 2 7.4 5.6', key:'b'}));
+    const studentTabs = [['Objavuj','❖'],['Správy','✉'],['Profil',personIcon]];
+    const firmTabs = [['Ponuka','❖'],['Správy','✉'],['Inzeráty','☰'],['Profil',personIcon]];
+    const tabs = isStudent ? studentTabs : firmTabs;
+    const active = isStudent ? s.tab : (s.ftab === 9 ? 2 : s.ftab);
+    const nTabs = tabs.length;
+    const needTxt = j => { const free = j.need - (j.taken || 0); return `Voľné ${free} / ${j.need} ${j.need === 1 ? 'pozície' : 'pozícií'}`; };
+    const dockTabs = tabs.map((t, i) => {
+      const on = i === active;
+      return {
+        label: t[0], glyph: t[1], left: (i*100/nTabs).toFixed(3)+'%', w: (100/nTabs).toFixed(3)+'%',
+        ty: on ? -30 : 0,
+        bg: on ? '#40319F' : 'transparent',
+        fg: '#fff',
+        sh: on ? '0 10px 26px rgba(91,33,182,.35)' : 'none',
+        lo: on ? 0 : 1, lfg: '#FFFFFF',
+        go: () => { if(on) return; this.setState(isStudent ? {tab:i} : {ftab:i}); this.startLoad(); }
+      };
+    });
+    const notchLeft = ((active*2+1)/(2*nTabs)*430 - 37).toFixed(1) + 'px';
+
+    const seg = on => ({bg: on ? '#40319F' : 'transparent', fg: on ? '#fff' : '#000000'});
+    const segS = seg(isStudent), segF = seg(!isStudent);
+    const hseg = on => ({bg: on ? '#40319F' : 'transparent', fg: '#fff'});
+    const hsegS = hseg(isStudent), hsegF = hseg(!isStudent);
+
+    const am = s.matches[Math.min(s.activeChat, s.matches.length-1)] || s.matches[0];
+    const afm = s.fchats[Math.min(s.activeFChat, s.fchats.length-1)] || s.fchats[0];
+    const matchList = s.matches.map((m, i) => ({
+      name: m.name, job: m.job, ini: m.ini, lg: m.lg,
+      bg: i === s.activeChat ? 'rgba(85,70,196,.12)' : 'transparent',
+      go: () => this.setState({activeChat: i})
+    }));
+    const chatMsgs = (am ? am.msgs : []).map(m => ({txt: m.txt, me: m.me, them: !m.me}));
+
+    const candList = this.CANDS.map(c => {
+      const done = s.contacted.includes(c.id);
+      return {...c, scoreW: c.score+'%', done, notDone: !done,
+        menuOn: s.rowMenu === 'c'+c.id,
+        menuTgl: () => this.setState({rowMenu: this.state.rowMenu === 'c'+c.id ? null : 'c'+c.id}),
+        report: () => this.showToast('Profil sme nahlásili — pozrieme sa na to.'),
+        block: () => { this.setState({blocked:[...this.state.blocked, c.id]}); this.showToast('Profil zablokovaný.'); },
+        nDisp: s.authed ? c.n : c.n.split(' ')[0],
+        avBlur: s.authed ? 'none' : 'blur(9px)', avTxt: s.authed ? c.ini : '●●',
+        detailOn: s.authed, detailOff: !s.authed,
+        ageTxt: c.adult ? '18+' : 'do 18',
+        ageBg: c.adult ? 'rgba(21,128,61,.1)' : 'rgba(36,27,69,.07)',
+        ageFg: c.adult ? '#15803D' : '#3F3A55',
+        contact: () => {
+          const st = this.state;
+          if(!st.authed){ this.setState({gate:true}); return; }
+          const upd = {contacted: [...st.contacted, c.id]};
+          if (!st.fchats.some(f => f.candId === c.id))
+            upd.fchats = [...st.fchats, {candId: c.id, name: c.n, job: c.offer, ini: c.ini, lg: c.g,
+              msgs:[{me:true, txt:`Dobrý deň, váš profil nás zaujal — máte záujem o pozíciu ${c.offer}?`}]}];
+          this.setState(upd);
+        }};
+    });
+    const offerNames = s.offers.map(o => o.t);
+    const candVisible = candList.filter(c => (!s.only18 || c.adult) && offerNames.includes(c.offer) && !s.blocked.includes(c.id));
+    const candGroups = [...new Set(candVisible.map(c => c.offer))].map(off => {
+      const cands = candVisible.filter(c => c.offer === off).sort((a, b) => b.score - a.score);
+      return {offer: off, cands, count: cands.length + (cands.length === 1 ? ' kandidát' : cands.length < 5 ? ' kandidáti' : ' kandidátov')};
+    });
+
+    const offerList = s.offers.map((o, i) => ({...o,
+      filled: `${Math.min(o.m, o.need || 1)} / ${o.need || 1}`,
+      status: o.on ? 'Aktívna' : 'Pozastavená',
+      stBg: o.on ? 'rgba(21,128,61,.12)' : 'rgba(36,27,69,.07)',
+      stFg: o.on ? '#15803D' : '#6E688C',
+      op: o.on ? 1 : .6,
+      tgLabel: o.on ? 'Pozastaviť' : 'Aktivovať',
+      menuOn: s.rowMenu === 'o'+i,
+      menuTgl: () => this.setState({rowMenu: this.state.rowMenu === 'o'+i ? null : 'o'+i}),
+      dup: () => { this.setState({rowMenu:null, offers:[...this.state.offers.slice(0,i+1), {...o, t:o.t+' (kópia)', views:0, likes:0, m:0}, ...this.state.offers.slice(i+1)]}); this.showToast('Inzerát zduplikovaný.'); },
+      askDel: () => this.setState({rowMenu:null, delIdx:i}),
+      toggle: () => this.setState({offers: this.state.offers.map((x, j) => j === i ? {...x, on: !x.on} : x)})}));
+    // ── kalendár inzerátov (September 2026, pondelok prvý) ──
+    const MDAYS = 30, FIRSTOFF = 1, MPAL = ['#5546C4','#7C6CE0','#9F8FF2'];
+    const dayOffers = d => s.offers.map((o,i) => ({o,i})).filter(({o}) => d >= (o.d1||0) && d <= (o.d2||0));
+    const calCells = [];
+    for (let b = 0; b < FIRSTOFF; b++) calCells.push({blank:true, day:'', bg:'transparent', fg:'transparent', bd:'1px solid transparent', fw:'400', pick:()=>{}, bars:[]});
+    for (let d = 1; d <= MDAYS; d++) {
+      const list = dayOffers(d), sel = s.calDay === d;
+      calCells.push({
+        blank:false, day:String(d),
+        bg: sel ? '#40319F' : (list.length ? 'rgba(124,108,224,.12)' : 'transparent'),
+        fg: sel ? '#FFFFFF' : (list.length ? '#40319F' : '#6E688C'),
+        bd: sel ? '1px solid #40319F' : (list.length ? '1px solid rgba(124,108,224,.3)' : '1px solid transparent'),
+        fw: list.length ? '700' : '400',
+        pick: () => this.setState({calDay:d}),
+        bars: list.map(({o,i}) => ({key:'b'+i, c: sel ? 'rgba(255,255,255,.9)' : MPAL[i % 3], op: o.on ? 1 : .4}))
+      });
+    }
+    const calLegend = s.offers.map((o,i) => ({
+      key:'lg'+i, t:o.t, c: MPAL[i % 3], op: o.on ? 1 : .45,
+      range:`${o.d1}. – ${o.d2}. 9.`
+    }));
+    const calSel = dayOffers(s.calDay).map(({o,i}) => ({
+      key:'cs'+i, t:o.t, pay:o.pay,
+      range:`${o.d1}. – ${o.d2}. 9. 2026`,
+      dot: MPAL[i % 3],
+      stat: o.on ? 'Aktívna' : 'Pozastavená',
+      statFg: o.on ? '#15803D' : '#6E688C'
+    }));
+    const calLabel = `${s.calDay}. september 2026`;
+    const calEmpty = calSel.length === 0;
+
+    const sumActive = s.offers.filter(o => o.on).length;
+    const sumViews = s.offers.reduce((a, o) => a + o.views, 0);
+    const sumLikes = s.offers.reduce((a, o) => a + o.likes, 0);
+    const sumM = s.offers.reduce((a, o) => a + o.m, 0);
+
+    const myInterests = s.likedIds.map(id => this.JOBS.find(j => j.id === id)).filter(Boolean).map(j => {
+      const matched = s.matches.some(m => m.jobId === j.id);
+      return {t: j.t, f: j.f.split(' · ')[0], pay: j.pay, lg: j.lg, ini: j.ini,
+        status: matched ? '✓ Zhoda' : 'Čaká na odpoveď',
+        stBg: matched ? 'rgba(21,128,61,.12)' : 'rgba(36,27,69,.07)',
+        stFg: matched ? '#15803D' : '#6E688C'};
+    });
+
+    const dt = s.detail;
+    const aiJob = this.JOBS[3];
+    const canPub = s.fT.trim().length > 0;
+
+    const ld = !!s.loading;
+    return {
+      dotRefL: this.dotRefL, dotRefR: this.dotRefR,
+      skeleton: ld, skRows: [0,1,2,3], skLines: [0,1,2],
+      // screens
+      isLogin: s.screen === 'login', isOb: s.screen === 'ob', isApp: s.screen === 'app', isFob: s.screen === 'fob', isPick: s.screen === 'pick',
+      isStudent, streakOn: showStreak && isStudent && s.screen === 'app' && s.authed,
+      vObjavuj: !ld && isStudent && s.tab === 0, vZhody: !ld && isStudent && s.tab === 1, vProfil: !ld && isStudent && s.tab === 2,
+      vBrig: !ld && !isStudent && s.ftab === 0, vFSpravy: !ld && !isStudent && s.ftab === 1, vPonuky: !ld && !isStudent && s.ftab === 2, vNova: !ld && !isStudent && s.ftab === 9, vFProfil: !ld && !isStudent && s.ftab === 3,
+      novaHdrOn: !isStudent && s.screen === 'app' && s.authed,
+      authedOn: s.authed, guestOn: !s.authed, dockOn: s.authed,
+      gateOn: s.gate,
+      gateClose: () => this.setState({gate:false, pendingJob:null}),
+      gateLogin: () => this.setState({gate:false, screen:'login'}),
+      gateSignup: () => this.setState({gate:false, screen:'pick', obStep:1, fobStep:1}),
+      goLogin: () => this.setState({screen:'login'}),
+      goFirmReg: () => this.setState({screen:'fob', role:'firm', fobStep:1}),
+      pickStudent: () => this.setState({screen:'ob', role:'student', obStep:1}),
+      pickFirm: () => this.setState({screen:'fob', role:'firm', fobStep:1}),
+      fobStep: s.fobStep,
+      fdot1: s.fobStep >= 1 ? '#40319F' : 'rgba(36,27,69,.12)',
+      fdot2: s.fobStep >= 2 ? '#40319F' : 'rgba(36,27,69,.12)',
+      fdot3: s.fobStep >= 3 ? '#40319F' : 'rgba(36,27,69,.12)',
+      fobS1: s.fobStep === 1, fobS2: s.fobStep === 2, fobS3: s.fobStep === 3,
+      fobName: s.fobName, setFobName: e => this.setState({fobName: e.target.value}),
+      fobInit: (s.fobName.trim() || '?').slice(0,1).toUpperCase(),
+      fobInitDisp: s.fobLogo ? 'none' : 'block',
+      fobLogoBg: s.fobLogo ? 'url(' + s.fobLogo + ')' : 'none',
+      setFobLogo: e => {
+        const f = e.target.files && e.target.files[0];
+        if(!f) return;
+        this.setState({fobLogo: URL.createObjectURL(f)});
+      },
+      fobIco: s.fobIco, setFobIco: e => this.setState({fobIco: e.target.value}),
+      fobContact: s.fobContact, setFobContact: e => this.setState({fobContact: e.target.value}),
+      fobEmail: s.fobEmail, setFobEmail: e => this.setState({fobEmail: e.target.value}),
+      fobPass: s.fobPass, setFobPass: e => this.setState({fobPass: e.target.value}),
+      fobTerms: s.fobTerms, fobTermsTgl: () => this.setState({fobTerms: !this.state.fobTerms}),
+      fobTermsBd: s.fobTerms ? '#40319F' : '#DEDBEC',
+      fobTermsBg: s.fobTerms ? '#40319F' : 'transparent',
+      fobTermsMark: s.fobTerms ? '✓' : '',
+      fobFields: ['Gastro','Retail','Sklad a logistika','Administratíva','Eventy','IT a dizajn','Doučovanie','Manuálna práca'].map(f => {
+        const on = s.fobFields.includes(f);
+        return {label:f, border: on ? '1px solid #40319F' : '1px solid #DEDBEC', bg: on ? 'rgba(85,70,196,.1)' : 'transparent', fg: on ? '#40319F' : '#3F3A55',
+          click: () => this.setState({fobFields: on ? this.state.fobFields.filter(x => x !== f) : [...this.state.fobFields, f]})};
+      }),
+      fobNextLabel: s.fobStep === 3 ? 'Vytvoriť firemný účet' : 'Pokračovať',
+      fobNextOp: (s.fobStep === 1 && !s.fobName.trim()) || (s.fobStep === 2 && s.fobFields.length < 1) || (s.fobStep === 3 && !s.fobTerms) ? .45 : 1,
+      fobNext: () => {
+        const st = this.state;
+        if (st.fobStep === 1 && !st.fobName.trim()) return;
+        if (st.fobStep === 2 && st.fobFields.length < 1) return;
+        if (st.fobStep === 3 && !st.fobTerms) return;
+        if (st.fobStep < 3) { this.setState({fobStep: st.fobStep + 1}); return; }
+        this.setState({screen:'app', authed:true, role:'firm', ftab:0,
+          fpName: st.fobName.trim(), fpLogo: st.fobLogo,
+          fpDesc: '', fpVerified: false, offers: [], contacted: [], fchats: []});
+        this.startLoad();
+      },
+      fobBack: () => this.state.fobStep > 1 ? this.setState({fobStep: this.state.fobStep - 1}) : this.setState({screen:'pick'}),
+      goSignup: () => this.setState({screen:'pick', obStep:1, fobStep:1}),
+      // login
+      segStudentBg: segS.bg, segStudentFg: segS.fg, segFirmBg: segF.bg, segFirmFg: segF.fg,
+      hsegStudentBg: hsegS.bg, hsegStudentFg: hsegS.fg, hsegFirmBg: hsegF.bg, hsegFirmFg: hsegF.fg,
+      roleToStudent: () => { if(isStudent) return; this.setState({role:'student'}); if(s.screen==='app') this.startLoad(); },
+      roleToFirm: () => { if(!isStudent) return; this.setState({role:'firma'}); if(s.screen==='app') this.startLoad(); },
+      doLogin: () => {
+        const pj = s.pendingJob;
+        this.setState({screen:'app', authed:true, pendingJob:null});
+        this.startLoad();
+        if(pj) setTimeout(() => this.act(pj, 'like'), 40);
+      },
+      goRegister: () => this.setState({screen:'pick', obStep:1, fobStep:1}),
+      regHint: 'zamestnanec alebo firma',
+      logout: () => {
+        clearTimeout(this._bt); clearTimeout(this._rt);
+        this._order = this.JOBS.map(j => j.id).sort(() => Math.random() - .5);
+        const init = this._init ? JSON.parse(JSON.stringify(this._init)) : {};
+        this.setState({...init, screen:'app', authed:false, accMenu:false, tab:0, ftab:0,
+          gate:false, pendingJob:null, detail:null, banner:false, bannerName:'',
+          activeChat:0, activeFChat:0, draft:'', fdraft:'', profEdit:false});
+        this.startLoad();
+      },
+      menuOpen: s.accMenu,
+      menuToggle: e => { e.stopPropagation(); this.setState({accMenu: !s.accMenu}); },
+      menuName: isStudent ? (s.obName || 'Marek Kováč') : s.fpName,
+      menuRole: isStudent ? 'Študent' : 'Firma',
+      notifTxt: s.notifOn ? 'Zap.' : 'Vyp.',
+      notifFg: s.notifOn ? '#15803D' : '#6E688C',
+      menuNotif: e => { e.stopPropagation(); this.setState({notifOn: !s.notifOn}); },
+      menuProfile: () => this.setState(isStudent ? {tab:2, accMenu:false} : {ftab:3, accMenu:false}),
+      menuSettings: () => this.setState({accMenu:false}),
+      menuHelp: () => this.setState({accMenu:false}),
+      // onboarding
+      obStep: s.obStep,
+      dot1: s.obStep >= 1 ? '#40319F' : 'rgba(36,27,69,.12)',
+      dot2: s.obStep >= 2 ? '#40319F' : 'rgba(36,27,69,.12)',
+      dot3: s.obStep >= 3 ? '#40319F' : 'rgba(36,27,69,.12)',
+      obS1: s.obStep === 1, obS2: s.obStep === 2, obS3: s.obStep === 3,
+      obName: s.obName, obInit: init,
+      avaInit: isStudent ? init : (s.fpName.trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase() || 'F'),
+      setObName: e => this.setState({obName: e.target.value}),
+      baseGroups, selRows,
+      hasSel: s.obSkills.length > 0,
+      customSkill: s.customSkill || '',
+      setCustomSkill: e => this.setState({customSkill: e.target.value}),
+      customKey: e => { if (e.key === 'Enter') addCustom(); },
+      addCustom,
+      obHours: s.obHours, setObHours: e => this.setState({obHours: +e.target.value}),
+      hoursLabel: hoursOpts[s.obHours],
+      availDays: ['Po','Ut','St','Št','Pi','So','Ne'].map(d => {
+        const on = (s.availDays || []).includes(d);
+        return {key:'ad'+d, d, on,
+          bg: on ? '#40319F' : 'rgba(36,27,69,.04)', fg: on ? '#FFFFFF' : '#3F3A55',
+          bd: on ? '1px solid #40319F' : '1px solid #DEDBEC',
+          tgl: () => this.setState(st => ({availDays: (st.availDays||[]).includes(d)
+            ? st.availDays.filter(x => x !== d) : [...(st.availDays||[]), d]}))};
+      }),
+      availTimes: [['Ráno','6–12 h'],['Poobede','12–18 h'],['Večer','18–23 h'],['Nočné zmeny','23–6 h']].map(([t,sub]) => {
+        const on = (s.availTimes || []).includes(t);
+        return {key:'at'+t, t, sub, on,
+          bg: on ? 'rgba(124,108,224,.14)' : 'rgba(36,27,69,.04)', fg: on ? '#40319F' : '#3F3A55',
+          bd: on ? '1px solid #7C6CE0' : '1px solid #DEDBEC',
+          tgl: () => this.setState(st => ({availTimes: (st.availTimes||[]).includes(t)
+            ? st.availTimes.filter(x => x !== t) : [...(st.availTimes||[]), t]}))};
+      }),
+      availSummary: (() => {
+        const d = s.availDays || [], t = s.availTimes || [];
+        if (!d.length && !t.length) return 'Vyber si dni a časy, kedy môžeš pracovať.';
+        const dd = d.length === 7 ? 'každý deň' : (d.length ? d.join(', ') : 'dni podľa dohody');
+        return dd + (t.length ? ' · ' + t.join(', ').toLowerCase() : '');
+      })(),
+      obNextLabel: s.obStep === 3 ? 'Hotovo — pozri ponuky' : 'Pokračovať',
+      obNextOp: (s.obStep === 2 && s.obSkills.length < 1) ? .45 : 1,
+      obNext: () => {
+        if (this.state.obStep === 2 && this.state.obSkills.length < 1) return;
+        if (this.state.obStep < 3) this.setState({obStep: this.state.obStep + 1});
+        else { const pj = this.state.pendingJob; this.setState({screen:'app', authed:true, tab:0, pendingJob:null}); if(pj) setTimeout(() => this.act(pj, 'like'), 40); }
+      },
+      obBack: () => this.state.obStep > 1 ? this.setState({obStep: this.state.obStep - 1}) : this.setState({screen:'pick'}),
+      // ponuky pre teba
+      deckHas: remaining.length > 0, deckEmpty: remaining.length === 0,
+      jobCards: remaining.map(j => ({
+        t: j.t, f: j.f, pay: j.pay, lg: j.lg, ini: j.ini, rat: j.rat, ratN: j.ratN, badges: j.badges, tags: j.tags, ai: j.ai, scorePct: j.score + ' %', scoreColor: `hsl(${Math.max(0, Math.min(120, (j.score - 40) * 2))}, 70%, 38%)`,
+        needTxt: needTxt(j), needPct: Math.round((j.need - (j.taken || 0)) / j.need * 100) + '%', posted: j.posted, start: j.start,
+        open: () => this.setState({detail: j}),
+        liked: s.likedIds.includes(j.id), notLiked: !s.likedIds.includes(j.id),
+        like: () => this.act(j, 'like'),
+        skip: () => this.act(j, 'skip'),
+        menuOn: s.rowMenu === 'j'+j.id,
+        menuTgl: () => this.setState({rowMenu: this.state.rowMenu === 'j'+j.id ? null : 'j'+j.id}),
+        report: () => this.showToast('Inzerát sme nahlásili — pozrieme sa na to.'),
+        block: () => { this.setState({blockedFirms:[...this.state.blockedFirms, j.f]}); this.showToast('Firmu sme skryli z tvojho feedu.'); }
+      })),
+      resetDeck: () => this.setState({handled:[]}),
+      viewed: s.viewed, likedCount: s.liked, matchCount: s.matches.length,
+      // ai tip
+      aiTipOn: s.viewed >= 2, aiTipOff: s.viewed < 2,
+      aiT: aiJob.t, aiFirm: aiJob.f.split(' · ')[0], aiPay: aiJob.pay, aiLg: aiJob.lg, aiIni: aiJob.ini,
+      aiOpen: () => this.setState({detail: aiJob}),
+      // zhody
+      matchList, chatMsgs,
+      chatName: am?.name, chatJob: am?.job, chatIni: am?.ini, chatLg: am?.lg,
+      draft: s.draft, setDraft: e => this.setState({draft: e.target.value}),
+      draftKey: e => { if (e.key === 'Enter') this.sendMsg(); },
+      sendMsg: () => this.sendMsg(),
+      chatRef: el => { if (el) el.scrollTop = el.scrollHeight; },
+      // firma správy
+      fMatchList: s.fchats.map((m, i) => ({name: m.name, job: m.job, ini: m.ini, lg: m.lg,
+        bg: i === s.activeFChat ? 'rgba(85,70,196,.12)' : 'transparent',
+        go: () => this.setState({activeFChat: i})})),
+      fChatMsgs: (afm ? afm.msgs : []).map(m => ({txt: m.txt, me: m.me, them: !m.me})),
+      fChatName: afm?.name, fChatJob: afm?.job, fChatIni: afm?.ini, fChatLg: afm?.lg,
+      fDraft: s.fdraft, setFDraft: e => this.setState({fdraft: e.target.value}),
+      fDraftKey: e => { if (e.key === 'Enter') this.fSendMsg(); },
+      fSendMsg: () => this.fSendMsg(),
+      // profil
+      profName: name,
+      profSkills: (s.obSkills.length ? s.obSkills : [{n:'Barista',lvl:2},{n:'Eventy',lvl:2},{n:'Angličtina',lvl:3}])
+        .map(x => this.LANGS.includes(x.n)
+          ? {n: x.n, dots: this.LANG_LVLS[x.lvl - 1] + (x.speak !== false ? ' · rozprávam' : '')}
+          : {n: x.n, dots: '●'.repeat(x.lvl) + '○'.repeat(3 - x.lvl)}),
+      profView: !s.profEdit, profEditing: s.profEdit,
+      profEditLabel: s.profEdit ? '✓ Hotovo' : 'Upraviť',
+      profEditToggle: () => this.setState({profEdit: !this.state.profEdit}),
+      hasInterests: myInterests.length > 0, noInterests: myInterests.length === 0,
+      myInterests,
+      // firma profil + prehľad
+      sumActive, sumViews, sumLikes, sumM,
+      calCells, calSel, calLabel, calEmpty, calLegend,
+      calDows: [{d:'Po'},{d:'Ut'},{d:'St'},{d:'Št'},{d:'Pi'},{d:'So'},{d:'Ne'}],
+      fpName: s.fpName, setFpName: e => this.setState({fpName: e.target.value}),
+      fpDesc: s.fpDesc, setFpDesc: e => this.setState({fpDesc: e.target.value}),
+      fpVerified: s.fpVerified, fpPending: !s.fpVerified,
+      fpLogoBg: s.fpLogo ? 'url(' + s.fpLogo + ')' : 'none',
+      fpInitDisp: s.fpLogo ? 'none' : 'block',
+      setFpLogo: e => {
+        const f = e.target.files && e.target.files[0];
+        if(!f) return;
+        this.setState({fpLogo: URL.createObjectURL(f)});
+      },
+      // firma
+      candList, candGroups, offerList, noOffers: s.offers.length === 0,
+      candHas: s.authed && s.offers.length > 0, candEmpty: s.authed && s.offers.length === 0,
+      toastOn: !!s.toast, toastTxt: s.toast,
+      delOn: s.delIdx !== null, delName: s.delIdx !== null && s.offers[s.delIdx] ? s.offers[s.delIdx].t : '',
+      delCancel: () => this.setState({delIdx:null}),
+      delConfirm: () => { const i = this.state.delIdx; this.setState({offers: this.state.offers.filter((x,j) => j !== i), delIdx:null}); this.showToast('Inzerát zmazaný.'); },
+      only18: s.only18,
+      set18All: () => { if(!s.only18) return; this.setState({only18:false}); },
+      set18Only: () => { if(s.only18) return; this.setState({only18:true}); },
+      a18AllBg: s.only18 ? 'transparent' : '#40319F', a18AllFg: s.only18 ? '#3F3A55' : '#FFFFFF',
+      a18OnlyBg: s.only18 ? '#40319F' : 'transparent', a18OnlyFg: s.only18 ? '#FFFFFF' : '#3F3A55',
+      aiNote: s.aiNote, setAiNote: e => this.setState({aiNote: e.target.value}),
+      profBirth: s.birth, setBirth: e => this.setState({birth: e.target.value}),
+      profBio: s.bio, setBio: e => this.setState({bio: e.target.value}), hasBio: !!s.bio.trim(),
+      goNova: () => this.setState({ftab:9}),
+      fT: s.fT, setFT: e => this.setState({fT: e.target.value}),
+      fPay: s.fPay, setFPay: e => this.setState({fPay: e.target.value}),
+      fNeed: s.fNeed, setFNeed: e => this.setState({fNeed: e.target.value}),
+      typeChips, pubOp: canPub ? 1 : .45,
+      publish: () => {
+        if (!this.state.fT.trim()) return;
+        this.setState({
+          offers: [{t: this.state.fT.trim(), pay: (this.state.fPay.trim() || '8') + ' € / hod', views:0, likes:0, m:0, need: Math.max(1, parseInt(this.state.fNeed, 10) || 1), on:true, d1:8, d2:15}, ...this.state.offers],
+          fT:'', fPay:'', fNeed:'', fTypes:[], aiNote:'', ftab:2
+        });
+      },
+      // banner
+      banner: s.banner, bannerName: s.bannerName,
+      bannerGo: () => this.setState({banner:false, tab:1, activeChat: this.state.matches.length - 1}),
+      // detail
+      detailOn: !!dt,
+      dT: dt?.t, dFirm: dt?.f, dRat: dt?.rat, dRatN: dt?.ratN, dPay: dt?.pay, dLg: dt?.lg, dIni: dt?.ini, dDesc: dt?.desc, dNeed: dt ? needTxt(dt) : '',
+      dBadges: dt?.badges || [], dTags: dt?.tags || [], dIce: dt?.ice || [],
+      closeDetail: () => this.setState({detail:null}),
+      stop: e => e.stopPropagation(),
+      detailLike: () => { const cur = this.state.detail; this.setState({detail:null}); if (cur) this.act(cur, 'like'); },
+      detailSkip: () => { const cur = this.state.detail; this.setState({detail:null}); if (cur) this.act(cur, 'skip'); },
+      // dock
+      dockTabs, notchLeft
+    };
+  }
+
+  fSendMsg(){
+    const t = this.state.fdraft.trim();
+    if (!t) return;
+    const i = this.state.activeFChat;
+    const up = this.state.fchats.map((m, j) => j === i ? {...m, msgs:[...m.msgs, {me:true, txt:t}]} : m);
+    this.setState({fchats: up, fdraft:''});
+    clearTimeout(this._frt);
+    this._frt = setTimeout(() => {
+      const up2 = this.state.fchats.map((m, j) => j === i ? {...m, msgs:[...m.msgs, {me:false, txt:'Ďakujem za správu! Ozvem sa hneď, ako budem vedieť.'}]} : m);
+      this.setState({fchats: up2});
+    }, 1400);
+  }
+
+  sendMsg(){
+    const t = this.state.draft.trim();
+    if (!t) return;
+    const i = this.state.activeChat;
+    const up = this.state.matches.map((m, j) => j === i ? {...m, msgs:[...m.msgs, {me:true, txt:t}]} : m);
+    this.setState({matches: up, draft:''});
+    clearTimeout(this._rt);
+    this._rt = setTimeout(() => {
+      const up2 = this.state.matches.map((m, j) => j === i ? {...m, msgs:[...m.msgs, {me:false, txt:'Super, dohodnuté! Ozveme sa s detailami.'}]} : m);
+      this.setState({matches: up2});
+    }, 1400);
+  }
+}
+</script>
+</body>
+</html>
