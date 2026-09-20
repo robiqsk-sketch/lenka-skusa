@@ -727,7 +727,6 @@ function suggCard(o, r) {
     <div class="top">
       <div class="av anon">${PERSON}</div>
       <div><div class="n">Brigádnik</div><div class="s">${esc(HOURS[r.hours] || '')}</div><div class="s">${esc(avail)}</div></div>
-      <div class="score">${r.score} %<small>zhoda</small></div>
     </div>
     ${(r.skills || []).length ? `<div class="skills">${r.skills.map(k => `<span>${esc(k)}</span>`).join('')}</div>` : ''}
     ${done ? `<div class="sent">✓ Oslovený — čaká sa na odpoveď</div>` : `<button class="contact" data-sugg="${key}" data-act="invite">✦ Osloviť</button>`}

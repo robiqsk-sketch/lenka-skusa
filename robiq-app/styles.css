@@ -347,8 +347,6 @@ h2 b { font-weight: 700; color: #40319F; }
 .cand.sugg { border-style: dashed; border-color: rgba(124,108,224,.45); box-shadow: none; background: rgba(255,255,255,.7); }
 .cand .av.anon { background: rgba(124,108,224,.16); color: #40319F; }
 .cand .av.anon svg { width: 22px; height: 22px; }
-.cand .score { margin-left: auto; align-self: flex-start; text-align: right; font-size: 18px; font-weight: 700; color: #15803D; line-height: 1; white-space: nowrap; flex-shrink: 0; }
-.cand .score small { display: block; font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: #3F3A55; font-weight: 700; margin-top: 3px; }
 /* Student side: a company reached out first */
 .job.invited { border-color: rgba(21,128,61,.35); }
 .invite-badge { font-size: 11px; font-weight: 700; color: #15803D; background: rgba(21,128,61,.1); border-radius: 99px; padding: 5px 12px; align-self: flex-start; margin: -6px 0 -6px; }
