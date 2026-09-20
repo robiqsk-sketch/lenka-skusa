@@ -83,11 +83,12 @@
     <main class="login-card">
       <div class="logo"><span>Robiq<b>.</b></span></div>
       <div class="tagline">Nehľadaj brigádu. Nechaj ju nájsť teba.</div>
-      <div class="fields">
-        <input class="input" type="email" placeholder="E-mail">
-        <input class="input" type="password" placeholder="Heslo">
-      </div>
-      <button class="primary" data-go="doLogin">Prihlásiť sa</button>
+      <form class="fields" id="login-form">
+        <input class="input" type="email" id="login-email" placeholder="E-mail" autocomplete="email">
+        <input class="input" type="password" id="login-pass" placeholder="Heslo" autocomplete="current-password">
+      </form>
+      <div class="form-err" id="login-err"></div>
+      <button class="primary" data-go="doLogin" id="login-btn">Prihlásiť sa</button>
       <div class="divider"><span></span>alebo<span></span></div>
       <button class="secondary" data-go="goRegister">Vytvoriť účet</button>
       <div class="link-row"><button class="link" data-go="goFirmReg">Ste firma? Vytvorte si firemný účet →</button></div>
@@ -115,6 +116,7 @@
         <div class="dots" id="ob-dots"><span></span><span></span><span></span></div>
       </div>
       <div id="ob-step"></div>
+      <div class="form-err" id="ob-err"></div>
       <div class="foot"><button class="back" id="ob-back">← Späť</button><button class="next" id="ob-next">Pokračovať</button></div>
     </main>
   </section>
@@ -127,10 +129,14 @@
         <div class="dots" id="fob-dots"><span></span><span></span><span></span></div>
       </div>
       <div id="fob-step"></div>
+      <div class="form-err" id="fob-err"></div>
       <div class="foot"><button class="back" id="fob-back">← Späť</button><button class="next" id="fob-next">Pokračovať</button></div>
     </main>
   </section>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

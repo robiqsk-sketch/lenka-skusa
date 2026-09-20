@@ -1,210 +1,330 @@
-// ═══════════ Data — l.1029–1054 (jobs), 1063–1110 (skills), 1249, 1473 ═══════════
-const JOBS = [
-  {id:1,t:'Barista — víkendy',f:'Kavey Coffee · Bratislava',pay:'7,50 €',need:2,taken:1,posted:'pred 2 dňami',start:'18. júla',lg:'#5546C4',ini:'K',rat:'4,8',ratN:23,score:87,ai:false,match:false,
-   badges:['✓ Overená firma','⚡ Rýchla odpoveď'],tags:['Víkendy','Bez praxe','Staré Mesto'],
-   desc:'Ranné a víkendové zmeny v specialty kaviarni v centre. Skúsenosti netreba — zaškolíme ťa, latte art zvládneš za mesiac.',
-   ice:['Čo ťa naučíme za prvý mesiac? — Latte art a prácu s espresso strojom La Marzocco.','Aký je tím? — Šiesti, väčšina študenti. Playlist si volíme spoločne.','Najlepší benefit? — Káva zadarmo aj mimo zmeny.']},
-  {id:2,t:'Junior frontend výpomoc',f:'TechLink s.r.o. · remote',pay:'12 €',need:1,taken:0,posted:'včera',start:'ihneď',lg:'#0EA5E9',ini:'T',rat:'4,9',ratN:11,score:94,ai:true,match:true,
-   badges:['✓ Overená firma','Nástup ASAP'],tags:['React','Remote','10 h / týž.'],
-   desc:'Pomáhaj nášmu tímu s React komponentami a drobnými fixami. Ideálne popri škole — úlohy si plánuješ sám, code review dostaneš na každý PR.',
-   ice:['Čo ťa naučíme za prvý mesiac? — Prácu v reálnom git flow a code review kultúru.','Aký je tím? — 4 devi, štandup 2× týždenne, inak async.','Najlepší benefit? — Referencia a mentoring od seniora.']},
-  {id:3,t:'Hosteska — eventy',f:'Eventix · Bratislava',pay:'9 €',need:8,taken:3,posted:'pred 4 dňami',start:'24. júla',lg:'#9F8FF2',ini:'E',rat:'4,3',ratN:41,score:71,ai:false,match:false,
-   badges:['⚡ Rýchla odpoveď'],tags:['Večery','Flexibilné','Tímové'],
-   desc:'Vítanie hostí a registrácia na firemných eventoch a konferenciách. Večerné akcie, výber termínov je na tebe.',
-   ice:['Čo ťa naučíme za prvý mesiac? — Prácu s registračným systémom a event etiketu.','Aký je tím? — Mladý, na každej akcii iná zostava.','Najlepší benefit? — Catering a networking zadarmo.']},
-  {id:4,t:'Doučovanie matematiky',f:'SmartKids · online',pay:'15 €',need:3,taken:1,posted:'pred 3 hodinami',start:'od septembra',lg:'#7C6CE0',ini:'S',rat:'4,7',ratN:18,score:89,ai:true,match:true,
-   badges:['✓ Overená firma'],tags:['Online','VŠ študent','Poobede'],
-   desc:'Online doučovanie stredoškolákov, 60-minútové bloky poobede. Materiály dostaneš, ty dodáš trpezlivosť.',
-   ice:['Čo ťa naučíme za prvý mesiac? — Didaktiku a prácu s našou online tabuľou.','Aký je tím? — 30+ doučovateľov, komunita na Discorde.','Najlepší benefit? — Sám si volíš počet žiakov.']},
-  {id:5,t:'Skladová výpomoc — víkendy',f:'LogisPack · Trnava',pay:'8,20 €',need:5,taken:4,posted:'pred 6 dňami',start:'12. júla',lg:'#40319F',ini:'L',rat:'4,1',ratN:35,score:64,ai:false,match:false,
-   badges:['⚡ Rýchla odpoveď'],tags:['Víkendy','Fyzická práca','Trnava'],
-   desc:'Kompletizácia objednávok v modernom sklade. Sobota alebo nedeľa, 8-hodinové zmeny, doprava z centra Trnavy zdarma.',
-   ice:['Čo ťa naučíme za prvý mesiac? — Prácu so skenerom a logistiku e-shopu.','Aký je tím? — Zmena 10 ľudí, polovica brigádnici.','Najlepší benefit? — Príplatok 20 % za nedeľu.']},
-  {id:6,t:'Social media asistent',f:'Mode Studio · Bratislava',pay:'10 €',need:1,taken:0,posted:'včera',start:'ihneď',lg:'#7C6CE0',ini:'M',rat:'4,6',ratN:9,score:82,ai:true,match:false,
-   badges:['✓ Overená firma'],tags:['Instagram','Kreatívne','Hybrid'],
-   desc:'Príprava reels a stories pre módne značky. Hybrid — natáčanie v štúdiu, strih z domu.',
-   ice:['Čo ťa naučíme za prvý mesiac? — Strih v CapCute na profi úrovni.','Aký je tím? — Kreatívne duo + ty.','Najlepší benefit? — Vlastné portfólio kampaní.']},
-];
-const CANDS = [                                          // l.1055–1062
-  {id:1,adult:true,n:'Marek K.',ini:'MK',school:'FIIT STU',role:'Frontend',offer:'Barista — víkendy',hrs:'10 h / týž.',rat:'4,9',ratN:7,skills:['React','TypeScript','Figma'],score:92,g:'linear-gradient(135deg,#5546C4,#9F8FF2)'},
-  {id:2,adult:true,n:'Laura B.',ini:'LB',school:'EUBA',role:'Marketing',offer:'Hosteska — letné eventy',hrs:'20 h / týž.',rat:'4,8',ratN:12,skills:['Instagram','Copywriting','Canva'],score:88,g:'linear-gradient(135deg,#5546C4,#40319F)'},
-  {id:3,adult:true,n:'Adam V.',ini:'AV',school:'FMFI UK',role:'Doučovanie',offer:'Barista — víkendy',hrs:'flexibilne',rat:'5,0',ratN:5,skills:['Matematika','Fyzika','AJ B2'],score:85,g:'linear-gradient(135deg,#7C6CE0,#9F8FF2)'},
-  {id:4,adult:false,n:'Samuel T.',ini:'ST',school:'SPŠE',role:'Sklad',offer:'Skladová výpomoc',hrs:'víkendy',rat:'4,6',ratN:14,skills:['VZV preukaz','Spoľahlivosť'],score:81,g:'linear-gradient(135deg,#40319F,#5546C4)'},
-  {id:5,adult:false,n:'Nina H.',ini:'NH',school:'ŠUP J. Vydru',role:'Grafika',offer:'Hosteska — letné eventy',hrs:'poobede',rat:'4,7',ratN:6,skills:['Illustrator','Photoshop'],score:77,g:'linear-gradient(135deg,#7C6CE0,#7C6CE0)'},
-  {id:6,adult:true,n:'Ema S.',ini:'ES',school:'FiF UK',role:'Eventy',offer:'Hosteska — letné eventy',hrs:'večery',rat:'4,8',ratN:19,skills:['Komunikácia','AJ C1','NJ B2'],score:74,g:'linear-gradient(135deg,#9F8FF2,#7C6CE0)'},
-];
-const TYPES = ['Víkendy', 'Poobede', 'Večery', 'Remote', 'Flexibilné'];   // l.1110
-const GROUPS = [
-  { g: 'Pracovné pozície', items: ['Barista','Čašník / Servírka','Predaj','Pokladňa','Sklad','Eventy','Hostesing','Promo akcie','Doučovanie','Kuriér','Rozvoz','Recepcia','Kuchyňa','Upratovanie','Administratíva'] },
-  { g: 'Digitálne zručnosti', items: ['React','Tvorba webu','Grafika','Figma','Canva','Photoshop','Video strih','Copywriting','Sociálne siete','Excel','Dátová analýza','AI nástroje'] },
-  { g: 'Jazyky', items: ['Angličtina','Nemčina','Španielčina','Francúzština','Taliančina','Ruština','Ukrajinčina','Maďarčina','Poľština','Čínština'] },
-  { g: 'Vlastnosti a iné', items: ['Vodičák B','Komunikatívnosť','Spoľahlivosť','Práca v tíme','Fyzická kondícia','Flexibilita','Práca pod tlakom','Organizovanosť','Rýchle učenie'] },
-];
-const SKILLS = GROUPS.flatMap(x => x.items);
-const LANGS  = GROUPS.find(x => x.g === 'Jazyky').items;
-const LANG_LVLS = ['A1–A2', 'B1–B2', 'C1–C2'];
-const LVLS      = ['Základy', 'Dobré', 'Top'];
-const RELATED = {
-  'Barista':['Obsluha','Latte art','Príprava nápojov'], 'Čašník / Servírka':['Obsluha','Someliérstvo','Barmanstvo'],
-  'Predaj':['Obsluha','Merchandising','Reklamácie'], 'Pokladňa':['Obsluha','Inventúra'], 'Sklad':['VZV preukaz','Inventúra','Balenie objednávok'],
-  'Eventy':['Stavba pódia','Šatňa','Vstupenky'], 'Hostesing':['Modeling','Degustácie'], 'Promo akcie':['Letáky','Sampling'],
-  'Doučovanie':['Matematika','Fyzika','Slovenčina','Programovanie pre deti'], 'Kuriér':['Vlastné auto','Bicykel','Skúter'],
-  'Rozvoz':['Vlastné auto','Navigácia'], 'Recepcia':['Rezervácie','Telefonovanie'], 'Kuchyňa':['Príprava jedál','Hygienické minimum','Umývanie riadu'],
-  'Administratíva':['Fakturácia','Dátové tabuľky','Telefonovanie'], 'React':['TypeScript','CSS','Git','Next.js'], 'Tvorba webu':['WordPress','HTML/CSS','SEO'],
-  'Grafika':['Illustrator','Branding','Tlačoviny'], 'Figma':['Prototypovanie','UI dizajn'], 'Canva':['Prezentácie','Social media grafika'],
-  'Photoshop':['Retuš','Fotografovanie'], 'Video strih':['CapCut','Premiere','Reels'], 'Copywriting':['SEO texty','Blog','Newslettre'],
-  'Sociálne siete':['Reels','TikTok','Community management'], 'Excel':['PowerPoint','Dátové tabuľky','Google Sheets'], 'Dátová analýza':['SQL','Power BI'],
-  'AI nástroje':['ChatGPT','Midjourney','Automatizácie'], 'Vodičák B':['Vlastné auto','Rozvoz'], 'Angličtina':['Preklady','Zákaznícka podpora'],
-  'Nemčina':['Preklady','Zákaznícka podpora'], 'Španielčina':['Preklady'], 'Francúzština':['Preklady'], 'Ukrajinčina':['Tlmočenie'],
-  'Komunikatívnosť':['Telefonovanie','Zákaznícka podpora'], 'Práca v tíme':['Vedenie zmeny'], 'Fyzická kondícia':['Sťahovanie','Stavba pódia'],
-};
-const HOURS  = ['5 h / týždeň', '10 h / týždeň', '20 h / týždeň', 'Fulltime cez leto'];
-const DAYS   = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne'];
-const TIMES  = [['Ráno','6–12 h'], ['Poobede','12–18 h'], ['Večer','18–23 h'], ['Nočné zmeny','23–6 h']];
-const FIELDS = ['Gastro','Retail','Sklad a logistika','Administratíva','Eventy','IT a dizajn','Doučovanie','Manuálna práca'];
+// Robiq — app logic. UI follows Robiq MVP.dc.html (line numbers in comments);
+// data lives in Supabase (see ../supabase/schema.sql).
 
-// Dock tabs — l.1305–1309
-const PERSON = `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.6 20c0-3.6 3.3-5.6 7.4-5.6s7.4 2 7.4 5.6"/></svg>`;
-const STUDENT_TABS = [['Objavuj','❖'], ['Správy','✉'], ['Profil', PERSON]];
-const FIRM_TABS    = [['Ponuka','❖'], ['Správy','✉'], ['Inzeráty','☰'], ['Profil', PERSON]];
+const CFG = window.ROBIQ_CONFIG;
+const sb = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
 
-// ═══════════ State — l.1112–1138 ═══════════
-// Guest-first: the prototype opens on the feed, signed out.
+// ═══════════ State ═══════════
+// `screen` decides which <section> is visible: app · login · pick · ob · fob
 const initialState = () => ({
-  screen: 'app', authed: false, role: 'student', pendingJob: null, gate: false,
+  screen: 'app', authed: false, role: 'student', uid: null, pendingJob: null, gate: false,
   tab: 0, ftab: 0, loading: false, accMenu: false, notifOn: true, rowMenu: null,
-  handled: [], viewed: 0, liked: 0, likedIds: [], blockedFirms: [],
-  matches: [{ jobId: 1, name: 'Kavey Coffee', job: 'Barista — víkendy', ini: 'K', lg: '#5546C4',      // l.1122–1125
-    msgs: [{ me: false, txt: 'Ahoj! Videli sme tvoj profil — kedy by si sa vedel zastaviť na skúšobnú zmenu?' },
-           { me: true,  txt: 'Ahoj! Pokojne tento víkend, sobota ráno?' },
-           { me: false, txt: 'Sobota 9:00 znie super. Laurinská 4, pýtaj si Petru.' }] }],
-  activeChat: 0, draft: '',
-  detail: null, toast: '', banner: false, bannerName: '',
-  // company side — l.1127–1137
-  fchats: [{ candId: 1, name: 'Marek K.', job: 'Barista — víkendy', ini: 'MK', lg: 'linear-gradient(135deg,#5546C4,#9F8FF2)',
-    msgs: [{ me: true,  txt: 'Dobrý deň Marek, váš profil nám sedí na víkendové zmeny. Máte čas tento týždeň na krátky hovor?' },
-           { me: false, txt: 'Dobrý deň! Áno, vo štvrtok poobede alebo v piatok kedykoľvek.' }] }],
-  activeFChat: 0, fdraft: '', aiNote: '', contacted: [], blocked: [], delIdx: null, only18: false,
-  fT: '', fPay: '', fNeed: '', fTypes: [],
-  // student onboarding + profile (l.1116, 1118)
-  obStep: 1, obName: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
-  profEdit: false, birth: '2006-03-14',
-  bio: 'Študent FIIT, hľadám brigády popri škole — najradšej víkendy. Rýchlo sa učím a nevadí mi fyzická práca.',
-  // company registration + profile (seeded from registration, l.1486–1488)
-  fobStep: 1, fobName: '', fobIco: '', fobLogo: '', fobFields: [], fobContact: '', fobEmail: '', fobPass: '', fobTerms: false,
-  fpName: 'Kavey Coffee s.r.o.', fpLogo: '', fpVerified: true,
-  fpDesc: 'Specialty kaviareň v centre. Mladý tím, väčšina študenti — zmeny si plánuješ podľa rozvrhu.',
-  offers: [{ t: 'Barista — víkendy',       pay: '7,50 € / hod', views: 412, likes: 38, m: 6, need: 2, on: true  },   // l.1133–1135
-           { t: 'Hosteska — letné eventy', pay: '9 € / hod',    views: 230, likes: 21, m: 3, need: 8, on: true  },
-           { t: 'Skladová výpomoc',        pay: '8,20 € / hod', views: 145, likes: 9,  m: 1, need: 5, on: false }],
+  detail: null, toast: '', banner: false, bannerName: '', delIdx: null,
+  // feed (guest + student)
+  postings: [], likedIds: [], skippedIds: [], blockedFirms: [],
+  // student
+  obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
+  profEdit: false, birth: '', bio: '',
+  matches: [], activeChat: 0, draft: '', myInterests: [],
+  // company
+  fobStep: 1, fobName: '', fobIco: '', fobLogo: '', fobLogoFile: null, fobFields: [], fobContact: '', fobEmail: '', fobPass: '', fobTerms: false,
+  fpName: '', fpDesc: '', fpLogo: '', fpVerified: false,
+  offers: [], candidates: [], contacted: [], blocked: [], fchats: [], activeFChat: 0, fdraft: '',
+  fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false,
 });
 let state = initialState();
-let order = shuffle();                                   // l.1241: guests see a shuffled feed
-let loadT, toastT, bannerT;
-
-function shuffle() { return JOBS.map(j => j.id).sort(() => Math.random() - .5); }
+let order = [];                                            // guest feed order (shuffled)
+let loadT, toastT, bannerT, rt;
 const isStudent = () => state.role === 'student';
 
+// ═══════════ Data: reading ═══════════
+function colorFor(name) {                                  // deterministic logo colour from the palette
+  let h = 0; for (const ch of name || '') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return LOGO_COLORS[h % LOGO_COLORS.length];
+}
+function ago(ts) {                                         // "pred 2 dňami" etc.
+  const s = (Date.now() - new Date(ts)) / 1000;
+  if (s < 60) return 'práve teraz';
+  const m = Math.floor(s / 60); if (m < 60) return `pred ${m} min`;
+  const h = Math.floor(m / 60); if (h < 24) return h === 1 ? 'pred hodinou' : `pred ${h} hodinami`;
+  const d = Math.floor(h / 24); if (d === 1) return 'včera';
+  return `pred ${d} dňami`;
+}
+function jobFromRow(p) {                                   // posting row (+company) → card model
+  const c = p.companies || {};
+  return {
+    id: p.id, companyId: p.company_id, t: p.title, f: c.name || 'Firma', pay: p.pay + ' €', need: p.need, taken: p.taken,
+    posted: ago(p.created_at), start: p.start, lg: colorFor(c.name), logo: c.logo_url, ini: (c.name || 'F')[0].toUpperCase(),
+    badges: c.verified ? ['✓ Overená firma'] : [], tags: p.types || [], desc: p.description || '', ice: [], only18: p.only18,
+  };
+}
+function shuffle(list) { return list.map(x => x.id).sort(() => Math.random() - .5); }
+
+async function loadPostings() {
+  const { data, error } = await sb.from('postings')
+    .select('*, companies(name, verified, logo_url)').eq('active', true).order('created_at', { ascending: false });
+  if (error) throw error;
+  state.postings = data.map(jobFromRow);
+  if (!order.length) order = shuffle(state.postings);
+}
+
+async function loadMe() {                                  // who is signed in, and their role data
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { state.authed = false; state.uid = null; return; }
+  state.uid = session.user.id;
+  const { data: prof } = await sb.from('profiles').select('role').eq('id', state.uid).maybeSingle();
+  if (!prof) { state.authed = false; return; }             // profile trigger not run yet — treat as guest
+  state.authed = true; state.role = prof.role;
+  if (prof.role === 'student') await loadStudent(); else await loadCompany();
+}
+
+async function loadStudent() {
+  const [{ data: s }, { data: ints }, { data: skips }] = await Promise.all([
+    sb.from('students').select('*').eq('id', state.uid).single(),
+    sb.from('interests').select('posting_id, postings(id, title, pay, companies(name, logo_url))').eq('student_id', state.uid),
+    sb.from('skips').select('posting_id').eq('student_id', state.uid),
+  ]);
+  if (s) Object.assign(state, { obName: s.name, obSkills: s.skills || [], obHours: s.hours, availDays: s.avail_days || [],
+    availTimes: s.avail_times || [], birth: s.birth || '', bio: s.bio || '' });
+  state.likedIds = (ints || []).map(i => i.posting_id);
+  state.myInterests = (ints || []).filter(i => i.postings).map(i => ({
+    postingId: i.posting_id, t: i.postings.title, f: i.postings.companies?.name || 'Firma', pay: i.postings.pay + ' €',
+    lg: colorFor(i.postings.companies?.name), ini: (i.postings.companies?.name || 'F')[0].toUpperCase() }));
+  state.skippedIds = (skips || []).map(x => x.posting_id);
+  await loadMatches();
+}
+
+async function loadCompany() {
+  const [{ data: c }, { data: posts }, { data: cints }] = await Promise.all([
+    sb.from('companies').select('*').eq('id', state.uid).single(),
+    sb.from('postings').select('*, interests(count), matches(count)').eq('company_id', state.uid).order('created_at', { ascending: false }),
+    sb.from('company_interests').select('student_id, posting_id').eq('company_id', state.uid),
+  ]);
+  if (c) Object.assign(state, { fpName: c.name, fpDesc: c.description || '', fpLogo: c.logo_url || '', fpVerified: c.verified });
+  state.offers = (posts || []).map(p => ({ id: p.id, t: p.title, pay: p.pay + ' € / hod', views: p.views,
+    likes: p.interests?.[0]?.count || 0, m: p.matches?.[0]?.count || 0, need: p.need, on: p.active }));
+  state.contacted = (cints || []).map(x => x.student_id + ':' + x.posting_id);
+  await loadCandidates();
+  await loadMatches();
+}
+
+async function loadCandidates() {                          // students who liked one of my postings, grouped later by posting
+  const { data } = await sb.from('interests')
+    .select('posting_id, created_at, postings!inner(title, company_id), students(id, name, skills, hours)')
+    .eq('postings.company_id', state.uid);
+  state.candidates = (data || []).filter(r => r.students).map(r => ({
+    id: r.students.id, n: r.students.name || 'Študent', ini: initialsOf(r.students.name), hrs: HOURS[r.students.hours] || '',
+    skills: (r.students.skills || []).map(k => k.n), offer: r.postings.title, postingId: r.posting_id, at: r.created_at,
+    g: `linear-gradient(135deg, ${colorFor(r.students.name)}, #9F8FF2)` }));
+}
+
+async function loadMatches() {
+  const col = isStudent() ? 'student_id' : 'company_id';
+  const { data } = await sb.from('matches')
+    .select('id, posting_id, student_id, company_id, created_at, postings(title), companies(name, logo_url), students(name)')
+    .eq(col, state.uid).order('created_at');
+  const list = (data || []).map(m => {
+    const other = isStudent() ? (m.companies?.name || 'Firma') : (m.students?.name || 'Študent');
+    return { id: m.id, postingId: m.posting_id, name: other, job: m.postings?.title || '', msgs: [],
+      ini: isStudent() ? other[0].toUpperCase() : initialsOf(other),
+      lg: isStudent() ? colorFor(other) : `linear-gradient(135deg, ${colorFor(other)}, #9F8FF2)` };
+  });
+  if (list.length) {
+    const { data: msgs } = await sb.from('messages').select('*').in('match_id', list.map(m => m.id)).order('created_at');
+    for (const msg of msgs || []) { const m = list.find(x => x.id === msg.match_id); if (m) m.msgs.push({ id: msg.id, me: msg.sender_id === state.uid, txt: msg.body }); }
+  }
+  if (isStudent()) state.matches = list; else state.fchats = list;
+}
+
+function initialsOf(name) { return (name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'; }
+
+// ═══════════ Realtime: new messages and matches ═══════════
+function subscribe() {
+  if (rt) sb.removeChannel(rt);
+  if (!state.authed) return;
+  rt = sb.channel('robiq')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, ({ new: msg }) => {
+      const list = isStudent() ? state.matches : state.fchats;
+      const m = list.find(x => x.id === msg.match_id);
+      if (!m || m.msgs.some(x => x.id === msg.id)) return;
+      m.msgs.push({ id: msg.id, me: msg.sender_id === state.uid, txt: msg.body });
+      render();
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matches' }, async ({ new: m }) => {
+      if (m.student_id !== state.uid && m.company_id !== state.uid) return;
+      await onNewMatch(m.id);
+    })
+    .subscribe();
+}
+async function onNewMatch(id) {                            // banner l.946–950
+  const list = isStudent() ? state.matches : state.fchats;
+  if (list.some(x => x.id === id)) return;
+  await loadMatches();
+  const m = (isStudent() ? state.matches : state.fchats).find(x => x.id === id);
+  if (!m) return;
+  if (isStudent()) { state.banner = true; state.bannerName = m.name; clearTimeout(bannerT); bannerT = setTimeout(() => { state.banner = false; render(); }, 3500); }
+  else showToast(`Zhoda: ${m.name} má záujem o ${m.job}.`);
+  if (!isStudent()) await loadCompany();
+  render();
+}
+
 // ═══════════ Actions ═══════════
-function startLoad(ms) {                                 // l.1143–1147: skeleton while "loading"
+function startLoad(ms) {                                   // skeleton while "loading" — l.1143–1147
   clearTimeout(loadT);
   state.loading = true; render();
   loadT = setTimeout(() => { state.loading = false; render(); }, ms || 900);
 }
-function showToast(msg) {                                // l.1148–1152
+function showToast(msg) {                                  // l.1148–1152
   clearTimeout(toastT);
   state.rowMenu = null; state.toast = msg; render();
   toastT = setTimeout(() => { state.toast = ''; render(); }, 2600);
 }
-function act(job, dir) {                                 // l.1219–1235
+function fail(e) { console.error(e); showToast(e.message || 'Niečo sa nepodarilo.'); }
+
+async function act(job, dir) {                             // l.1219–1235
   if (!state.authed && dir === 'like') { state.gate = true; state.pendingJob = job; state.detail = null; render(); return; }
-  if (state.handled.includes(job.id)) return;
-  state.handled.push(job.id); state.viewed++;
-  if (dir === 'like') {
-    state.liked++; state.likedIds.push(job.id);
-    if (job.match && !state.matches.some(m => m.jobId === job.id)) {
-      state.matches.push({ jobId: job.id, name: job.f.split(' · ')[0], job: job.t, ini: job.ini, lg: job.lg,
-        msgs: [{ me: false, txt: 'Ahoj! Tvoj profil nám sedí — kedy máš čas na krátky call?' }] });
-      state.banner = true; state.bannerName = job.f.split(' · ')[0];
-      clearTimeout(bannerT); bannerT = setTimeout(() => { state.banner = false; render(); }, 3500);
+  if (state.likedIds.includes(job.id) || state.skippedIds.includes(job.id)) return;
+  try {
+    if (dir === 'like') {
+      const { error } = await sb.from('interests').insert({ posting_id: job.id, student_id: state.uid });
+      if (error) throw error;
+      state.likedIds.push(job.id);
+      state.myInterests.push({ postingId: job.id, t: job.t, f: job.f, pay: job.pay, lg: job.lg, ini: job.ini });
+      render();
+      const { data: m } = await sb.from('matches').select('id').eq('posting_id', job.id).eq('student_id', state.uid).maybeSingle();
+      if (m) await onNewMatch(m.id);
+    } else {
+      const { error } = await sb.from('skips').insert({ posting_id: job.id, student_id: state.uid });
+      if (error) throw error;
+      state.skippedIds.push(job.id);
+      render();
     }
-  }
-  render();
+  } catch (e) { fail(e); }
 }
-function enterApp(extra) {                               // shared by login and both onboardings
+
+async function enterApp(extra) {                           // after sign-in / registration
   const pj = state.pendingJob;
-  Object.assign(state, { screen: 'app', authed: true, pendingJob: null }, extra);
-  startLoad();
-  if (pj) setTimeout(() => act(pj, 'like'), 40);         // l.1498–1503: send the interest that hit the gate
+  Object.assign(state, { screen: 'app', pendingJob: null, gate: false }, extra);
+  state.loading = true; render();
+  try { await loadMe(); await loadPostings(); } catch (e) { fail(e); }
+  state.loading = false;
+  if (state.authed && !isStudent()) state.ftab = 0;
+  subscribe();
+  render();
+  if (pj && state.authed && isStudent()) setTimeout(() => act(pj, 'like'), 40);   // l.1498–1503
 }
+
+function setErr(id, msg) { const el = document.getElementById(id); if (el) el.textContent = msg || ''; }
 
 const go = {
   // entry — l.1447–1450, 1498–1504
-  doLogin:     () => enterApp(),
+  doLogin: async () => {
+    const email = document.getElementById('login-email').value.trim(), pass = document.getElementById('login-pass').value;
+    setErr('login-err', '');
+    if (!email || !pass) { setErr('login-err', 'Zadaj e-mail a heslo.'); return; }
+    const btn = document.getElementById('login-btn'); btn.disabled = true;
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    btn.disabled = false;
+    if (error) { setErr('login-err', error.message === 'Invalid login credentials' ? 'Nesprávny e-mail alebo heslo.' : error.message); return; }
+    document.getElementById('login-pass').value = '';
+    await enterApp();
+  },
   goRegister:  () => { state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },
   goSignup:    () => { state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },
-  goFirmReg:   () => { state.screen = 'fob'; state.role = 'firm'; state.fobStep = 1; },
-  pickStudent: () => { state.screen = 'ob';  state.role = 'student'; state.obStep = 1; },
-  pickFirm:    () => { state.screen = 'fob'; state.role = 'firm'; state.fobStep = 1; },
-  goLogin:     () => { state.screen = 'login'; },
+  goFirmReg:   () => { state.screen = 'fob'; state.fobStep = 1; },
+  pickStudent: () => { state.screen = 'ob';  state.obStep = 1; },
+  pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; },
+  goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
   // gate — l.1444–1446
   gateClose:   () => { state.gate = false; state.pendingJob = null; },
   gateLogin:   () => { state.gate = false; state.screen = 'login'; },
   gateSignup:  () => { state.gate = false; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },
   // account menu — l.1515–1524
-  menuToggle:  () => { state.accMenu = !state.accMenu; },
+  menuToggle:  el => { if (el && el.classList.contains('a-menu')) { state.accMenu = true; return; } state.accMenu = !state.accMenu; },
   menuProfile: () => { if (isStudent()) state.tab = 2; else state.ftab = 3; state.accMenu = false; },
   menuClose:   () => { state.accMenu = false; },
-  menuNotif:   () => { state.notifOn = !state.notifOn; },
-  logout:      () => {                                   // l.1506–1514: clean guest view
-    clearTimeout(bannerT); order = shuffle();
-    state = initialState(); startLoad();
+  menuNotif:   () => { state.notifOn = !state.notifOn; state.accMenu = true; },
+  logout: async () => {                                    // l.1506–1514: clean guest view
+    clearTimeout(bannerT);
+    await sb.auth.signOut();
+    state = initialState(); order = [];
+    subscribe();
+    state.loading = true; render();
+    try { await loadPostings(); } catch (e) { fail(e); }
+    state.loading = false;
   },
   goNova:      () => { state.ftab = 9; },
   // feed — l.1577–1591
-  resetDeck:   () => { state.handled = []; },
-  aiOpen:      () => { state.detail = JOBS[3]; },
+  resetDeck: async () => {
+    try { await sb.from('skips').delete().eq('student_id', state.uid); state.skippedIds = []; } catch (e) { fail(e); }
+  },
+  aiOpen:      () => { state.detail = aiJob(); },
   closeDetail: () => { state.detail = null; },
   detailLike:  () => { const j = state.detail; state.detail = null; if (j) act(j, 'like'); },
   detailSkip:  () => { const j = state.detail; state.detail = null; if (j) act(j, 'skip'); },
-  bannerGo:    () => { state.banner = false; state.tab = 1; },
-  // profile — l.1616
-  profEditToggle: () => { state.profEdit = !state.profEdit; },
+  bannerGo:    () => { state.banner = false; state.tab = 1; state.activeChat = state.matches.length - 1; },
+  noop:        () => {},
+  // profile — l.1616; saving happens on "✓ Hotovo"
+  profEditToggle: async () => {
+    state.profEdit = !state.profEdit;
+    if (!state.profEdit) await saveStudent();
+  },
   // chats — l.1689–1700, 1676–1687
-  sendMsg:  () => sendMsg('matches', 'activeChat', 'draft', 'Super, dohodnuté! Ozveme sa s detailami.'),
-  fSendMsg: () => sendMsg('fchats', 'activeFChat', 'fdraft', 'Ďakujem za správu! Ozvem sa hneď, ako budem vedieť.'),
+  sendMsg:  () => sendMsg('matches', 'activeChat', 'draft'),
+  fSendMsg: () => sendMsg('fchats', 'activeFChat', 'fdraft'),
   // new posting — l.1641–1642, 1653–1659
   set18All:  () => { state.only18 = false; },
   set18Only: () => { state.only18 = true; },
-  publish:   () => {
+  publish: async () => {
     if (!state.fT.trim()) return;
-    state.offers.unshift({ t: state.fT.trim(), pay: (state.fPay.trim() || '8') + ' € / hod', views: 0, likes: 0, m: 0,
-      need: Math.max(1, parseInt(state.fNeed, 10) || 1), on: true });
-    Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', ftab: 2 });
+    try {
+      const { error } = await sb.from('postings').insert({ company_id: state.uid, title: state.fT.trim(), pay: state.fPay.trim() || '8',
+        need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote });
+      if (error) throw error;
+      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, ftab: 2 });
+      await loadCompany(); await loadPostings();
+    } catch (e) { fail(e); }
   },
   // delete confirm — l.1638–1639
   delCancel:  () => { state.delIdx = null; },
-  delConfirm: () => { state.offers.splice(state.delIdx, 1); state.delIdx = null; showToast('Inzerát zmazaný.'); },
+  delConfirm: async () => {
+    const o = state.offers[state.delIdx]; state.delIdx = null;
+    try { const { error } = await sb.from('postings').delete().eq('id', o.id); if (error) throw error; await loadCompany(); await loadPostings(); showToast('Inzerát zmazaný.'); }
+    catch (e) { fail(e); }
+  },
 };
 
-function sendMsg(listKey, idxKey, draftKey, reply) {
-  const t = state[draftKey].trim();
-  if (!t) return;
-  const chat = state[listKey][state[idxKey]];
-  if (!chat) return;
-  chat.msgs.push({ me: true, txt: t });
+async function sendMsg(listKey, idxKey, draftKey) {
+  const t = state[draftKey].trim(); if (!t) return;
+  const chat = state[listKey][state[idxKey]]; if (!chat) return;
   state[draftKey] = '';
-  clearTimeout(replyT);
-  replyT = setTimeout(() => { chat.msgs.push({ me: false, txt: reply }); render(); }, 1400);
+  try {
+    const { data, error } = await sb.from('messages').insert({ match_id: chat.id, sender_id: state.uid, body: t }).select().single();
+    if (error) throw error;
+    if (!chat.msgs.some(m => m.id === data.id)) chat.msgs.push({ id: data.id, me: true, txt: data.body });
+    render();
+  } catch (e) { fail(e); }
 }
-let replyT;
+
+async function saveStudent() {
+  try {
+    const { error } = await sb.from('students').update({ name: state.obName.trim(), skills: state.obSkills, hours: state.obHours,
+      avail_days: state.availDays, avail_times: state.availTimes, birth: state.birth || null, bio: state.bio, updated_at: new Date().toISOString() }).eq('id', state.uid);
+    if (error) throw error;
+  } catch (e) { fail(e); }
+}
+async function saveCompany(patch) {
+  try {
+    const { error } = await sb.from('companies').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', state.uid);
+    if (error) throw error;
+    await loadPostings();                                 // company name shows on cards
+  } catch (e) { fail(e); }
+}
+async function uploadLogo(file) {                          // Storage bucket "logos", path <uid>/logo.<ext>
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+  const path = `${state.uid}/logo.${ext}`;
+  const { error } = await sb.storage.from('logos').upload(path, file, { upsert: true, contentType: file.type });
+  if (error) throw error;
+  const { data } = sb.storage.from('logos').getPublicUrl(path);
+  return data.publicUrl + '?v=' + Date.now();
+}
 
 // Every element with data-go="name" calls go[name] and re-renders.
-document.body.addEventListener('click', e => {
+document.body.addEventListener('click', async e => {
   const el = e.target.closest('[data-go]');
   if (!el) return;
   e.stopPropagation();
-  go[el.dataset.go](el);
+  await go[el.dataset.go](el);
   render();
 });
 // Close the account menu on any click elsewhere (l.1171–1172); close ⋯ menus on pointerdown outside (l.1155–1161).
@@ -214,6 +334,7 @@ document.addEventListener('pointerdown', e => {
   if (e.target.closest('[data-rowmenu]')) return;
   state.rowMenu = null; render();
 }, true);
+document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); go.doLogin(); });
 
 // ═══════════ Render ═══════════
 function render() {
@@ -228,7 +349,7 @@ function renderApp() {
   renderHeader();
   const main = document.getElementById('a-main');
   if (state.loading) main.innerHTML = skeleton();
-  else if (isStudent()) {
+  else if (!state.authed || isStudent()) {
     main.innerHTML = [feed, zhody, profile][state.tab]();
     if (state.tab === 2 && state.profEdit) bindEditors();
   }
@@ -238,7 +359,7 @@ function renderApp() {
   document.getElementById('a-layers').innerHTML = layers();
 }
 
-function renderHeader() {                                // l.342–372
+function renderHeader() {                                  // l.342–372
   const r = document.getElementById('a-hdr-right');
   if (!state.authed) {
     r.innerHTML = `<div class="a-guest">
@@ -259,18 +380,10 @@ function renderHeader() {                                // l.342–372
     </div>`;
   r.innerHTML = `${nova}<div class="a-acc"><button class="a-ava" aria-label="Účet" data-go="menuToggle">${avaInit()}</button>${menu}</div>`;
 }
-// Menu items that only close the menu re-toggle it; make menuToggle on the menu container a no-op.
-const _menuToggle = go.menuToggle;
-go.menuToggle = el => { if (el.classList.contains('a-menu')) { state.accMenu = true; return; } _menuToggle(); };
-go.menuNotif = el => { state.notifOn = !state.notifOn; state.accMenu = true; };
+function menuName() { return isStudent() ? (state.obName || 'Študent') : state.fpName; }
+function avaInit() { return isStudent() ? initials() : (initialsOf(state.fpName) || 'F'); }
 
-function menuName() { return isStudent() ? (state.obName || 'Marek Kováč') : state.fpName; }      // l.1517
-function avaInit() {                                     // l.1532
-  if (isStudent()) return initials();
-  return state.fpName.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'F';
-}
-
-function skeleton() {                                    // l.377–403
+function skeleton() {                                      // l.377–403
   const card = `<div class="sk-card">
     <div style="display:flex;align-items:center;gap:14px"><div class="sk" style="width:44px;height:44px;border-radius:12px;flex-shrink:0"></div>
       <div style="flex:1;display:flex;flex-direction:column;gap:8px"><div class="sk" style="width:62%;height:16px;border-radius:6px"></div><div class="sk lt" style="width:44%;height:12px;border-radius:99px"></div></div></div>
@@ -284,38 +397,48 @@ function skeleton() {                                    // l.377–403
 }
 
 // l.1313
-const needTxt = j => { const free = j.need - (j.taken || 0); return `Voľné ${free} / ${j.need} ${j.need === 1 ? 'pozície' : 'pozícií'}`; };
+const needTxt = j => { const free = Math.max(0, j.need - (j.taken || 0)); return `Voľné ${free} / ${j.need} ${j.need === 1 ? 'pozície' : 'pozícií'}`; };
+const logoStyle = j => j.logo ? `background:url('${j.logo}') center/cover` : `background:${j.lg}`;
+const logoText  = j => j.logo ? '' : j.ini;
 
-function remaining() {                                   // l.1243–1245
-  return JOBS.filter(j => !state.handled.includes(j.id) || state.likedIds.includes(j.id))
-    .filter(j => !state.blockedFirms.includes(j.f))
-    .sort(state.authed ? (a, b) => b.score - a.score : (a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+function isAdult() {                                       // student age from birth date; unknown → adult
+  if (!state.birth) return true;
+  const b = new Date(state.birth), n = new Date();
+  return (n.getFullYear() - b.getFullYear() - ((n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) ? 1 : 0)) >= 18;
 }
+function remaining() {                                     // l.1243–1245
+  const adult = isAdult();
+  return state.postings
+    .filter(j => !state.skippedIds.includes(j.id) && !state.blockedFirms.includes(j.f) && (!j.only18 || adult))
+    .sort(state.authed ? (a, b) => (b.id - a.id) : (a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+}
+function aiJob() { return remaining().find(j => !state.likedIds.includes(j.id)) || null; }
 
-function feed() {                                        // l.408–475
+function feed() {                                          // l.408–475
   const list = remaining();
-  const ai = JOBS[3];
-  const tip = state.viewed < 2 ? '' : `
+  const viewed = state.likedIds.length + state.skippedIds.length;
+  const ai = viewed >= 2 ? aiJob() : null;
+  const tip = !ai ? '' : `
     <div class="ai-tip">
       <div class="eb">✦ Toto by ti sedelo</div>
-      <div class="mid"><div class="lg" style="background:${ai.lg}">${ai.ini}</div>
-        <div><div class="t">${esc(ai.t)}</div><div class="f">${esc(ai.f.split(' · ')[0])} · <b>${ai.pay}/hod</b></div></div></div>
+      <div class="mid"><div class="lg" style="${logoStyle(ai)}">${logoText(ai)}</div>
+        <div><div class="t">${esc(ai.t)}</div><div class="f">${esc(ai.f)} · <b>${esc(ai.pay)}/hod</b></div></div></div>
       <button data-go="aiOpen">Pozrieť detail</button>
     </div>`;
   const cards = list.length ? `<div class="cards">${list.map(jobCard).join('')}</div>` : `
     <div class="deck-empty">
       <div class="h">Na dnes si videl <b>všetko</b></div>
       <p>Robiq medzitým aktívne hľadá ďalšie ponuky, ktoré ti sadnú. Vráť sa večer.</p>
-      <button data-go="resetDeck">Prezrieť znova</button>
+      ${state.skippedIds.length ? '<button data-go="resetDeck">Prezrieť znova</button>' : ''}
     </div>`;
   return `<div class="a-wrap">
     <div class="a-title"><h2>Ponuky <b>pre teba</b></h2>${state.authed ? '<span class="sorted">✦ zoradené podľa zhody s tvojím profilom</span>' : ''}</div>
     ${tip}${cards}</div>`;
 }
 
-function jobCard(j) {                                    // l.425–463
+function jobCard(j) {                                      // l.425–463
   const liked = state.likedIds.includes(j.id);
-  const pct = Math.round((j.need - (j.taken || 0)) / j.need * 100);
+  const pct = Math.round(Math.max(0, j.need - (j.taken || 0)) / j.need * 100);
   const menu = state.rowMenu !== 'j' + j.id ? '' : `
     <div class="row-menu" data-rowmenu="1">
       <button data-job="${j.id}" data-act="report">Nahlásiť inzerát</button>
@@ -325,13 +448,13 @@ function jobCard(j) {                                    // l.425–463
     <div class="top"><div class="posted">${esc(j.posted)}</div>
       <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-job="${j.id}" data-act="menu">⋯</button>${menu}</div></div>
     <div class="who" data-job="${j.id}" data-act="open">
-      <div class="lg" style="background:${j.lg}">${j.ini}</div>
+      <div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
       <div style="flex:1;min-width:0"><div class="t">${esc(j.t)}</div><div class="f">${esc(j.f)}</div>
-        <div class="rat"><b>★ ${j.rat}</b> (${j.ratN} hodnotení)</div></div>
+        ${j.badges.length ? `<div class="rat"><b>${esc(j.badges[0])}</b></div>` : ''}</div>
     </div>
-    <div class="pay">${j.pay} <small>/ hod</small></div>
+    <div class="pay">${esc(j.pay)} <small>/ hod</small></div>
     <div class="need"><span>${needTxt(j)}</span><span class="bar"><i style="width:${pct}%"></i></span></div>
-    <div class="tags">${j.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
+    ${j.tags.length ? `<div class="tags">${j.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="start">Nástup <b>${esc(j.start)}</b></div>
     ${liked ? `<div class="sent">✓ Záujem odoslaný</div>` : `
     <div class="act"><button class="like" data-job="${j.id}" data-act="like">♥ Mám záujem</button>
@@ -339,23 +462,20 @@ function jobCard(j) {                                    // l.425–463
   </div>`;
 }
 
-function profile() {                                     // l.515–635
+function profile() {                                       // l.515–635
   const s = state;
-  const skills = (s.obSkills.length ? s.obSkills : [{ n: 'Barista', lvl: 2 }, { n: 'Eventy', lvl: 2 }, { n: 'Angličtina', lvl: 3 }])   // l.1610
-    .map(x => LANGS.includes(x.n)
-      ? { n: x.n, dots: LANG_LVLS[x.lvl - 1] + (x.speak !== false ? ' · rozprávam' : '') }
-      : { n: x.n, dots: '●'.repeat(x.lvl) + '○'.repeat(3 - x.lvl) });
-  const interests = s.likedIds.map(id => JOBS.find(j => j.id === id)).filter(Boolean).map(j => {   // l.1420–1426
-    const matched = s.matches.some(m => m.jobId === j.id);
-    return { ...j, firm: j.f.split(' · ')[0], status: matched ? '✓ Zhoda' : 'Čaká na odpoveď',
-      stBg: matched ? 'rgba(21,128,61,.12)' : 'rgba(36,27,69,.07)', stFg: matched ? '#15803D' : '#6E688C' };
+  const skills = s.obSkills.map(x => LANGS.includes(x.n)
+    ? { n: x.n, dots: LANG_LVLS[x.lvl - 1] + (x.speak !== false ? ' · rozprávam' : '') }
+    : { n: x.n, dots: '●'.repeat(x.lvl) + '○'.repeat(3 - x.lvl) });
+  const interests = s.myInterests.map(it => {
+    const matched = s.matches.some(m => m.postingId === it.postingId);
+    return { ...it, status: matched ? '✓ Zhoda' : 'Čaká na odpoveď', stBg: matched ? 'rgba(21,128,61,.12)' : 'rgba(36,27,69,.07)', stFg: matched ? '#15803D' : '#6E688C' };
   });
-
   const view = `
     ${s.bio.trim() ? `<div class="p-sec tight">O mne</div><p class="p-bio">${esc(s.bio)}</p>` : ''}
     <div class="p-sec">Zručnosti</div>
-    <div class="p-skills">${skills.map(k => `<span class="p-skill">${esc(k.n)} <b>${esc(k.dots)}</b></span>`).join('')}</div>`;
-
+    ${skills.length ? `<div class="p-skills">${skills.map(k => `<span class="p-skill">${esc(k.n)} <b>${esc(k.dots)}</b></span>`).join('')}</div>`
+                    : `<div class="p-empty" style="margin-bottom:26px">Zatiaľ žiadne. Klikni na <b>Upraviť</b> a pridaj, čo ti ide.</div>`}`;
   const edit = `<div class="compact">
     <div class="p-birth"><div class="l">Dátum narodenia</div><input type="date" id="p-birth" value="${esc(s.birth)}"></div>
     <div class="p-bio-edit"><div class="label" style="margin-bottom:8px">Bio</div>
@@ -365,18 +485,17 @@ function profile() {                                     // l.515–635
     <div class="p-sec" style="margin-bottom:10px">Dostupnosť</div>
     ${availabilityEditor()}
   </div>`;
-
   return `<div class="prof">
     <div class="pcard">
       <div class="p-head">
         <div class="p-ava">${initials()}</div>
-        <div style="flex:1;min-width:0"><div class="p-name">${esc(s.obName.trim() || 'Tomáš Novák')}</div><div class="p-sub">Študent · <span id="p-hours">${HOURS[s.obHours]}</span></div></div>
+        <div style="flex:1;min-width:0"><div class="p-name">${esc(s.obName.trim() || 'Študent')}</div><div class="p-sub">Študent · <span id="p-hours">${HOURS[s.obHours]}</span></div></div>
         <button class="p-edit" data-go="profEditToggle">${s.profEdit ? '✓ Hotovo' : 'Upraviť'}</button>
       </div>
       ${s.profEdit ? edit : view}
       <div class="p-stats">
-        <div><div class="n">${s.viewed}</div><div class="l">prezreté</div></div>
-        <div><div class="n">${s.liked}</div><div class="l">záujmy</div></div>
+        <div><div class="n">${s.likedIds.length + s.skippedIds.length}</div><div class="l">prezreté</div></div>
+        <div><div class="n">${s.likedIds.length}</div><div class="l">záujmy</div></div>
         <div><div class="n">${s.matches.length}</div><div class="l">zhody</div></div>
       </div>
     </div>
@@ -384,57 +503,12 @@ function profile() {                                     // l.515–635
       <div class="p-int-head"><div class="t">Moje <b>záujmy</b></div><span class="s">na čo si klikol „Mám záujem"</span></div>
       ${interests.length ? `<div class="p-int">${interests.map(it => `
         <div class="p-int-row"><div class="lg" style="background:${it.lg}">${it.ini}</div>
-          <div style="flex:1;min-width:0"><div class="t">${esc(it.t)}</div><div class="f">${esc(it.firm)} · <b>${it.pay}/hod</b></div></div>
+          <div style="flex:1;min-width:0"><div class="t">${esc(it.t)}</div><div class="f">${esc(it.f)} · <b>${esc(it.pay)}/hod</b></div></div>
           <span class="st" style="background:${it.stBg};color:${it.stFg}">${it.status}</span></div>`).join('')}</div>`
       : `<div class="p-empty">Zatiaľ žiadne. Prejdi na <b>Objavuj</b> a označ ponuky, ktoré ťa zaujali.</div>`}
     </div>
   </div>`;
 }
-
-// Card actions — l.1577–1584; skill / availability toggles inside the profile editor
-document.getElementById('a-main').addEventListener('click', e => {
-  const btn = e.target.closest('button');
-  if (btn && !btn.dataset.act && editorClick(btn)) return;
-  if (btn && btn.dataset.chat !== undefined) {                                // chat list — l.1338, 1602
-    if (isStudent()) state.activeChat = +btn.dataset.chat; else state.activeFChat = +btn.dataset.chat;
-    render(); return;
-  }
-  const el = e.target.closest('[data-act]');
-  if (!el) return;
-  const d = el.dataset, a = d.act;
-
-  if (d.job) {                                                                 // feed cards — l.1577–1584
-    const j = JOBS.find(x => x.id === +d.job);
-    if (a === 'open')   { state.detail = j; render(); }
-    if (a === 'like')   act(j, 'like');
-    if (a === 'skip')   act(j, 'skip');
-    if (a === 'menu')   { state.rowMenu = state.rowMenu === 'j' + j.id ? null : 'j' + j.id; render(); }
-    if (a === 'report') showToast('Inzerát sme nahlásili — pozrieme sa na to.');
-    if (a === 'block')  { state.blockedFirms.push(j.f); showToast('Firmu sme skryli z tvojho feedu.'); }
-  }
-  else if (d.cand) {                                                           // candidates — l.1342–1364
-    const c = CANDS.find(x => x.id === +d.cand);
-    if (a === 'menu')   { state.rowMenu = state.rowMenu === 'c' + c.id ? null : 'c' + c.id; render(); }
-    if (a === 'report') showToast('Profil sme nahlásili — pozrieme sa na to.');
-    if (a === 'block')  { state.blocked.push(c.id); showToast('Profil zablokovaný.'); }
-    if (a === 'contact') {
-      if (!state.authed) { state.gate = true; render(); return; }
-      state.contacted.push(c.id);
-      if (!state.fchats.some(f => f.candId === c.id))
-        state.fchats.push({ candId: c.id, name: c.n, job: c.offer, ini: c.ini, lg: c.g,
-          msgs: [{ me: true, txt: `Dobrý deň, váš profil nás zaujal — máte záujem o pozíciu ${c.offer}?` }] });
-      render();
-    }
-  }
-  else if (d.offer) {                                                          // company postings — l.1372–1383
-    const i = +d.offer, o = state.offers[i];
-    if (a === 'toggle') { o.on = !o.on; render(); }
-    if (a === 'menu')   { state.rowMenu = state.rowMenu === 'o' + i ? null : 'o' + i; render(); }
-    if (a === 'dup')    { state.offers.splice(i + 1, 0, { ...o, t: o.t + ' (kópia)', views: 0, likes: 0, m: 0 }); showToast('Inzerát zduplikovaný.'); }
-    if (a === 'askDel') { state.rowMenu = null; state.delIdx = i; render(); }
-  }
-  else if (a === 'type') { toggleInList(state.fTypes, d.type); render(); }    // posting type chips — l.1297–1302
-});
 
 // ─── Chat (shared by Zhody and Správy firmy) — l.482–511 / 712–741 ───
 function chatUI(list, active, isFirm) {
@@ -450,6 +524,9 @@ function chatUI(list, active, isFirm) {
       <div><div class="n">${esc(cur.name)}</div>
         <div class="j ${isFirm ? 'firm' : ''}">${isFirm ? 'Uchádzač · ' : '✓ Zhoda · '}${esc(cur.job)}</div></div></div>`;
   const msgs = (cur ? cur.msgs : []).map(m => `<div class="msg ${m.me ? 'me' : 'them'}">${esc(m.txt)}</div>`).join('');
+  if (!list.length) return `<div class="p-empty">${isFirm
+    ? 'Zatiaľ žiadne konverzácie. Chat vznikne, keď o kandidáta prejavíte záujem a on oň prejavil záujem tiež.'
+    : 'Zatiaľ žiadne zhody. Chat vznikne, keď o teba prejaví záujem firma, ktorej si dal „Mám záujem".'}</div>`;
   return `<div class="chat">
     <div class="chat-list">${items}</div>
     <div class="chat-box">${head}
@@ -458,66 +535,65 @@ function chatUI(list, active, isFirm) {
         <button data-go="${isFirm ? 'fSendMsg' : 'sendMsg'}">Odoslať</button></div>
     </div></div>`;
 }
-function zhody() {                                       // l.478–513
+function zhody() {                                         // l.478–513
   return `<div class="chat-wrap">
     <div class="a-title"><h2>Tvoje <b>správy</b></h2><span class="sub">každý chat = obojstranný záujem</span></div>
     ${chatUI(state.matches, state.activeChat, false)}</div>`;
 }
-function fspravy() {                                     // l.708–743
+function fspravy() {                                       // l.708–743
   return `<div class="chat-wrap">
     <div class="a-title"><h2>Vaše <b>správy</b></h2><span class="sub">konverzácie s uchádzačmi</span></div>
     ${chatUI(state.fchats, state.activeFChat, true)}</div>`;
 }
 
-// ─── Brigádnici — l.637–706, logic l.1342–1370 ───
+// ─── Brigádnici — l.637–706 ───
 function brig() {
   const s = state;
   let body;
   if (!s.authed) body = `<div class="gate-card"><div class="ic">◎</div>
       <div class="h">Profily brigádnikov sú len pre prihlásené firmy</div>
       <div class="p">Chránime súkromie ľudí — ich profily uvidíte po prihlásení firemného účtu.</div>
-      <div class="col"><button class="gate-b1 b1" data-go="goSignup" style="width:100%;background:#40319F;color:#fff;border:none;border-radius:13px;padding:13px 0;font-size:14px;font-weight:700;cursor:pointer">Vytvoriť firemný účet</button>
+      <div class="col"><button data-go="goSignup" style="width:100%;background:#40319F;color:#fff;border:none;border-radius:13px;padding:13px 0;font-size:14px;font-weight:700;cursor:pointer">Vytvoriť firemný účet</button>
         <button data-go="goLogin" style="width:100%;background:transparent;color:#40319F;border:1px solid rgba(64,49,159,.35);border-radius:13px;padding:12px 0;font-size:14px;font-weight:700;cursor:pointer">Už mám účet — prihlásiť sa</button></div></div>`;
   else if (s.offers.length === 0) body = `<div class="empty-card narrow">
       <div class="h">Zatiaľ nie sú koho ukázať</div>
       <div class="p">Pridajte prvý inzerát — kandidátov začneme párovať hneď po zverejnení.</div>
       <button class="btn-violet" data-go="goNova">＋ Nový inzerát</button></div>`;
   else {
-    const offerNames = s.offers.map(o => o.t);
-    const visible = CANDS.filter(c => (!s.only18 || c.adult) && offerNames.includes(c.offer) && !s.blocked.includes(c.id));
-    const groups = [...new Set(visible.map(c => c.offer))].map(off => {
-      const cands = visible.filter(c => c.offer === off).sort((a, b) => b.score - a.score);
+    const visible = s.candidates.filter(c => !s.blocked.includes(c.id));
+    if (!visible.length) body = `<div class="empty-card narrow">
+      <div class="h">Zatiaľ nikto neprejavil záujem</div>
+      <div class="p">Kandidáti sa tu objavia, keď klepnú „Mám záujem" na niektorý z vašich inzerátov.</div></div>`;
+    else body = [...new Set(visible.map(c => c.offer))].map(off => {
+      const cands = visible.filter(c => c.offer === off).sort((a, b) => new Date(b.at) - new Date(a.at));
       const count = cands.length + (cands.length === 1 ? ' kandidát' : cands.length < 5 ? ' kandidáti' : ' kandidátov');
       return `<div class="cgroup"><div class="cgroup-head"><div class="t">${esc(off)}</div><span class="c">${count}</span></div>
         <div class="cards">${cands.map(candCard).join('')}</div></div>`;
-    });
-    body = groups.join('');
+    }).join('');
   }
-  const has = s.authed && s.offers.length > 0;
+  const has = s.authed && s.candidates.length > 0;
   return `<div class="a-wrap">
     <div class="a-title" style="align-items:center"><h2>Ponuka <b>brigádnikov</b></h2>${has ? '<span class="sorted">✦ zoradené podľa AI zhody s vašimi ponukami</span>' : ''}</div>
     ${body}</div>`;
 }
-function candCard(c) {                                   // l.674–699
-  const done = state.contacted.includes(c.id), authed = state.authed;
-  const menu = state.rowMenu !== 'c' + c.id ? '' : `
+function candCard(c) {                                     // l.674–699
+  const key = c.id + ':' + c.postingId, done = state.contacted.includes(key);
+  const menu = state.rowMenu !== 'c' + key ? '' : `
     <div class="row-menu w186" data-rowmenu="1">
-      <button data-cand="${c.id}" data-act="report">Nahlásiť profil</button>
-      <button class="danger" data-cand="${c.id}" data-act="block">Zablokovať</button></div>`;
+      <button data-cand="${key}" data-act="report">Nahlásiť profil</button>
+      <button class="danger" data-cand="${key}" data-act="block">Zablokovať</button></div>`;
   return `<div class="cand">
     <div class="top">
-      <div class="av" style="background:${c.g}"><span style="filter:${authed ? 'none' : 'blur(9px)'}">${authed ? c.ini : '●●'}</span></div>
-      <div><div class="n">${esc(authed ? c.n : c.n.split(' ')[0])}</div>
-        <div class="s">${authed ? `${esc(c.school)} · ${esc(c.hrs)}` : `${esc(c.hrs)} · <span class="muted">detaily po prihlásení</span>`}</div>
-        <div class="r"><b>★ ${c.rat}</b> (${c.ratN} hodnotení)</div></div>
-      <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-cand="${c.id}" data-act="menu">⋯</button>${menu}</div>
+      <div class="av" style="background:${c.g}"><span>${c.ini}</span></div>
+      <div><div class="n">${esc(c.n)}</div><div class="s">${esc(c.hrs)}</div></div>
+      <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-cand="${key}" data-act="menu">⋯</button>${menu}</div>
     </div>
-    <div class="skills">${c.skills.map(k => `<span>${esc(k)}</span>`).join('')}</div>
-    ${done ? `<div class="sent">✓ Záujem odoslaný</div>` : `<button class="contact" data-cand="${c.id}" data-act="contact">♥ Prejaviť záujem</button>`}
+    ${c.skills.length ? `<div class="skills">${c.skills.map(k => `<span>${esc(k)}</span>`).join('')}</div>` : ''}
+    ${done ? `<div class="sent">✓ Záujem odoslaný</div>` : `<button class="contact" data-cand="${key}" data-act="contact">♥ Prejaviť záujem</button>`}
   </div>`;
 }
 
-// ─── Ponuky firmy — l.745–791, logic l.1372–1383, 1415–1418 ───
+// ─── Ponuky firmy — l.745–791 ───
 const sums = () => ({
   active: state.offers.filter(o => o.on).length,
   views: state.offers.reduce((a, o) => a + o.views, 0),
@@ -557,7 +633,7 @@ function ponuky() {
     <div class="off-list">${rows}</div></div>`;
 }
 
-// ─── Nová ponuka — l.793–828, logic l.1297–1302, 1430, 1640–1659 ───
+// ─── Nová ponuka — l.793–828 ───
 function nova() {
   const s = state;
   return `<div class="nova-wrap">
@@ -582,13 +658,13 @@ function nova() {
     </div></div>`;
 }
 
-// ─── Firemný profil + kalendár — l.830–913, logic l.1384–1418 ───
+// ─── Firemný profil — l.830–913 (bez kalendára) ───
 function fprofil() {
   const s = state, S = sums();
   return `<div class="fprof">
     <div class="pcard">
       <div class="p-head">
-        <label class="fp-logo" id="fp-logo" title="Zmeniť logo" style="background-image:${s.fpLogo ? `url(${s.fpLogo})` : 'none'}">
+        <label class="fp-logo" id="fp-logo" title="Zmeniť logo" style="background-image:${s.fpLogo ? `url('${s.fpLogo}')` : 'none'}">
           <span style="display:${s.fpLogo ? 'none' : 'block'}">${avaInit()}</span><input type="file" accept="image/*" id="fp-file"></label>
         <div style="flex:1;min-width:0"><div class="p-name">${esc(s.fpName)}</div>
           <div class="fp-badges">${s.fpVerified ? '<span class="badge-ok">✓ Overená firma</span>' : '<span class="badge-pending">◷ Overenie prebieha</span>'}</div></div>
@@ -613,22 +689,79 @@ function bindAppInputs() {
   on('chat-draft', el => {
     const key = isStudent() ? 'draft' : 'fdraft';
     el.addEventListener('input', () => { state[key] = el.value; });
-    el.addEventListener('keydown', e => { if (e.key === 'Enter') { go[isStudent() ? 'sendMsg' : 'fSendMsg'](); render(); } });
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') go[isStudent() ? 'sendMsg' : 'fSendMsg'](); });
   });
   on('chat-msgs', el => { el.scrollTop = el.scrollHeight; });                 // l.1598
   on('f-t',    el => el.addEventListener('input', () => { state.fT = el.value; document.getElementById('f-publish').style.opacity = el.value.trim() ? 1 : .45; }));
   on('f-pay',  el => el.addEventListener('input', () => { state.fPay = el.value; }));
   on('f-need', el => el.addEventListener('input', () => { state.fNeed = el.value; }));
   on('f-ai',   el => el.addEventListener('input', () => { state.aiNote = el.value; }));
-  on('fp-name', el => { el.addEventListener('input', () => { state.fpName = el.value; }); el.addEventListener('change', render); });
-  on('fp-desc', el => el.addEventListener('input', () => { state.fpDesc = el.value; }));
-  on('fp-file', el => el.addEventListener('change', e => {                      // l.1628–1632
+  on('fp-name', el => { el.addEventListener('input', () => { state.fpName = el.value; });
+                        el.addEventListener('change', async () => { await saveCompany({ name: state.fpName.trim() }); render(); }); });
+  on('fp-desc', el => { el.addEventListener('input', () => { state.fpDesc = el.value; });
+                        el.addEventListener('change', () => saveCompany({ description: state.fpDesc })); });
+  on('fp-file', el => el.addEventListener('change', async e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
-    state.fpLogo = URL.createObjectURL(f); render();
+    try { state.fpLogo = await uploadLogo(f); await saveCompany({ logo_url: state.fpLogo }); render(); } catch (err) { fail(err); }
   }));
 }
 
-function dock() {                                        // l.929–941, logic l.1308–1326
+// Card / candidate / posting actions — l.1577–1584, 1342–1364, 1372–1383
+document.getElementById('a-main').addEventListener('click', async e => {
+  const btn = e.target.closest('button');
+  if (btn && !btn.dataset.act && editorClick(btn)) return;
+  if (btn && btn.dataset.chat !== undefined) {
+    if (isStudent()) state.activeChat = +btn.dataset.chat; else state.activeFChat = +btn.dataset.chat;
+    render(); return;
+  }
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const d = el.dataset, a = d.act;
+
+  if (d.job) {
+    const j = state.postings.find(x => x.id === +d.job);
+    if (a === 'open')   { state.detail = j; render(); }
+    if (a === 'like')   act(j, 'like');
+    if (a === 'skip')   act(j, 'skip');
+    if (a === 'menu')   { state.rowMenu = state.rowMenu === 'j' + j.id ? null : 'j' + j.id; render(); }
+    if (a === 'report') showToast('Inzerát sme nahlásili — pozrieme sa na to.');
+    if (a === 'block')  { state.blockedFirms.push(j.f); showToast('Firmu sme skryli z tvojho feedu.'); }
+  }
+  else if (d.cand) {
+    const [sid, pid] = d.cand.split(':');
+    const c = state.candidates.find(x => x.id === sid && x.postingId === +pid);
+    if (a === 'menu')   { state.rowMenu = state.rowMenu === 'c' + d.cand ? null : 'c' + d.cand; render(); }
+    if (a === 'report') showToast('Profil sme nahlásili — pozrieme sa na to.');
+    if (a === 'block')  { state.blocked.push(sid); showToast('Profil zablokovaný.'); }
+    if (a === 'contact') {
+      try {
+        const { error } = await sb.from('company_interests').insert({ company_id: state.uid, student_id: sid, posting_id: +pid });
+        if (error) throw error;
+        state.contacted.push(d.cand); render();
+        const { data: m } = await sb.from('matches').select('id').eq('posting_id', +pid).eq('student_id', sid).maybeSingle();
+        if (m) await onNewMatch(m.id);
+      } catch (err) { fail(err); }
+    }
+  }
+  else if (d.offer) {
+    const i = +d.offer, o = state.offers[i];
+    try {
+      if (a === 'toggle') { o.on = !o.on; render(); const { error } = await sb.from('postings').update({ active: o.on }).eq('id', o.id); if (error) throw error; await loadPostings(); }
+      if (a === 'menu')   { state.rowMenu = state.rowMenu === 'o' + i ? null : 'o' + i; render(); }
+      if (a === 'dup')    {
+        const { data: src } = await sb.from('postings').select('*').eq('id', o.id).single();
+        const { error } = await sb.from('postings').insert({ company_id: state.uid, title: src.title + ' (kópia)', pay: src.pay, need: src.need,
+          types: src.types, only18: src.only18, ai_note: src.ai_note, description: src.description, start: src.start });
+        if (error) throw error;
+        await loadCompany(); await loadPostings(); showToast('Inzerát zduplikovaný.');
+      }
+      if (a === 'askDel') { state.rowMenu = null; state.delIdx = i; render(); }
+    } catch (err) { fail(err); }
+  }
+  else if (a === 'type') { toggleInList(state.fTypes, d.type); render(); }
+});
+
+function dock() {                                          // l.929–941, logic l.1308–1326
   const tabs = isStudent() ? STUDENT_TABS : FIRM_TABS;
   const active = isStudent() ? state.tab : (state.ftab === 9 ? 2 : state.ftab);
   const n = tabs.length;
@@ -646,10 +779,10 @@ document.getElementById('a-dock').addEventListener('click', e => {
   const active = isStudent() ? state.tab : (state.ftab === 9 ? 2 : state.ftab);
   if (i === active) return;
   if (isStudent()) state.tab = i; else state.ftab = i;
-  startLoad();
+  startLoad(500);
 });
 
-function layers() {                                      // banner l.946, toast l.954, gate l.972, detail l.988
+function layers() {                                        // banner l.946, toast l.954, delete l.957, gate l.972, detail l.988
   let h = '';
   if (state.banner) h += `<div class="banner" role="status"><div class="ok">✓</div>
     <div><b>Máte zhodu!</b><span class="s">${esc(state.bannerName)} má o teba záujem.</span></div>
@@ -668,67 +801,85 @@ function layers() {                                      // banner l.946, toast 
       <button class="b3" data-go="gateClose">Zrušiť</button></div></div></div>`;
   const d = state.detail;
   if (d) h += `<div class="overlay detail" data-go="closeDetail"><div class="dmodal" data-go="noop">
-    <div class="top"><div class="who"><div class="lg" style="background:${d.lg}">${d.ini}</div>
-      <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)} · <b>★ ${d.rat}</b> (${d.ratN} hodnotení)</div></div></div>
+    <div class="top"><div class="who"><div class="lg" style="${logoStyle(d)}">${logoText(d)}</div>
+      <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)}</div></div></div>
       <button class="x" data-go="closeDetail">✕</button></div>
-    <div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-    <div class="payrow"><div class="pay">${d.pay} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
-    <p>${esc(d.desc)}</p>
-    <div class="sec">Icebreakery</div>
-    <div class="ice">${d.ice.map(i => `<div>${esc(i)}</div>`).join('')}</div>
+    ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+    <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
+    ${d.desc ? `<p>${esc(d.desc)}</p>` : ''}
+    ${d.ice.length ? `<div class="sec">Icebreakery</div><div class="ice">${d.ice.map(i => `<div>${esc(i)}</div>`).join('')}</div>` : ''}
     <div class="sec">Deň v práci</div>
     <div class="day"><div>foto 1</div><div>foto 2</div><div>foto 3</div></div>
-    <div class="act"><button class="like" data-go="detailLike">♥ Mám záujem</button><button class="skip" data-go="detailSkip">✕ Preskočiť</button></div>
+    ${state.likedIds.includes(d.id) ? `<div class="sent">✓ Záujem odoslaný</div>` : `
+    <div class="act"><button class="like" data-go="detailLike">♥ Mám záujem</button><button class="skip" data-go="detailSkip">✕ Preskočiť</button></div>`}
   </div></div>`;
   return h;
 }
-go.noop = () => {};                                      // clicks inside a modal don't close it (l.1668 `stop`)
 
 // README: top bar hides on scroll down and returns on scroll up.
 (() => {
   const c = document.getElementById('a-content'), hdr = document.getElementById('a-hdr');
   let last = 0;
-  c.addEventListener('scroll', () => {
-    const y = c.scrollTop;
-    hdr.classList.toggle('hide', y > last && y > 80);
-    last = y;
-  });
+  c.addEventListener('scroll', () => { const y = c.scrollTop; hdr.classList.toggle('hide', y > last && y > 80); last = y; });
 })();
 
-// ─── OB ───
+// ─── OB — student onboarding — l.97–194 ───
+function obCanContinue() {
+  if (state.obStep === 1) return state.obName.trim() && state.obEmail.trim() && state.obPass.length >= 6;
+  if (state.obStep === 2) return state.obSkills.length > 0;
+  return true;
+}
 document.getElementById('ob-back').addEventListener('click', () => { if (state.obStep > 1) state.obStep--; else state.screen = 'pick'; render(); });
-document.getElementById('ob-next').addEventListener('click', () => {           // l.1566–1570
-  if (state.obStep === 2 && state.obSkills.length < 1) return;
-  if (state.obStep < 3) { state.obStep++; render(); }
-  else enterApp({ tab: 0 });
+document.getElementById('ob-next').addEventListener('click', async () => {           // l.1566–1570
+  if (!obCanContinue()) return;
+  if (state.obStep < 3) { state.obStep++; render(); return; }
+  await registerStudent();
 });
+async function registerStudent() {
+  const btn = document.getElementById('ob-next'); btn.disabled = true; setErr('ob-err', '');
+  const { data, error } = await sb.auth.signUp({ email: state.obEmail.trim(), password: state.obPass,
+    options: { data: { role: 'student', name: state.obName.trim(), skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes } } });
+  btn.disabled = false;
+  if (error) { setErr('ob-err', error.message); return; }
+  if (!data.session) {                                    // e-mail confirmation is on
+    state.screen = 'login'; render();
+    setErr('login-err', 'Poslali sme ti potvrdzovací e-mail. Po potvrdení sa prihlás.');
+    return;
+  }
+  await enterApp({ tab: 0 });
+}
 function renderOb() {
   document.getElementById('ob-no').textContent = state.obStep;
   [...document.getElementById('ob-dots').children].forEach((d, i) => d.classList.toggle('on', state.obStep >= i + 1));
   const next = document.getElementById('ob-next');
   next.textContent = state.obStep === 3 ? 'Hotovo — pozri ponuky' : 'Pokračovať';
-  next.style.opacity = (state.obStep === 2 && state.obSkills.length < 1) ? .45 : 1;
+  next.style.opacity = obCanContinue() ? 1 : .45;
   if (state.obStep === 1) obStep1();
   if (state.obStep === 2) obStep2();
   if (state.obStep === 3) obStep3();
 }
 const obEl = document.getElementById('ob-step');
-function obStep1() {                                     // l.111–119
+function obStep1() {                                       // l.111–119 + e-mail a heslo (nutné pre skutočný účet)
   obEl.innerHTML = `
     <h2>Ako sa <b>voláš?</b></h2>
     <p class="desc" style="margin-bottom:26px">Žiadne CV, žiadny motivačný list. Stačí meno a fotka.</p>
     <div class="s1-row"><div class="avatar" id="avatar">${initials()}</div>
-      <div class="col"><input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}">
+      <div class="col"><input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
+        <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
+        <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">
         <button class="photo-btn" type="button">Nahrať fotku (voliteľné)</button></div></div>`;
+  const upd = () => { document.getElementById('ob-next').style.opacity = obCanContinue() ? 1 : .45; };
   const nameEl = document.getElementById('ob-name');
-  nameEl.addEventListener('input', () => { state.obName = nameEl.value; document.getElementById('avatar').textContent = initials(); });
+  nameEl.addEventListener('input', () => { state.obName = nameEl.value; document.getElementById('avatar').textContent = initials(); upd(); });
+  const emailEl = document.getElementById('ob-email'); emailEl.addEventListener('input', () => { state.obEmail = emailEl.value; upd(); });
+  const passEl = document.getElementById('ob-pass');    passEl.addEventListener('input', () => { state.obPass = passEl.value; upd(); });
   obEl.onclick = null;
 }
-function initials() {                                    // l.1247–1248
+function initials() {                                      // l.1247–1248
   const name = state.obName.trim() || 'Tomáš Novák';
   return name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
 }
-function obStep2() {                                     // l.123–162
+function obStep2() {                                       // l.123–162
   obEl.innerHTML = `
     <h2>Čo ti <b>ide?</b></h2>
     <p class="desc" style="margin-bottom:22px">Vyber si koľko chceš — a pri každej nastav, ako dobre ju ovládaš. Robiq sa učí z každého kliku.</p>
@@ -736,7 +887,7 @@ function obStep2() {                                     // l.123–162
   obEl.onclick = e => { const el = e.target.closest('button'); if (el) editorClick(el); };
   bindEditors();
 }
-function obStep3() {                                     // l.166–188
+function obStep3() {                                       // l.166–188
   obEl.innerHTML = `
     <h2>Koľko hodín <b>máš?</b></h2>
     <p class="desc" style="margin-bottom:30px">Ponuky uvidíš len podľa svojej reálnej dostupnosti.</p>
@@ -746,8 +897,8 @@ function obStep3() {                                     // l.166–188
   bindEditors();
 }
 
-// ─── Shared editors: used by onboarding steps 2–3 and by the profile in edit mode ───
-function skillsEditor() {                                // l.126–162, logic l.1256–1296
+// ─── Shared editors: onboarding steps 2–3 and the profile in edit mode ───
+function skillsEditor() {                                  // l.126–162, logic l.1256–1296
   const selNames = state.obSkills.map(x => x.n);
   const rows = state.obSkills.map((x, i) => {
     const isLang = LANGS.includes(x.n), speakOn = x.speak !== false;
@@ -770,7 +921,7 @@ function skillsEditor() {                                // l.126–162, logic l
         <div class="custom-row"><input class="input" id="custom" placeholder="Napíš vlastnú zručnosť a stlač Enter…" value="${esc(state.customSkill)}"><button type="button" class="add-btn" id="add-custom">Pridať</button></div>
         <div class="hint">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami.</div></div></div>`;
 }
-function availabilityEditor() {                          // l.169–188, logic l.1542–1563
+function availabilityEditor() {                            // l.169–188, logic l.1542–1563
   return `<input type="range" id="hours" min="0" max="3" step="1" value="${state.obHours}">
     <div class="ticks"><span>5 h</span><span>10 h</span><span>20 h</span><span>Fulltime</span></div>
     <div class="label">Ktoré dni?</div>
@@ -779,8 +930,7 @@ function availabilityEditor() {                          // l.169–188, logic l
     <div class="times">${TIMES.map(([t, sub]) => `<button type="button" class="${state.availTimes.includes(t) ? 'on' : ''}" data-time="${t}"><span>${t}</span><small>${sub}</small></button>`).join('')}</div>
     <div class="summary">${availSummary()}</div>`;
 }
-// Buttons inside the editors carry data-* attributes; returns true when it handled the click.
-function editorClick(el) {
+function editorClick(el) {                                 // returns true when it handled the click
   if (el.dataset.add)    { addSkill(el.dataset.add); return true; }
   if (el.dataset.remove) { state.obSkills.splice(+el.dataset.remove, 1); render(); return true; }
   if (el.dataset.speak)  { const s = state.obSkills[+el.dataset.speak]; s.speak = !(s.speak !== false); render(); return true; }
@@ -790,7 +940,6 @@ function editorClick(el) {
   if (el.id === 'add-custom') { addCustom(); return true; }
   return false;
 }
-// Text fields update state while typing (no re-render, so the caret stays). Call after the editor HTML is in the page.
 function bindEditors() {
   const custom = document.getElementById('custom');
   if (custom) {
@@ -809,26 +958,40 @@ function bindEditors() {
 }
 function addSkill(n) { if (!state.obSkills.some(x => x.n === n)) { state.obSkills.push({ n, lvl: 2, speak: true }); state.customSkill = ''; } render(); }
 function addCustom() { const n = state.customSkill.trim(); if (n) addSkill(n); }
-function availSummary() {                                // l.1558–1563
+function availSummary() {                                  // l.1558–1563
   const d = state.availDays, t = state.availTimes;
   if (!d.length && !t.length) return 'Vyber si dni a časy, kedy môžeš pracovať.';
   const dd = d.length === 7 ? 'každý deň' : (d.length ? d.join(', ') : 'dni podľa dohody');
   return dd + (t.length ? ' · ' + t.join(', ').toLowerCase() : '');
 }
 
-// ─── FOB ───
+// ─── FOB — company registration — l.230–291 ───
 function fobCanContinue() {
   if (state.fobStep === 1) return state.fobName.trim() !== '';
   if (state.fobStep === 2) return state.fobFields.length > 0;
-  return state.fobTerms;
+  return state.fobTerms && state.fobEmail.trim() && state.fobPass.length >= 6;
 }
 document.getElementById('fob-back').addEventListener('click', () => { if (state.fobStep > 1) state.fobStep--; else state.screen = 'pick'; render(); });
-document.getElementById('fob-next').addEventListener('click', () => {          // l.1480–1490
+document.getElementById('fob-next').addEventListener('click', async () => {          // l.1480–1490
   if (!fobCanContinue()) return;
   if (state.fobStep < 3) { state.fobStep++; render(); return; }
-  enterApp({ role: 'firm', ftab: 0, fpName: state.fobName.trim(), fpLogo: state.fobLogo,
-             fpDesc: '', fpVerified: false, offers: [], contacted: [], fchats: [] });      // l.1486–1488: no demo data
+  await registerCompany();
 });
+async function registerCompany() {
+  const btn = document.getElementById('fob-next'); btn.disabled = true; setErr('fob-err', '');
+  const { data, error } = await sb.auth.signUp({ email: state.fobEmail.trim(), password: state.fobPass,
+    options: { data: { role: 'firm', name: state.fobName.trim(), ico: state.fobIco.trim(), fields: state.fobFields, contact_name: state.fobContact.trim() } } });
+  btn.disabled = false;
+  if (error) { setErr('fob-err', error.message); return; }
+  if (!data.session) {
+    state.screen = 'login'; render();
+    setErr('login-err', 'Poslali sme vám potvrdzovací e-mail. Po potvrdení sa prihláste.');
+    return;
+  }
+  state.uid = data.user.id;
+  if (state.fobLogoFile) { try { const url = await uploadLogo(state.fobLogoFile); await sb.from('companies').update({ logo_url: url }).eq('id', state.uid); } catch (e) { console.warn(e); } }
+  await enterApp({ ftab: 0 });
+}
 function renderFob() {
   document.getElementById('fob-no').textContent = state.fobStep;
   [...document.getElementById('fob-dots').children].forEach((d, i) => d.classList.toggle('on', state.fobStep >= i + 1));
@@ -840,7 +1003,7 @@ function renderFob() {
   if (state.fobStep === 3) fobStep3();
 }
 const fobEl = document.getElementById('fob-step');
-function fobStep1() {                                    // l.244–256
+function fobStep1() {                                      // l.244–256
   fobEl.innerHTML = `
     <h2>Kto <b>ste?</b></h2>
     <p class="desc" style="margin-bottom:24px">Overíme firmu podľa IČO — ľudia tak vedia, že píšu reálnemu zamestnávateľovi.</p>
@@ -852,17 +1015,17 @@ function fobStep1() {                                    // l.244–256
   bindInput('fob-ico', 'fobIco');
   document.getElementById('flogo-file').addEventListener('change', e => {      // l.1460–1464
     const f = e.target.files && e.target.files[0]; if (!f) return;
-    state.fobLogo = URL.createObjectURL(f); paintLogo();
+    state.fobLogoFile = f; state.fobLogo = URL.createObjectURL(f); paintLogo();
   });
   fobEl.onclick = null;
 }
-function paintLogo() {                                   // l.1457–1459
+function paintLogo() {                                     // l.1457–1459
   const logo = document.getElementById('flogo'), init = document.getElementById('flogo-init'); if (!logo) return;
   init.textContent = (state.fobName.trim() || '?').slice(0, 1).toUpperCase();
   init.style.display = state.fobLogo ? 'none' : 'block';
   logo.style.backgroundImage = state.fobLogo ? `url(${state.fobLogo})` : 'none';
 }
-function fobStep2() {                                    // l.261–268
+function fobStep2() {                                      // l.261–268
   fobEl.innerHTML = `
     <h2>Koho <b>hľadáte?</b></h2>
     <p class="desc" style="margin-bottom:22px">Podľa toho vám Robiq predvyberie ľudí. Dá sa kedykoľvek zmeniť.</p>
@@ -870,24 +1033,25 @@ function fobStep2() {                                    // l.261–268
     <div class="fchips">${FIELDS.map(f => `<button type="button" class="fchip ${state.fobFields.includes(f) ? 'on' : ''}" data-field="${esc(f)}">${esc(f)}</button>`).join('')}</div>`;
   fobEl.onclick = e => { const el = e.target.closest('button[data-field]'); if (!el) return; toggleInList(state.fobFields, el.dataset.field); render(); };
 }
-function fobStep3() {                                    // l.272–282
+function fobStep3() {                                      // l.272–282
   fobEl.innerHTML = `
     <h2>Kontaktná <b>osoba</b></h2>
     <p class="desc" style="margin-bottom:24px">Komu majú chodiť správy od záujemcov.</p>
-    <div class="f3-col"><input class="input" id="fob-contact" placeholder="Meno a priezvisko" value="${esc(state.fobContact)}">
-      <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}">
-      <input class="input" id="fob-pass" type="password" placeholder="Heslo" value="${esc(state.fobPass)}"></div>
+    <div class="f3-col"><input class="input" id="fob-contact" placeholder="Meno a priezvisko" value="${esc(state.fobContact)}" autocomplete="name">
+      <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
+      <input class="input" id="fob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.fobPass)}" autocomplete="new-password"></div>
     <button type="button" class="terms ${state.fobTerms ? 'on' : ''}" id="terms"><span class="box">${state.fobTerms ? '✓' : ''}</span>
       <span class="txt">Súhlasím s podmienkami Robiq a potvrdzujem, že som oprávnený zastupovať túto firmu.</span></button>`;
-  bindInput('fob-contact', 'fobContact'); bindInput('fob-email', 'fobEmail'); bindInput('fob-pass', 'fobPass');
+  const upd = () => { document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
+  bindInput('fob-contact', 'fobContact'); bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd);
   document.getElementById('terms').addEventListener('click', () => { state.fobTerms = !state.fobTerms; render(); });
   fobEl.onclick = null;
 }
 
 // ═══════════ Helpers ═══════════
-function bindInput(id, key) { const el = document.getElementById(id); el.addEventListener('input', () => { state[key] = el.value; }); }
+function bindInput(id, key, after) { const el = document.getElementById(id); el.addEventListener('input', () => { state[key] = el.value; if (after) after(); }); }
 function toggleInList(list, item) { const i = list.indexOf(item); if (i === -1) list.push(item); else list.splice(i, 1); }
-function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
 // ═══════════ Login background — l.1173–1213, verbatim ═══════════
 const M = 12, R = 430, CX = 450, CY = 450, SEG = 90;
@@ -922,4 +1086,11 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 
-render();
+// ═══════════ Start ═══════════
+(async () => {
+  state.loading = true; render();
+  try { await loadMe(); await loadPostings(); } catch (e) { fail(e); }
+  state.loading = false;
+  subscribe();
+  render();
+})();
