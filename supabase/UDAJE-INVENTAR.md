@@ -18,10 +18,10 @@ Stav k: 20. 9. 2026.
 
 | Systém | Čo | Poskytovateľ | Miesto |
 |---|---|---|---|
-| **Supabase — databáza (PostgreSQL)** | všetky údaje z tabuliek nižšie | Supabase Inc. (sprostredkovateľ) | región **West EU (Írsko)** |
-| **Supabase — Auth** | e-mail, heslo (uložené len ako hash, aplikácia ho nikdy nevidí), časy prihlásení, IP adresa pri prihlásení (systémový log Supabase) | Supabase | Írsko |
-| **Supabase — Storage** | logá firiem (obrázky), bucket `logos`, **verejne čitateľné** cez URL | Supabase | Írsko |
-| **Supabase — Realtime** | prenos nových správ a zhôd v reálnom čase (nič sa navyše neukladá) | Supabase | Írsko |
+| **Supabase — databáza (PostgreSQL)** | všetky údaje z tabuliek nižšie | Supabase Inc. (sprostredkovateľ) | región **Central EU (Frankfurt, Nemecko)** |
+| **Supabase — Auth** | e-mail, heslo (uložené len ako hash, aplikácia ho nikdy nevidí), časy prihlásení, IP adresa pri prihlásení (systémový log Supabase) | Supabase | Frankfurt |
+| **Supabase — Storage** | logá firiem (obrázky), bucket `logos`, **verejne čitateľné** cez URL | Supabase | Frankfurt |
+| **Supabase — Realtime** | prenos nových správ a zhôd v reálnom čase (nič sa navyše neukladá) | Supabase | Frankfurt |
 | **Prehliadač používateľa — localStorage** | prihlasovací token (session) Supabase, aby človek zostal prihlásený | — | zariadenie používateľa |
 | **jsDelivr CDN** | načítanie knižnice supabase-js (pri načítaní stránky sa odošle IP adresa a hlavičky prehliadača) | jsDelivr (Prospect One) | globálna CDN |
 | **cdnfonts.com** | načítanie písiem Satoshi a Open Sauce One (rovnako IP adresa) | CDNFonts | globálna CDN |
@@ -143,4 +143,4 @@ Telefónne číslo študenta ani firmy (pole neexistuje), adresu, fotografiu št
 
 ## Príloha: prompt pre AI
 
-> Na základe priloženého inventára údajov (UDAJE-INVENTAR.md) a databázovej schémy (schema.sql) napíš dokument „Ochrana osobných údajov" pre webovú aplikáciu Robiq v slovenčine, v súlade s GDPR a zákonom č. 18/2018 Z. z. Prevádzkovateľ: Matej Majtán, ceo@robiq.sk. Dokument má mať sekcie: kto spracúva údaje; aké údaje zbierame (rozdelené pre študentov a firmy, vrátane voľných textov a správ); účely a právne základy pre každý účel; komu údaje odovzdávame (Supabase — Írsko, EÚ, jsDelivr, CDNFonts) a prenosy mimo EÚ; kto vidí čo (firma vidí profil študenta až po jeho záujme, nikdy dátum narodenia ani bio); ako dlho údaje uchovávame a ako si používateľ zmaže účet sám v aplikácii; práva používateľa a ako ich uplatniť; vekové obmedzenie (mladší ako 16 rokov — súhlas zákonného zástupcu); bezpečnosť; kontakt. Študentom tykaj, firmám vykaj. Krátke vecné vety, bez emoji. Pri veciach, ktoré aplikácia zatiaľ nerieši automaticky (export údajov), uveď, že sa riešia na žiadosť e-mailom.
+> Na základe priloženého inventára údajov (UDAJE-INVENTAR.md) a databázovej schémy (schema.sql) napíš dokument „Ochrana osobných údajov" pre webovú aplikáciu Robiq v slovenčine, v súlade s GDPR a zákonom č. 18/2018 Z. z. Prevádzkovateľ: Matej Majtán, ceo@robiq.sk. Dokument má mať sekcie: kto spracúva údaje; aké údaje zbierame (rozdelené pre študentov a firmy, vrátane voľných textov a správ); účely a právne základy pre každý účel; komu údaje odovzdávame (Supabase — Frankfurt, EÚ, jsDelivr, CDNFonts) a prenosy mimo EÚ; kto vidí čo (firma vidí profil študenta až po jeho záujme, nikdy dátum narodenia ani bio); ako dlho údaje uchovávame a ako si používateľ zmaže účet sám v aplikácii; práva používateľa a ako ich uplatniť; vekové obmedzenie (mladší ako 16 rokov — súhlas zákonného zástupcu); bezpečnosť; kontakt. Študentom tykaj, firmám vykaj. Krátke vecné vety, bez emoji. Pri veciach, ktoré aplikácia zatiaľ nerieši automaticky (export údajov), uveď, že sa riešia na žiadosť e-mailom.
