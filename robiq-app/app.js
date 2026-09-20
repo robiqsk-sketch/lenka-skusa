@@ -925,23 +925,8 @@ function layers() {                                        // banner l.946, toas
   return h;
 }
 
-// README: top bar hides on scroll down and returns on scroll up.
-// Hysteresis: the bar only reacts after 24px of continuous movement in one direction,
-// so finger jitter (tiny up/down changes while scrolling) doesn't make it flicker.
-// The document scrolls (not an inner panel), so this also lets Safari collapse its address bar.
-(() => {
-  const hdr = document.getElementById('a-hdr');
-  let last = 0, acc = 0, ticking = false;
-  const update = () => {
-    ticking = false;
-    const y = Math.max(0, window.scrollY), dy = y - last; last = y;   // rubber-banding gives negative scrollY
-    if ((dy > 0) !== (acc > 0)) acc = 0;                   // direction changed → start counting again
-    acc += dy;
-    if (y <= 80 || acc < -24) hdr.classList.remove('hide');
-    else if (acc > 24) hdr.classList.add('hide');
-  };
-  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
-})();
+// The top bar is static (see styles.css): it scrolls away with the page and does not come back mid-page.
+// The document itself scrolls, so Safari can collapse its address bar.
 
 // ─── OB — student onboarding — l.97–194 ───
 // Privacy policy §10: Robiq is for people aged 16+, younger cannot register.
