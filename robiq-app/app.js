@@ -828,7 +828,7 @@ document.getElementById('a-dock').addEventListener('click', e => {
   if (isStudent()) state.tab = i; else state.ftab = i;
   state.rowMenu = null; state.accMenu = false;
   render();                                                // data is already in memory — no fake loading
-  document.getElementById('a-content').scrollTop = 0;
+  window.scrollTo(0, 0);
 });
 
 function layers() {                                        // banner l.946, toast l.954, delete l.957, gate l.972, detail l.988
@@ -874,16 +874,19 @@ function layers() {                                        // banner l.946, toas
 // README: top bar hides on scroll down and returns on scroll up.
 // Hysteresis: the bar only reacts after 24px of continuous movement in one direction,
 // so finger jitter (tiny up/down changes while scrolling) doesn't make it flicker.
+// The document scrolls (not an inner panel), so this also lets Safari collapse its address bar.
 (() => {
-  const c = document.getElementById('a-content'), hdr = document.getElementById('a-hdr');
-  let last = 0, acc = 0;
-  c.addEventListener('scroll', () => {
-    const y = c.scrollTop, dy = y - last; last = y;
+  const hdr = document.getElementById('a-hdr');
+  let last = 0, acc = 0, ticking = false;
+  const update = () => {
+    ticking = false;
+    const y = Math.max(0, window.scrollY), dy = y - last; last = y;   // rubber-banding gives negative scrollY
     if ((dy > 0) !== (acc > 0)) acc = 0;                   // direction changed → start counting again
     acc += dy;
     if (y <= 80 || acc < -24) hdr.classList.remove('hide');
     else if (acc > 24) hdr.classList.add('hide');
-  }, { passive: true });
+  };
+  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
 })();
 
 // ─── OB — student onboarding — l.97–194 ───
