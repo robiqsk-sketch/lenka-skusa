@@ -610,5 +610,10 @@ input[type="range"] { width: 100%; accent-color: #40319F; cursor: pointer; margi
 .terms .txt { font-size: 12.5px; line-height: 1.5; color: #3F3A55; }
 .terms .txt a { color: #40319F; font-weight: 700; text-decoration: none; }
 .terms .txt a:hover { color: #5546C4; }
-.a-footer span a { color: inherit; text-decoration: none; }
-.a-footer span a:hover { color: #40319F; }
+.a-footer { align-items: flex-start; }
+.a-contact { display: flex; flex-direction: column; gap: 8px; }
+.a-contact .h { font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #6E688C; margin-bottom: 2px; }
+.a-contact a { display: inline-flex; align-items: center; gap: 8px; color: #3F3A55; text-decoration: none; font-size: 12.5px; }
+.a-contact a:hover { color: #40319F; }
+.a-contact svg { width: 15px; height: 15px; flex-shrink: 0; color: #6E688C; }
+.a-contact a:hover svg { color: #40319F; }
