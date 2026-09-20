@@ -18,10 +18,10 @@ Stav k: 20. 9. 2026.
 
 | Systém | Čo | Poskytovateľ | Miesto |
 |---|---|---|---|
-| **Supabase — databáza (PostgreSQL)** | všetky údaje z tabuliek nižšie | Supabase Inc. (sprostredkovateľ) | región **Central EU (Frankfurt, Nemecko)** |
-| **Supabase — Auth** | e-mail, heslo (uložené len ako hash, aplikácia ho nikdy nevidí), časy prihlásení, IP adresa pri prihlásení (systémový log Supabase) | Supabase | Frankfurt |
-| **Supabase — Storage** | logá firiem (obrázky), bucket `logos`, **verejne čitateľné** cez URL | Supabase | Frankfurt |
-| **Supabase — Realtime** | prenos nových správ a zhôd v reálnom čase (nič sa navyše neukladá) | Supabase | Frankfurt |
+| **Supabase — databáza (PostgreSQL)** | všetky údaje z tabuliek nižšie | Supabase Inc. (sprostredkovateľ) | región **West EU (Írsko)** |
+| **Supabase — Auth** | e-mail, heslo (uložené len ako hash, aplikácia ho nikdy nevidí), časy prihlásení, IP adresa pri prihlásení (systémový log Supabase) | Supabase | Írsko |
+| **Supabase — Storage** | logá firiem (obrázky), bucket `logos`, **verejne čitateľné** cez URL | Supabase | Írsko |
+| **Supabase — Realtime** | prenos nových správ a zhôd v reálnom čase (nič sa navyše neukladá) | Supabase | Írsko |
 | **Prehliadač používateľa — localStorage** | prihlasovací token (session) Supabase, aby človek zostal prihlásený | — | zariadenie používateľa |
 | **jsDelivr CDN** | načítanie knižnice supabase-js (pri načítaní stránky sa odošle IP adresa a hlavičky prehliadača) | jsDelivr (Prospect One) | globálna CDN |
 | **cdnfonts.com** | načítanie písiem Satoshi a Open Sauce One (rovnako IP adresa) | CDNFonts | globálna CDN |
@@ -107,7 +107,7 @@ Vidia len obe strany danej zhody. Prevádzkovateľ má k správam technický pr�
 |---|---|---|---|---|
 | inzeráty (aktívne) + názov, popis a logo firmy | **áno** | áno | áno | áno |
 | profil študenta (meno, zručnosti, hodiny, dostupnosť) | nie | len svoj | **len študentov, ktorí dali záujem o jej inzerát** | áno |
-| dátum narodenia, bio študenta | nie | len svoj | nie (bio a dátum sa firme nezobrazujú; RLS však firme umožňuje čítať celý riadok kandidáta — pozri §6) | áno |
+| dátum narodenia, bio študenta | nie | len svoj | **nie** (pohľad `candidate_profiles` ich neobsahuje) | áno |
 | IČO, kontaktná osoba firmy | nie | nie | len svoja | áno |
 | záujmy študenta | nie | svoje | len na svoje inzeráty | áno |
 | správy | nie | len vo svojich zhodách | len vo svojich zhodách | áno (technicky) |
@@ -129,8 +129,8 @@ Zatiaľ **nie**: marketing, newsletter (ten rieši waitlist), profilovanie, auto
 - **Voľné texty** (`bio`, `skills` vlastné položky, `ai_note`, `messages.body`) môžu obsahovať citlivé údaje, ak ich tam človek sám napíše. Dokument by mal používateľov upozorniť, aby do nich nepísali citlivé informácie, a určiť, ako sa s nimi zaobchádza.
 - **Verejné údaje firmy:** názov, popis a logo firmy sú verejné bez prihlásenia. Meno kontaktnej osoby verejné nie je.
 - **Prístup firmy k profilu študenta** je podmienený tým, že študent sám klikol „Mám záujem" na jej inzerát — to je vhodný právny základ (plnenie zmluvy / oprávnený záujem) a dá sa to v dokumente jasne opísať.
-- **RLS a bio/dátum narodenia:** politika `students: firm sees candidates` dnes dovoľuje firme prečítať celý riadok kandidáta vrátane `birth` a `bio`, hoci ich UI nezobrazuje. Ak má dokument tvrdiť, že firma dátum narodenia nevidí, treba to v schéme obmedziť (napr. pohľad `candidate_view` bez týchto stĺpcov). **Odporúčanie: upraviť schému pred spustením.**
-- **Uchovávanie:** schéma nemá žiadne automatické mazanie. Pri zmazaní účtu (`auth.users`) sa kaskádovo zmažú profil, záujmy, zhody a správy (cez `on delete cascade`). Logo v Storage sa **nezmaže automaticky**. Používateľ dnes v aplikácii **nemá tlačidlo na zmazanie účtu** — treba doplniť alebo riešiť na žiadosť cez ceo@robiq.sk.
+- **Bio a dátum narodenia firma nevidí** — technicky zaručené: firma číta kandidátov len cez pohľad `candidate_profiles` (meno, zručnosti, hodiny), priamo k tabuľke `students` prístup nemá.
+- **Uchovávanie a zmazanie účtu:** schéma nemá automatické mazanie podľa času. Používateľ si **môže účet zmazať sám** (menu účtu → Zmazať účet, s potvrdením) — zmaže sa účet, profil, inzeráty, záujmy, zhody, správy aj logo firmy. Nič sa neuchováva po zmazaní okrem systémových logov poskytovateľa.
 - **Export údajov (prenosnosť):** nie je v aplikácii; riešiť na žiadosť.
 - **Tretie strany mimo EÚ:** jsDelivr a cdnfonts sú globálne CDN — pri načítaní stránky im prehliadač odošle IP adresu. Ak to má byť čisto EÚ, dá sa knižnica aj písma hostovať priamo v aplikácii (jednoduchá úprava).
 - **Bezpečnosť:** prístup k dátam riadia RLS politiky v databáze (každý riadok má pravidlo, kto ho smie čítať/meniť); heslá hashuje Supabase Auth; prenos je cez HTTPS; verejný `anon` kľúč v kóde je určený na tento účel a sám o sebe prístup k údajom nedáva.
@@ -143,4 +143,4 @@ Telefónne číslo študenta ani firmy (pole neexistuje), adresu, fotografiu št
 
 ## Príloha: prompt pre AI
 
-> Na základe priloženého inventára údajov (UDAJE-INVENTAR.md) a databázovej schémy (schema.sql) napíš dokument „Ochrana osobných údajov" pre webovú aplikáciu Robiq v slovenčine, v súlade s GDPR a zákonom č. 18/2018 Z. z. Prevádzkovateľ: Matej Majtán, ceo@robiq.sk. Dokument má mať sekcie: kto spracúva údaje; aké údaje zbierame (rozdelené pre študentov a firmy, vrátane voľných textov a správ); účely a právne základy pre každý účel; komu údaje odovzdávame (Supabase — Frankfurt, EÚ, jsDelivr, CDNFonts) a prenosy mimo EÚ; kto vidí čo (firma vidí profil študenta až po jeho záujme); ako dlho údaje uchovávame; práva používateľa a ako ich uplatniť; vekové obmedzenie (mladší ako 16 rokov — súhlas zákonného zástupcu); bezpečnosť; kontakt. Študentom tykaj, firmám vykaj. Krátke vecné vety, bez emoji. Pri veciach, ktoré aplikácia zatiaľ nerieši automaticky (zmazanie účtu, export), uveď, že sa riešia na žiadosť e-mailom.
+> Na základe priloženého inventára údajov (UDAJE-INVENTAR.md) a databázovej schémy (schema.sql) napíš dokument „Ochrana osobných údajov" pre webovú aplikáciu Robiq v slovenčine, v súlade s GDPR a zákonom č. 18/2018 Z. z. Prevádzkovateľ: Matej Majtán, ceo@robiq.sk. Dokument má mať sekcie: kto spracúva údaje; aké údaje zbierame (rozdelené pre študentov a firmy, vrátane voľných textov a správ); účely a právne základy pre každý účel; komu údaje odovzdávame (Supabase — Írsko, EÚ, jsDelivr, CDNFonts) a prenosy mimo EÚ; kto vidí čo (firma vidí profil študenta až po jeho záujme, nikdy dátum narodenia ani bio); ako dlho údaje uchovávame a ako si používateľ zmaže účet sám v aplikácii; práva používateľa a ako ich uplatniť; vekové obmedzenie (mladší ako 16 rokov — súhlas zákonného zástupcu); bezpečnosť; kontakt. Študentom tykaj, firmám vykaj. Krátke vecné vety, bez emoji. Pri veciach, ktoré aplikácia zatiaľ nerieši automaticky (export údajov), uveď, že sa riešia na žiadosť e-mailom.

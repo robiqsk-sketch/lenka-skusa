@@ -164,6 +164,7 @@ on conflict (id) do nothing;
 create policy "logos: public read"  on storage.objects for select using (bucket_id = 'logos');
 create policy "logos: own upload"   on storage.objects for insert with check (bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "logos: own update"   on storage.objects for update using (bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "logos: own delete"   on storage.objects for delete using (bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- ─────────────────────────── Pomocné kontroly pre RLS ───────────────────────────
 -- security definer = bežia mimo RLS, aby sa politiky neodkazovali navzájom (rekurzia).
@@ -251,13 +252,12 @@ grant select on public.candidate_profiles to anon, authenticated;
 
 -- ─────────────────────────── Zmazanie účtu ───────────────────────────
 -- Používateľ zmaže sám seba. Kaskády v tabuľkách zmažú profil, inzeráty, záujmy, zhody a správy.
--- Súbory v Storage (logo) maže klient pred volaním.
+-- Súbory v Storage (logo) maže klient cez Storage API pred volaním — SQL ich mazať nesmie (chyba 42501).
 
 create or replace function public.delete_my_account() returns void
 language plpgsql security definer set search_path = public, auth as $$
 begin
   if auth.uid() is null then raise exception 'Nie ste prihlásený.'; end if;
-  delete from storage.objects where bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text;
   delete from auth.users where id = auth.uid();
 end $$;
 

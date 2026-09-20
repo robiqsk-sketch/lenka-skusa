@@ -11,3 +11,6 @@ desktop.ini
 node_modules/
 .env
 .env.*
+
+# Supabase CLI cache
+supabase/.temp/

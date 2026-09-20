@@ -292,6 +292,10 @@ const go = {
   delAccountConfirm: async () => {
     state.delAccount = false;
     try {
+      if (!isStudent()) {                                  // Storage files must go through the Storage API, not SQL
+        const { data: files } = await sb.storage.from('logos').list(state.uid);
+        if (files && files.length) await sb.storage.from('logos').remove(files.map(f => `${state.uid}/${f.name}`));
+      }
       const { error } = await sb.rpc('delete_my_account');
       if (error) throw error;
       await sb.auth.signOut();
