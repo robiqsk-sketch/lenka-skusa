@@ -1,0 +1,19 @@
+# Netlify: nasadzuje priečinok robiq-app/ (statické súbory, bez build kroku).
+[build]
+  publish = "robiq-app"
+  command = ""
+
+# Bezpečnostné hlavičky pre celú stránku
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# serve.ps1 je len pre lokálny vývoj, na web nepatrí
+[[redirects]]
+  from = "/serve.ps1"
+  to = "/"
+  status = 404
