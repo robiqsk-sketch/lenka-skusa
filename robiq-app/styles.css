@@ -66,7 +66,8 @@ h2 b { font-weight: 700; color: #40319F; }
 .link-row { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(36,27,69,.08); text-align: center; }
 
 /* ═══════════ APP SHELL — l.295–373, 916–925 ═══════════ */
-#scr-app { height: 100vh; max-height: 100vh; display: flex; flex-direction: column; background: #F7F6FB; overflow: hidden; align-items: stretch; justify-content: flex-start; min-height: 0; }
+/* 100dvh = the height the user actually sees on a phone (shrinks when the browser bar is shown), so the dock never floats above the bottom. */
+#scr-app { height: 100vh; height: 100dvh; max-height: 100dvh; display: flex; flex-direction: column; background: #F7F6FB; overflow: hidden; align-items: stretch; justify-content: flex-start; min-height: 0; }
 .a-art { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
 .a-art g.drift { animation: waveDrift 22s ease-in-out infinite; transform-origin: 720px 450px; }
 .a-content { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 14px 32px 130px; position: relative; z-index: 1; }
@@ -419,23 +420,29 @@ h2 b { font-weight: 700; color: #40319F; }
 }
 
 /* ═══════════ DOCK — l.929–941 ═══════════ */
-.dock { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); width: 430px; height: 66px; z-index: 40; filter: drop-shadow(0 10px 18px rgba(23,18,46,.22)); }
+/* Smaller than the prototype (430×66 → 360×56); notch radius 37 → 31. Sizes are mirrored in app.js (DOCK_W, DOCK_R).
+   Fixed to the visual viewport bottom, above the phone's home indicator. */
+.dock {
+  position: fixed; left: 50%; bottom: max(14px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  width: 360px; height: 56px; z-index: 40; filter: drop-shadow(0 10px 18px rgba(23,18,46,.22));
+}
 .dock .bg {
-  position: absolute; inset: 0; background: #241D45; border: 1px solid rgba(159,143,242,.28); border-radius: 22px;
-  -webkit-mask: radial-gradient(circle 37px at 37px 37px, #000 0 99%, transparent 100%) no-repeat, linear-gradient(#000 0 0);
-          mask: radial-gradient(circle 37px at 37px 37px, #000 0 99%, transparent 100%) no-repeat, linear-gradient(#000 0 0);
-  -webkit-mask-size: 74px 74px, auto; mask-size: 74px 74px, auto;
+  position: absolute; inset: 0; background: #241D45; border: 1px solid rgba(159,143,242,.28); border-radius: 20px;
+  -webkit-mask: radial-gradient(circle 31px at 31px 31px, #000 0 99%, transparent 100%) no-repeat, linear-gradient(#000 0 0);
+          mask: radial-gradient(circle 31px at 31px 31px, #000 0 99%, transparent 100%) no-repeat, linear-gradient(#000 0 0);
+  -webkit-mask-size: 62px 62px, auto; mask-size: 62px 62px, auto;
   -webkit-mask-composite: xor; mask-composite: exclude;
   transition: -webkit-mask-position .38s cubic-bezier(.55,0,.3,1.4), mask-position .38s cubic-bezier(.55,0,.3,1.4);
 }
 .dock .tabs { position: absolute; inset: 0; display: flex; }
-.dock .tabs button { flex: 1 1 0; min-width: 0; height: 58px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.dock .tabs button { flex: 1 1 0; min-width: 0; height: 50px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; -webkit-tap-highlight-color: transparent; }
 .dock .glyph {
-  display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; font-size: 19px; color: #fff;
+  display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; font-size: 17px; color: #fff;
   transition: transform .38s cubic-bezier(.55,0,.3,1.4), background .3s, color .3s; background: transparent;
 }
-.dock button.on .glyph { transform: translateY(-30px); background: #40319F; box-shadow: 0 10px 26px rgba(91,33,182,.35); }
-.dock .lbl { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; transition: opacity .3s, color .3s; margin-top: -6px; color: #FFFFFF; }
+.dock .glyph svg { width: 18px; height: 18px; }
+.dock button.on .glyph { transform: translateY(-25px); background: #40319F; box-shadow: 0 10px 26px rgba(91,33,182,.35); }
+.dock .lbl { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; transition: opacity .3s, color .3s; margin-top: -5px; color: #FFFFFF; }
 .dock button.on .lbl { opacity: 0; }
 
 /* ═══════════ BANNER / TOAST — l.946–954 ═══════════ */
@@ -505,7 +512,7 @@ h2 b { font-weight: 700; color: #40319F; }
 @media (max-width: 640px) {
   .a-content { padding: 12px 16px 150px; }
   .a-hdr { padding: 0 16px; gap: 10px; }
-  .dock { width: min(430px, calc(100% - 20px)); }
+  .dock { width: min(360px, calc(100% - 20px)); }
 }
 
 /* ═══════════ LOGIN — l.59–94 ═══════════ */

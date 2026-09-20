@@ -387,7 +387,7 @@ function renderApp() {
   }
   else main.innerHTML = ({ 0: brig, 1: fspravy, 2: ponuky, 3: fprofil, 9: nova })[state.ftab]();
   bindAppInputs();
-  document.getElementById('a-dock').innerHTML = state.authed ? dock() : '';
+  updateDock();
   document.getElementById('a-layers').innerHTML = layers();
 }
 
@@ -794,17 +794,28 @@ document.getElementById('a-main').addEventListener('click', async e => {
   else if (a === 'type') { toggleInList(state.fTypes, d.type); render(); }
 });
 
-function dock() {                                          // l.929–941, logic l.1308–1326
+// Dock — l.929–941, logic l.1308–1326. Built once per role; afterwards only the active
+// tab and the notch position change, so the CSS transitions run instead of restarting.
+const DOCK_W = 360, DOCK_R = 31;                           // smaller than the prototype's 430 / 37
+function updateDock() {
+  const host = document.getElementById('a-dock');
+  if (!state.authed) { host.innerHTML = ''; host.dataset.role = ''; return; }
   const tabs = isStudent() ? STUDENT_TABS : FIRM_TABS;
+  if (host.dataset.role !== state.role) {
+    host.dataset.role = state.role;
+    host.innerHTML = `<div class="dock"><div class="bg"></div>
+      <div class="tabs">${tabs.map(([label, glyph], i) => `
+        <button data-tab="${i}"><span class="glyph">${glyph}</span><span class="lbl">${label}</span></button>`).join('')}</div></div>`;
+  }
   const active = isStudent() ? state.tab : (state.ftab === 9 ? 2 : state.ftab);
-  const n = tabs.length;
-  const notchLeft = ((active * 2 + 1) / (2 * n) * 430 - 37).toFixed(1) + 'px';
-  return `<div class="dock">
-    <div class="bg" style="-webkit-mask-position:${notchLeft} -38px, 0 0; mask-position:${notchLeft} -38px, 0 0"></div>
-    <div class="tabs">${tabs.map(([label, glyph], i) => `
-      <button class="${i === active ? 'on' : ''}" data-tab="${i}"><span class="glyph">${glyph}</span><span class="lbl">${label}</span></button>`).join('')}</div>
-  </div>`;
+  const w = host.querySelector('.dock').offsetWidth || DOCK_W;   // narrower on small phones
+  const notchLeft = ((active * 2 + 1) / (2 * tabs.length) * w - DOCK_R).toFixed(1) + 'px';
+  const bg = host.querySelector('.bg');
+  bg.style.webkitMaskPosition = `${notchLeft} -${DOCK_R + 1}px, 0 0`;
+  bg.style.maskPosition = `${notchLeft} -${DOCK_R + 1}px, 0 0`;
+  host.querySelectorAll('[data-tab]').forEach((b, i) => b.classList.toggle('on', i === active));
 }
+window.addEventListener('resize', () => { if (state.screen === 'app' && state.authed) updateDock(); });
 document.getElementById('a-dock').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
   if (!b) return;
@@ -812,7 +823,9 @@ document.getElementById('a-dock').addEventListener('click', e => {
   const active = isStudent() ? state.tab : (state.ftab === 9 ? 2 : state.ftab);
   if (i === active) return;
   if (isStudent()) state.tab = i; else state.ftab = i;
-  startLoad(500);
+  state.rowMenu = null; state.accMenu = false;
+  render();                                                // data is already in memory — no fake loading
+  document.getElementById('a-content').scrollTop = 0;
 });
 
 function layers() {                                        // banner l.946, toast l.954, delete l.957, gate l.972, detail l.988
