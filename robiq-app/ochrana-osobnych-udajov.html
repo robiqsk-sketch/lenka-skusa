@@ -2,142 +2,115 @@
 <html lang="sk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ochrana osobných údajov — Robiq</title>
 <meta name="description" content="Ako aplikácia Robiq spracúva osobné údaje brigádnikov a firiem. Aké údaje zbierame, na čo ich používame, komu ich odovzdávame a aké máš práva.">
 <meta name="robots" content="index, follow">
+<meta name="theme-color" content="#241D45">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/open-sauce-one">
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/satoshi">
 <style>
-  :root {
-    --bg: #0a0710;
-    --surface: #140e1d;
-    --surface-2: #1b1327;
-    --line: rgba(255,255,255,.10);
-    --text: #ece7f3;
-    --muted: #a99fbb;
-    --accent: #a855f7;
-    --accent-2: #22d3ee;
-    --radius: 14px;
-  }
+  /* Robiq design system (DESIGN.md): Satoshi, #F7F6FB background, white cards with #CEC6E4 border, violet #40319F accents. */
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 17px;
-    line-height: 1.65;
-    font-weight: 300;
-    -webkit-font-smoothing: antialiased;
+    margin: 0; background: #F7F6FB; color: #000000;
+    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px; line-height: 1.65; font-weight: 500; -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 780px; margin: 0 auto; padding: 0 16px 96px; }
+  ::selection { background: rgba(85,70,196,.45); }
 
-  header.top {
-    padding: 56px 0 28px;
-    border-bottom: 1px solid var(--line);
-    margin-bottom: 32px;
+  /* Top bar — same as the app's */
+  .bar-wrap { padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 0; }
+  .bar {
+    position: relative; max-width: 780px; margin: 0 auto; height: 48px;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 18px;
+    background: #241D45; border: 1px solid rgba(159,143,242,.28); border-radius: 18px;
+    box-shadow: 0 8px 16px rgba(23,18,46,.18);
   }
-  .brand {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-size: 15px; letter-spacing: .14em; text-transform: uppercase;
-    color: var(--muted); text-decoration: none; margin-bottom: 28px;
-  }
-  .brand::before {
-    content: ""; width: 26px; height: 2px; border-radius: 2px;
-    background: linear-gradient(90deg, var(--accent-2), var(--accent));
-  }
-  h1 {
-    font-size: clamp(30px, 7vw, 46px);
-    font-weight: 200;
-    letter-spacing: -.02em;
-    line-height: 1.12;
-    margin: 0 0 14px;
-  }
-  .meta { color: var(--muted); font-size: 14.5px; margin: 0; }
-  .lede { color: var(--muted); font-size: 17px; margin: 20px 0 0; max-width: 60ch; }
+  .bar .glow { position: absolute; left: 18px; right: 18px; bottom: 0; height: 2px; border-radius: 99px; opacity: .85;
+    background: linear-gradient(90deg, rgba(124,108,224,0), #7C6CE0 30%, #CBC0FF 50%, #7C6CE0 70%, rgba(124,108,224,0)); }
+  .logo { font-family: 'Open Sauce One', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .01em; color: #FFFFFF; text-decoration: none; }
+  .logo b { color: #CBC0FF; }
+  .back { color: #CBC0FF; border: 1px solid rgba(159,143,242,.42); border-radius: 99px; padding: 5px 12px; font-size: 11.5px; font-weight: 700; text-decoration: none; transition: background .2s, color .2s; }
+  .back:hover { background: rgba(159,143,242,.14); color: #FFFFFF; }
 
-  nav.toc {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 20px 22px;
-    margin: 0 0 44px;
-  }
-  nav.toc h2 {
-    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
-    color: var(--muted); margin: 0 0 12px; font-weight: 500; border: 0; padding: 0;
-  }
-  nav.toc ol { margin: 0; padding: 0; list-style: none; }
-  nav.toc li { margin: 5px 0; }
-  nav.toc a { color: var(--text); text-decoration: none; font-size: 15.5px; }
-  nav.toc a:hover { color: var(--accent); }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 36px 16px 80px; }
 
-  h2 {
-    font-size: clamp(21px, 4.4vw, 27px);
-    font-weight: 300;
-    letter-spacing: -.01em;
-    margin: 56px 0 6px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--line);
-    scroll-margin-top: 20px;
+  /* Title block */
+  header.top { margin-bottom: 22px; }
+  .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #40319F; font-weight: 700; margin: 0 0 10px; }
+  h1 { font-size: clamp(28px, 6vw, 38px); font-weight: 700; letter-spacing: -.01em; line-height: 1.12; margin: 0 0 10px; }
+  h1 b { color: #40319F; font-weight: 700; }
+  .meta { color: #6E688C; font-size: 12.5px; margin: 0; }
+  .lede { color: #3F3A55; font-size: 15px; margin: 16px 0 0; max-width: 62ch; }
+
+  /* Cards */
+  .card, nav.toc, blockquote, .tablewrap table {
+    background: #FFFFFF; border: 1px solid #CEC6E4; border-radius: 22px;
+    box-shadow: 0 12px 34px -12px rgba(48,36,110,.24);
   }
-  h3 {
-    font-size: 18.5px; font-weight: 500; margin: 34px 0 6px;
-    color: #fff; scroll-margin-top: 20px;
-  }
-  p { margin: 14px 0; }
-  strong { font-weight: 600; color: #fff; }
-  a { color: var(--accent); }
+  nav.toc { padding: 22px 26px; margin: 0 0 20px; }
+  nav.toc h2 { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #6E688C; margin: 0 0 12px; font-weight: 700; border: 0; padding: 0; }
+  nav.toc ol { margin: 0; padding: 0; list-style: none; columns: 2; column-gap: 24px; }
+  nav.toc li { margin: 0 0 7px; break-inside: avoid; }
+  nav.toc a { color: #000000; text-decoration: none; font-size: 13.5px; font-weight: 700; }
+  nav.toc a:hover { color: #40319F; }
+  @media (max-width: 560px) { nav.toc ol { columns: 1; } }
+
+  main.card { padding: 6px 30px 30px; }
+  @media (max-width: 560px) { main.card { padding: 4px 20px 24px; } nav.toc { padding: 18px 20px; } }
+
+  h2 { font-size: 22px; font-weight: 700; letter-spacing: -.01em; margin: 44px 0 8px; padding-bottom: 10px; border-bottom: 1px solid rgba(36,27,69,.07); scroll-margin-top: 90px; }
+  h2::first-letter { color: #40319F; }
+  h3 { font-size: 15.5px; font-weight: 700; margin: 28px 0 6px; color: #000000; scroll-margin-top: 90px; }
+  p { margin: 12px 0; color: #3F3A55; }
+  li { color: #3F3A55; }
+  strong { font-weight: 700; color: #000000; }
+  a { color: #40319F; font-weight: 700; text-decoration: none; }
+  a:hover { color: #5546C4; }
   ul, ol { padding-left: 22px; }
-  li { margin: 7px 0; }
-  hr { border: 0; border-top: 1px solid var(--line); margin: 48px 0; }
+  li { margin: 6px 0; }
+  hr { display: none; }
 
-  blockquote {
-    margin: 24px 0; padding: 16px 20px;
-    background: var(--surface);
-    border-left: 2px solid var(--accent);
-    border-radius: 0 10px 10px 0;
-    color: var(--muted);
-  }
-  blockquote p { margin: 0; font-size: 15.5px; }
+  blockquote { margin: 20px 0; padding: 14px 18px; border-left: 3px solid #40319F; border-radius: 14px; box-shadow: none; background: rgba(124,108,224,.08); border-color: rgba(124,108,224,.35); border-left-color: #40319F; }
+  blockquote p { margin: 0; font-size: 13.5px; color: #3F3A55; }
 
-  .tablewrap { overflow-x: auto; margin: 22px 0; -webkit-overflow-scrolling: touch; }
-  table {
-    border-collapse: collapse; width: 100%; min-width: 520px;
-    font-size: 15px; background: var(--surface); border-radius: var(--radius); overflow: hidden;
-  }
-  th, td { padding: 11px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
-  th { background: var(--surface-2); font-weight: 500; color: #fff; font-size: 13.5px; letter-spacing: .02em; }
+  .tablewrap { overflow-x: auto; margin: 18px 0; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 520px; font-size: 13.5px; overflow: hidden; box-shadow: none; border-radius: 14px; }
+  th, td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(36,27,69,.07); color: #3F3A55; }
+  th { background: rgba(36,27,69,.04); font-weight: 700; color: #40319F; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
   tr:last-child td { border-bottom: 0; }
+  td strong { color: #000000; }
 
-  code {
-    background: var(--surface-2); padding: 2px 6px; border-radius: 5px;
-    font-size: 14px; font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent-2);
-  }
+  code { background: rgba(36,27,69,.06); padding: 2px 6px; border-radius: 6px; font-size: 12.5px; font-family: ui-monospace, Menlo, monospace; color: #40319F; }
 
-  footer.bot {
-    margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
-    color: var(--muted); font-size: 14.5px;
-  }
-  @media (max-width: 560px) {
-    body { font-size: 16.5px; }
-    header.top { padding-top: 36px; }
-    table { min-width: 460px; font-size: 14px; }
-  }
+  footer.bot { max-width: 780px; margin: 40px auto 0; padding: 22px 16px 0; border-top: 1px solid rgba(36,27,69,.12); color: #6E688C; font-size: 12px; display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+  footer.bot .brand { font-family: 'Open Sauce One', sans-serif; font-weight: 700; color: #17122E; }
+  footer.bot .brand b { color: #5546C4; }
+
   @media print {
-    body { background: #fff; color: #000; }
-    nav.toc { display: none; }
+    body { background: #fff; }
+    .bar-wrap, nav.toc, footer.bot { display: none; }
+    .card, main.card { box-shadow: none; border: 0; padding: 0; }
     a { color: #000; }
-    table, blockquote { background: #fff; border: 1px solid #ccc; }
   }
 </style>
 </head>
 <body>
+<div class="bar-wrap">
+  <div class="bar"><span class="glow"></span>
+    <a class="logo" href="./">Robiq<b>.</b></a>
+    <a class="back" href="./">← Späť do aplikácie</a>
+  </div>
+</div>
+
 <div class="wrap">
   <header class="top">
-    <a class="brand" href="./">Robiq — späť do aplikácie</a>
-    <h1>Ochrana osobných údajov</h1>
-    <p class="meta">Aplikácia Robiq · Verzia 1.0 · Posledná aktualizácia 20. 9. 2026</p>
+    <p class="eyebrow">Aplikácia Robiq · Verzia 1.0</p>
+    <h1>Ochrana <b>osobných údajov</b></h1>
+    <p class="meta">Posledná aktualizácia 20. 9. 2026</p>
     <p class="lede">Tu nájdeš, aké údaje o tebe spracúvame, prečo, kto sa k nim dostane a ako ich máš pod kontrolou. Bez právnickej hmly — píšeme to tak, aby to dávalo zmysel.</p>
   </header>
 
@@ -145,23 +118,23 @@
     <h2>Obsah</h2>
     <ol>
       <li><a href="#sek-1-kto-spracuva-tvoje-udaje">1. Kto spracúva tvoje údaje</a></li>
-<li><a href="#sek-2-cim-robiq-je-a-koho-sa-dokument-tyka">2. Čím Robiq je a koho sa dokument týka</a></li>
-<li><a href="#sek-3-ake-udaje-spracuvame">3. Aké údaje spracúvame</a></li>
-<li><a href="#sek-4-na-co-udaje-pouzivame-a-na-akom-pravnom-zaklade">4. Na čo údaje používame a na akom právnom základe</a></li>
-<li><a href="#sek-5-kto-ktore-udaje-vidi">5. Kto ktoré údaje vidí</a></li>
-<li><a href="#sek-6-komu-udaje-odovzdavame">6. Komu údaje odovzdávame</a></li>
-<li><a href="#sek-7-co-si-ukladame-do-tvojho-zariadenia">7. Čo si ukladáme do tvojho zariadenia</a></li>
-<li><a href="#sek-8-ako-dlho-udaje-uchovavame">8. Ako dlho údaje uchovávame</a></li>
-<li><a href="#sek-9-automatizovane-rozhodovanie-a-profilovanie">9. Automatizované rozhodovanie a profilovanie</a></li>
-<li><a href="#sek-10-vek-kto-moze-robiq-pouzivat">10. Vek – kto môže Robiq používať</a></li>
-<li><a href="#sek-11-tvoje-prava">11. Tvoje práva</a></li>
-<li><a href="#sek-12-bezpecnost">12. Bezpečnosť</a></li>
-<li><a href="#sek-13-zmeny-tohto-dokumentu">13. Zmeny tohto dokumentu</a></li>
-<li><a href="#sek-14-kontakt">14. Kontakt</a></li>
+      <li><a href="#sek-2-cim-robiq-je-a-koho-sa-dokument-tyka">2. Čím Robiq je a koho sa dokument týka</a></li>
+      <li><a href="#sek-3-ake-udaje-spracuvame">3. Aké údaje spracúvame</a></li>
+      <li><a href="#sek-4-na-co-udaje-pouzivame-a-na-akom-pravnom-zaklade">4. Na čo údaje používame a právny základ</a></li>
+      <li><a href="#sek-5-kto-ktore-udaje-vidi">5. Kto ktoré údaje vidí</a></li>
+      <li><a href="#sek-6-komu-udaje-odovzdavame">6. Komu údaje odovzdávame</a></li>
+      <li><a href="#sek-7-co-si-ukladame-do-tvojho-zariadenia">7. Čo si ukladáme do tvojho zariadenia</a></li>
+      <li><a href="#sek-8-ako-dlho-udaje-uchovavame">8. Ako dlho údaje uchovávame</a></li>
+      <li><a href="#sek-9-automatizovane-rozhodovanie-a-profilovanie">9. Automatizované rozhodovanie a profilovanie</a></li>
+      <li><a href="#sek-10-vek-kto-moze-robiq-pouzivat">10. Vek – kto môže Robiq používať</a></li>
+      <li><a href="#sek-11-tvoje-prava">11. Tvoje práva</a></li>
+      <li><a href="#sek-12-bezpecnost">12. Bezpečnosť</a></li>
+      <li><a href="#sek-13-zmeny-tohto-dokumentu">13. Zmeny tohto dokumentu</a></li>
+      <li><a href="#sek-14-kontakt">14. Kontakt</a></li>
     </ol>
   </nav>
 
-  <main>
+<main class="card">
 <blockquote>
 <p><strong>Poznámka k štýlu:</strong> Brigádnikom v tomto dokumente tykáme, firmám vykáme. Nemení to nič na obsahu – práva aj povinnosti sú pre obe strany rovnaké.</p>
 </blockquote>
@@ -625,10 +598,11 @@ web: dataprotection.gov.sk</p>
 <p>Matej Majtán, Robiq
 [DOPLNIŤ — adresa]</p>
   </main>
-
-  <footer class="bot">
-    Robiq · ceo@robiq.sk · Táto stránka nepoužíva cookies, analytiku ani sledovacie skripty.
-  </footer>
 </div>
+
+<footer class="bot">
+  <span class="brand">Robiq<b>.</b> <span style="font-family:'Satoshi',sans-serif;font-weight:400;color:#6E688C">© 2026</span></span>
+  <span>ceo@robiq.sk · Táto stránka nepoužíva cookies, analytiku ani sledovacie skripty.</span>
+</footer>
 </body>
 </html>
