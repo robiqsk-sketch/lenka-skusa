@@ -640,12 +640,16 @@ input[type="range"] { width: 100%; accent-color: #40319F; cursor: pointer; margi
 /* Compact footer: one row on desktop (brand · links · contact), wraps on phones */
 .a-footer { margin: 36px auto 0; padding: 14px 4px 0; font-size: 11.5px; gap: 8px 22px; align-items: center; }
 .a-footer nav { gap: 16px; }
-.a-contact { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
-.a-contact .h { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #6E688C; margin-right: 2px; }
+/* Contact: label · e-mail · the two phones side by side. Desktop: one row; phone: label, e-mail line, phones line. */
+.a-contact { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.a-contact .h { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #6E688C; }
 .a-contact a { display: inline-flex; align-items: center; gap: 6px; color: #3F3A55; text-decoration: none; font-size: 11.5px; white-space: nowrap; }
 .a-contact a:hover { color: #40319F; }
 .a-contact svg { width: 13px; height: 13px; flex-shrink: 0; color: #6E688C; }
 .a-contact a:hover svg { color: #40319F; }
+.a-contact .phones { display: flex; align-items: center; gap: 14px; }
 @media (max-width: 640px) {
-  .a-footer { margin-top: 28px; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .a-footer { margin-top: 28px; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .a-contact { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .a-contact .phones { gap: 16px; flex-wrap: wrap; }
 }
