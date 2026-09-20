@@ -76,8 +76,9 @@ h2 b { font-weight: 700; color: #40319F; }
   position: sticky; top: 0; z-index: 30; flex-shrink: 0; width: 100%; max-width: 1040px; margin: 0 auto 24px; height: 64px;
   display: flex; align-items: center; justify-content: space-between; padding: 0 26px;
   background: #241D45; border: 1px solid rgba(159,143,242,.28); border-radius: 22px;
-  filter: drop-shadow(0 8px 16px rgba(23,18,46,.18));
+  box-shadow: 0 8px 16px rgba(23,18,46,.18);              /* box-shadow instead of filter: drop-shadow — cheap to animate */
   transition: transform .28s ease;                          /* README: hides on scroll down, returns on scroll up */
+  will-change: transform;
 }
 .a-hdr.hide { transform: translateY(-130%); }
 .a-hdr .glow {

@@ -869,10 +869,18 @@ function layers() {                                        // banner l.946, toas
 }
 
 // README: top bar hides on scroll down and returns on scroll up.
+// Hysteresis: the bar only reacts after 24px of continuous movement in one direction,
+// so finger jitter (tiny up/down changes while scrolling) doesn't make it flicker.
 (() => {
   const c = document.getElementById('a-content'), hdr = document.getElementById('a-hdr');
-  let last = 0;
-  c.addEventListener('scroll', () => { const y = c.scrollTop; hdr.classList.toggle('hide', y > last && y > 80); last = y; });
+  let last = 0, acc = 0;
+  c.addEventListener('scroll', () => {
+    const y = c.scrollTop, dy = y - last; last = y;
+    if ((dy > 0) !== (acc > 0)) acc = 0;                   // direction changed → start counting again
+    acc += dy;
+    if (y <= 80 || acc < -24) hdr.classList.remove('hide');
+    else if (acc > 24) hdr.classList.add('hide');
+  }, { passive: true });
 })();
 
 // ─── OB — student onboarding — l.97–194 ───
