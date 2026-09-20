@@ -570,6 +570,15 @@ h2 b { font-weight: 700; color: #40319F; }
 .s1-row { display: flex; gap: 22px; align-items: center; margin-bottom: 26px; }
 .avatar { width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, #5546C4, #9F8FF2); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; }
 .col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+/* Photo avatars: any round/rounded avatar shows the image instead of initials */
+.has-img { background-size: cover !important; background-position: center; background-repeat: no-repeat; color: transparent !important; }
+.photo-btn { display: block; text-align: center; background: rgba(36,27,69,.05); border: 1px dashed #DEDBEC; border-radius: 12px; padding: 11px 0; font-size: 12.5px; color: #3F3A55; cursor: pointer; font-weight: 500; }
+.photo-btn:hover { border-color: #40319F; color: #40319F; }
+.photo-btn.sm { display: inline-block; padding: 8px 14px; border-radius: 10px; font-size: 12px; }
+.photo-remove { background: none; border: none; color: #6E688C; font-size: 12px; cursor: pointer; padding: 4px 6px; align-self: flex-start; }
+.photo-remove:hover { color: #DC2626; }
+.p-photo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.p-photo-row .l { flex: 1; font-size: 13px; font-weight: 700; color: #000000; }
 .ob-birth { display: flex; align-items: center; gap: 12px; }
 .ob-birth span { font-size: 12.5px; font-weight: 700; color: #000000; white-space: nowrap; }
 .ob-birth .input { padding: 11px 14px; font-size: 13.5px; font-weight: 700; }

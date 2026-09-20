@@ -23,6 +23,7 @@ create table public.students (
   avail_times  text[] not null default '{}',
   birth        date,
   bio          text not null default '',
+  avatar_path  text,                                -- cesta v neverejnom bucket-e avatars: <uid>/avatar.<ext>
   updated_at   timestamptz not null default now()
 );
 
@@ -166,6 +167,15 @@ create policy "logos: own upload"   on storage.objects for insert with check (bu
 create policy "logos: own update"   on storage.objects for update using (bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "logos: own delete"   on storage.objects for delete using (bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text);
 
+-- Profilové fotky brigádnikov: NEVEREJNÝ bucket. Vlastník robí všetko; firma číta len fotky svojich kandidátov (cez podpísané URL).
+insert into storage.buckets (id, name, public) values ('avatars', 'avatars', false)
+on conflict (id) do nothing;
+
+create policy "avatars: own all" on storage.objects for all
+  using      (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+-- (politika pre firmy je nižšie, pri pohľade candidate_profiles — potrebuje funkciu is_my_candidate)
+
 -- ─────────────────────────── Pomocné kontroly pre RLS ───────────────────────────
 -- security definer = bežia mimo RLS, aby sa politiky neodkazovali navzájom (rekurzia).
 
@@ -244,11 +254,15 @@ create policy "messages: parties write" on public.messages for insert with check
 -- Firma vidí o študentovi len meno, zručnosti a hodiny — a len ak študent dal záujem o jej inzerát.
 
 create or replace view public.candidate_profiles as
-  select s.id, s.name, s.skills, s.hours
+  select s.id, s.name, s.skills, s.hours, s.avatar_path
   from public.students s
   where s.id = auth.uid() or public.is_my_candidate(s.id);
 
 grant select on public.candidate_profiles to anon, authenticated;
+
+-- Fotku kandidáta vidí firma rovnako len po jeho záujme (bucket avatars je neverejný, klient si pýta podpísané URL).
+create policy "avatars: firm sees candidates" on storage.objects for select
+  using (bucket_id = 'avatars' and public.is_my_candidate(((storage.foldername(name))[1])::uuid));
 
 -- ─────────────────────────── Zmazanie účtu ───────────────────────────
 -- Používateľ zmaže sám seba. Kaskády v tabuľkách zmažú profil, inzeráty, záujmy, zhody a správy.

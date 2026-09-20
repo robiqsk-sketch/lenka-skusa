@@ -15,6 +15,7 @@ const initialState = () => ({
   // student
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   profEdit: false, birth: '', bio: '',
+  avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
   matches: [], activeChat: 0, draft: '', myInterests: [],
   // company
   fobStep: 1, fobName: '', fobIco: '', fobLogo: '', fobLogoFile: null, fobFields: [], fobContact: '', fobEmail: '', fobPass: '', fobTerms: false,
@@ -25,6 +26,41 @@ const initialState = () => ({
 let state = initialState();
 let order = [];                                            // guest feed order (shuffled)
 let loadT, toastT, bannerT, rt;
+const avatarUrls = {};                                     // storage path → signed URL (bucket "avatars" is private)
+
+// ═══════════ Profile photos (private bucket) ═══════════
+async function resolveAvatars(paths) {                     // fetch signed URLs for paths we don't have yet
+  const missing = [...new Set(paths.filter(p => p && !avatarUrls[p]))];
+  if (!missing.length) return;
+  const { data } = await sb.storage.from('avatars').createSignedUrls(missing, 60 * 60);
+  for (const r of data || []) if (r.signedUrl && !r.error) avatarUrls[r.path] = r.signedUrl;
+}
+const avatarUrl = path => (path && avatarUrls[path]) || '';
+async function uploadAvatar(file) {                        // <uid>/avatar.<ext>, replaces the previous one
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const path = `${state.uid}/avatar.${ext}`;
+  if (state.avatarPath && state.avatarPath !== path) await sb.storage.from('avatars').remove([state.avatarPath]);
+  const { error } = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
+  if (error) throw error;
+  const { error: e2 } = await sb.from('students').update({ avatar_path: path }).eq('id', state.uid);
+  if (e2) throw e2;
+  delete avatarUrls[path];
+  state.avatarPath = path;
+  await resolveAvatars([path]);
+}
+async function removeAvatar() {
+  if (!state.avatarPath) return;
+  await sb.storage.from('avatars').remove([state.avatarPath]);
+  const { error } = await sb.from('students').update({ avatar_path: null }).eq('id', state.uid);
+  if (error) throw error;
+  delete avatarUrls[state.avatarPath];
+  state.avatarPath = null;
+}
+// Round avatar: photo when there is one, initials otherwise.
+function avatarHtml(cls, url, initialsText, extra = '') {
+  return url ? `<div class="${cls} has-img" style="background-image:url('${url}')"${extra}></div>`
+             : `<div class="${cls}"${extra}>${initialsText}</div>`;
+}
 const isStudent = () => state.role === 'student';
 
 // ═══════════ Data: reading ═══════════
@@ -75,7 +111,8 @@ async function loadStudent() {
     sb.from('skips').select('posting_id').eq('student_id', state.uid),
   ]);
   if (s) Object.assign(state, { obName: s.name, obSkills: s.skills || [], obHours: s.hours, availDays: s.avail_days || [],
-    availTimes: s.avail_times || [], birth: s.birth || '', bio: s.bio || '' });
+    availTimes: s.avail_times || [], birth: s.birth || '', bio: s.bio || '', avatarPath: s.avatar_path || null });
+  await resolveAvatars([state.avatarPath]);
   state.likedIds = (ints || []).map(i => i.posting_id);
   state.myInterests = (ints || []).filter(i => i.postings).map(i => ({
     postingId: i.posting_id, t: i.postings.title, f: i.postings.companies?.name || 'Firma', pay: i.postings.pay + ' €',
@@ -101,7 +138,8 @@ async function loadCompany() {
 // Firma vidí o kandidátovi len to, čo je v pohľade candidate_profiles (meno, zručnosti, hodiny) — nie dátum narodenia ani bio.
 async function loadCandidateProfiles(ids) {
   if (!ids.length) return {};
-  const { data } = await sb.from('candidate_profiles').select('id, name, skills, hours').in('id', ids);
+  const { data } = await sb.from('candidate_profiles').select('id, name, skills, hours, avatar_path').in('id', ids);
+  await resolveAvatars((data || []).map(s => s.avatar_path));
   return Object.fromEntries((data || []).map(s => [s.id, s]));
 }
 async function loadCandidates() {                          // students who liked one of my postings, grouped later by posting
@@ -112,7 +150,7 @@ async function loadCandidates() {                          // students who liked
   const profiles = await loadCandidateProfiles([...new Set(rows.map(r => r.student_id))]);
   state.candidates = rows.filter(r => profiles[r.student_id]).map(r => {
     const s = profiles[r.student_id];
-    return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: HOURS[s.hours] || '',
+    return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: HOURS[s.hours] || '', photo: avatarUrl(s.avatar_path),
       skills: (s.skills || []).map(k => k.n), offer: r.postings.title, postingId: r.posting_id, at: r.created_at,
       g: `linear-gradient(135deg, ${colorFor(s.name)}, #9F8FF2)` };
   });
@@ -127,6 +165,7 @@ async function loadMatches() {
   const list = (data || []).map(m => {
     const other = isStudent() ? (m.companies?.name || 'Firma') : (names[m.student_id]?.name || 'Študent');
     return { id: m.id, postingId: m.posting_id, name: other, job: m.postings?.title || '', msgs: [],
+      photo: isStudent() ? (m.companies?.logo_url || '') : avatarUrl(names[m.student_id]?.avatar_path),
       ini: isStudent() ? other[0].toUpperCase() : initialsOf(other),
       lg: isStudent() ? colorFor(other) : `linear-gradient(135deg, ${colorFor(other)}, #9F8FF2)` };
   });
@@ -292,9 +331,10 @@ const go = {
   delAccountConfirm: async () => {
     state.delAccount = false;
     try {
-      if (!isStudent()) {                                  // Storage files must go through the Storage API, not SQL
-        const { data: files } = await sb.storage.from('logos').list(state.uid);
-        if (files && files.length) await sb.storage.from('logos').remove(files.map(f => `${state.uid}/${f.name}`));
+      {                                                    // Storage files must go through the Storage API, not SQL
+        const bucket = isStudent() ? 'avatars' : 'logos';
+        const { data: files } = await sb.storage.from(bucket).list(state.uid);
+        if (files && files.length) await sb.storage.from(bucket).remove(files.map(f => `${state.uid}/${f.name}`));
       }
       const { error } = await sb.rpc('delete_my_account');
       if (error) throw error;
@@ -411,7 +451,10 @@ function renderHeader() {                                  // l.342–372
       <button class="out" data-go="logout"><span class="ic">→</span>Odhlásiť sa</button>
       <button class="del" data-go="askDeleteAccount"><span class="ic">✕</span>Zmazať účet</button>
     </div>`;
-  r.innerHTML = `${nova}<div class="a-acc"><button class="a-ava" aria-label="Účet" data-go="menuToggle">${avaInit()}</button>${menu}</div>`;
+  const photo = isStudent() ? avatarUrl(state.avatarPath) : state.fpLogo;
+  const ava = photo ? `<button class="a-ava has-img" aria-label="Účet" data-go="menuToggle" style="background-image:url('${photo}')"></button>`
+                    : `<button class="a-ava" aria-label="Účet" data-go="menuToggle">${avaInit()}</button>`;
+  r.innerHTML = `${nova}<div class="a-acc">${ava}${menu}</div>`;
 }
 function menuName() { return isStudent() ? (state.obName || 'Študent') : state.fpName; }
 function avaInit() { return isStudent() ? initials() : (initialsOf(state.fpName) || 'F'); }
@@ -513,6 +556,11 @@ function profile() {                                       // l.515–635
     ${skills.length ? `<div class="p-skills">${skills.map(k => `<span class="p-skill">${esc(k.n)} <b>${esc(k.dots)}</b></span>`).join('')}</div>`
                     : `<div class="p-empty" style="margin-bottom:26px">Zatiaľ žiadne. Klikni na <b>Upraviť</b> a pridaj, čo ti ide.</div>`}`;
   const edit = `<div class="compact">
+    <div class="p-photo-row">
+      <div class="l">Profilová fotka</div>
+      <label class="photo-btn sm">${s.avatarPath ? 'Zmeniť fotku' : 'Nahrať fotku'}<input type="file" accept="image/*" id="p-photo" hidden></label>
+      ${s.avatarPath ? '<button type="button" class="photo-remove" id="p-photo-remove">Odstrániť</button>' : ''}
+    </div>
     <div class="p-birth"><div class="l">Dátum narodenia</div><input type="date" id="p-birth" value="${esc(s.birth)}"></div>
     <div class="p-bio-edit"><div class="label" style="margin-bottom:8px">Bio</div>
       <textarea id="p-bio" rows="3" maxlength="240" placeholder="Napíš pár viet o sebe — čo študuješ, čo ťa baví, kedy máš čas…">${esc(s.bio)}</textarea></div>
@@ -524,7 +572,7 @@ function profile() {                                       // l.515–635
   return `<div class="prof">
     <div class="pcard">
       <div class="p-head">
-        <div class="p-ava">${initials()}</div>
+        ${avatarHtml('p-ava', avatarUrl(s.avatarPath), initials())}
         <div style="flex:1;min-width:0"><div class="p-name">${esc(s.obName.trim() || 'Študent')}</div><div class="p-sub">Študent · <span id="p-hours">${HOURS[s.obHours]}</span></div></div>
         <button class="p-edit" data-go="profEditToggle">${s.profEdit ? '✓ Hotovo' : 'Upraviť'}</button>
       </div>
@@ -550,13 +598,15 @@ function profile() {                                       // l.515–635
 function chatUI(list, active, isFirm) {
   const cur = list[Math.min(active, list.length - 1)] || list[0];
   const lgCls = isFirm ? 'lg round' : 'lg';
+  const face = m => m.photo ? `<div class="${lgCls} has-img" style="background-image:url('${m.photo}')"></div>`
+                            : `<div class="${lgCls}" style="background:${m.lg}">${m.ini}</div>`;
   const items = list.map((m, i) => `
     <button class="${i === active ? 'on' : ''}" data-chat="${i}">
-      <div class="${lgCls}" style="background:${m.lg}">${m.ini}</div>
+      ${face(m)}
       <div><div class="n">${esc(m.name)}</div><div class="j">${esc(m.job)}</div></div>
     </button>`).join('');
   const head = !cur ? '' : `
-    <div class="chat-head"><div class="${lgCls}" style="background:${cur.lg}">${cur.ini}</div>
+    <div class="chat-head">${face(cur)}
       <div><div class="n">${esc(cur.name)}</div>
         <div class="j ${isFirm ? 'firm' : ''}">${isFirm ? 'Uchádzač · ' : '✓ Zhoda · '}${esc(cur.job)}</div></div></div>`;
   const msgs = (cur ? cur.msgs : []).map(m => `<div class="msg ${m.me ? 'me' : 'them'}">${esc(m.txt)}</div>`).join('');
@@ -620,7 +670,7 @@ function candCard(c) {                                     // l.674–699
       <button class="danger" data-cand="${key}" data-act="block">Zablokovať</button></div>`;
   return `<div class="cand">
     <div class="top">
-      <div class="av" style="background:${c.g}"><span>${c.ini}</span></div>
+      ${c.photo ? `<div class="av has-img" style="background-image:url('${c.photo}')"></div>` : `<div class="av" style="background:${c.g}"><span>${c.ini}</span></div>`}
       <div><div class="n">${esc(c.n)}</div><div class="s">${esc(c.hrs)}</div></div>
       <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-cand="${key}" data-act="menu">⋯</button>${menu}</div>
     </div>
@@ -914,6 +964,11 @@ async function registerStudent() {
     setErr('login-err', 'Poslali sme ti potvrdzovací e-mail. Po potvrdení sa prihlás.');
     return;
   }
+  if (state.obPhotoFile) {                                 // the account exists now — store the photo chosen in step 1
+    state.uid = data.user.id;
+    try { await uploadAvatar(state.obPhotoFile); } catch (e) { console.warn('avatar upload failed', e); }
+    state.obPhotoFile = null; state.obPhotoPreview = '';
+  }
   await enterApp({ tab: 0 });
 }
 function renderOb() {
@@ -931,12 +986,14 @@ function obStep1() {                                       // l.111–119 + e-ma
   obEl.innerHTML = `
     <h2>Ako sa <b>voláš?</b></h2>
     <p class="desc" style="margin-bottom:26px">Žiadne CV, žiadny motivačný list. Stačí meno a e-mail.</p>
-    <div class="s1-row"><div class="avatar" id="avatar">${initials()}</div>
+    <div class="s1-row">${avatarHtml('avatar', state.obPhotoPreview, initials(), ' id="avatar"')}
       <div class="col"><input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
         <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
         <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">
         <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" autocomplete="bday"></label>
-        <div class="ob-age-note" id="ob-age-note">Robiq je pre ľudí od ${MIN_AGE} rokov.</div></div></div>`;
+        <div class="ob-age-note" id="ob-age-note">Robiq je pre ľudí od ${MIN_AGE} rokov.</div>
+        <label class="photo-btn">${state.obPhotoFile ? 'Zmeniť fotku' : 'Nahrať fotku (voliteľné)'}<input type="file" accept="image/*" id="ob-photo" hidden></label>
+        ${state.obPhotoFile ? '<button type="button" class="photo-remove" id="ob-photo-remove">Odstrániť fotku</button>' : ''}</div></div>`;
   const upd = () => {
     document.getElementById('ob-next').style.opacity = obCanContinue() ? 1 : .45;
     const a = ageOf(state.birth), note = document.getElementById('ob-age-note');
@@ -948,6 +1005,13 @@ function obStep1() {                                       // l.111–119 + e-ma
   const emailEl = document.getElementById('ob-email'); emailEl.addEventListener('input', () => { state.obEmail = emailEl.value; upd(); });
   const passEl = document.getElementById('ob-pass');    passEl.addEventListener('input', () => { state.obPass = passEl.value; upd(); });
   const birthEl = document.getElementById('ob-birth');  birthEl.addEventListener('input', () => { state.birth = birthEl.value; upd(); });
+  document.getElementById('ob-photo').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { setErr('ob-err', 'Fotka je príliš veľká (max. 5 MB).'); return; }
+    setErr('ob-err', ''); state.obPhotoFile = f; state.obPhotoPreview = URL.createObjectURL(f); render();
+  });
+  const rm = document.getElementById('ob-photo-remove');
+  if (rm) rm.addEventListener('click', () => { state.obPhotoFile = null; state.obPhotoPreview = ''; render(); });
   upd();
   obEl.onclick = null;
 }
@@ -1031,6 +1095,16 @@ function bindEditors() {
   if (birth) birth.addEventListener('input', () => { state.birth = birth.value; });
   const bio = document.getElementById('p-bio');
   if (bio) bio.addEventListener('input', () => { state.bio = bio.value; });
+  const photo = document.getElementById('p-photo');
+  if (photo) photo.addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { showToast('Fotka je príliš veľká (max. 5 MB).'); return; }
+    try { await uploadAvatar(f); render(); showToast('Fotka uložená.'); } catch (err) { fail(err); }
+  });
+  const photoRm = document.getElementById('p-photo-remove');
+  if (photoRm) photoRm.addEventListener('click', async () => {
+    try { await removeAvatar(); render(); showToast('Fotka odstránená.'); } catch (err) { fail(err); }
+  });
 }
 function addSkill(n) { if (!state.obSkills.some(x => x.n === n)) { state.obSkills.push({ n, lvl: 2, speak: true }); state.customSkill = ''; } render(); }
 function addCustom() { const n = state.customSkill.trim(); if (n) addSkill(n); }
