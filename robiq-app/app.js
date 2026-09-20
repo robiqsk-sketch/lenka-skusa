@@ -1041,10 +1041,13 @@ function fobStep3() {                                      // l.272–282
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
       <input class="input" id="fob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.fobPass)}" autocomplete="new-password"></div>
     <button type="button" class="terms ${state.fobTerms ? 'on' : ''}" id="terms"><span class="box">${state.fobTerms ? '✓' : ''}</span>
-      <span class="txt">Súhlasím s podmienkami Robiq a potvrdzujem, že som oprávnený zastupovať túto firmu.</span></button>`;
+      <span class="txt">Súhlasím s <a href="https://robiq.sk/ochrana-osobnych-udajov.html" target="_blank" rel="noopener" data-stop="1">podmienkami Robiq</a> a potvrdzujem, že som oprávnený zastupovať túto firmu.</span></button>`;
   const upd = () => { document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
   bindInput('fob-contact', 'fobContact'); bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd);
-  document.getElementById('terms').addEventListener('click', () => { state.fobTerms = !state.fobTerms; render(); });
+  document.getElementById('terms').addEventListener('click', e => {
+    if (e.target.closest('a')) return;                     // the link opens the terms; it must not toggle the checkbox
+    state.fobTerms = !state.fobTerms; render();
+  });
   fobEl.onclick = null;
 }
 
