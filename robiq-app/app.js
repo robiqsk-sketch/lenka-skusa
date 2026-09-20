@@ -269,16 +269,19 @@ const go = {
     document.getElementById('login-pass').value = '';
     await enterApp();
   },
-  goRegister:  () => { state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },
-  goSignup:    () => { state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },
+  goRegister:  () => { state.pickFrom = 'login'; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },   // from the login card
+  goSignup:    () => { state.pickFrom = 'app';   state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },   // from the feed header
   goFirmReg:   () => { state.screen = 'fob'; state.fobStep = 1; },
   pickStudent: () => { state.screen = 'ob';  state.obStep = 1; },
   pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; },
   goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
+  // "← Späť" on login and account-type screens: login → feed; pick → wherever it was opened from
+  back:        () => { state.screen = state.screen === 'pick' ? (state.pickFrom || 'app') : 'app'; },
+  goPonuky:    () => { state.ftab = 2; },
   // gate — l.1444–1446
   gateClose:   () => { state.gate = false; state.pendingJob = null; },
   gateLogin:   () => { state.gate = false; state.screen = 'login'; },
-  gateSignup:  () => { state.gate = false; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },
+  gateSignup:  () => { state.gate = false; state.pickFrom = 'app'; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },
   // account menu — l.1515–1524
   menuToggle:  el => { if (el && el.classList.contains('a-menu')) { state.accMenu = true; return; } state.accMenu = !state.accMenu; },
   menuProfile: () => { if (isStudent()) state.tab = 2; else state.ftab = 3; state.accMenu = false; },
@@ -723,6 +726,7 @@ function ponuky() {
 function nova() {
   const s = state;
   return `<div class="nova-wrap">
+    <button class="back back-top" data-go="goPonuky">← Späť na inzeráty</button>
     <h2>Nový <b>inzerát</b></h2>
     <p class="desc">Robiq ju aktívne doručí študentom, ktorí sedia na profil pozície.</p>
     <div class="form-card">

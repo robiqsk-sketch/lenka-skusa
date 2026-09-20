@@ -52,6 +52,8 @@ h2 b { font-weight: 700; color: #40319F; }
 .foot { display: flex; justify-content: space-between; align-items: center; }
 .back { background: none; border: none; color: #3F3A55; font-size: 13px; cursor: pointer; padding: 10px 4px; }
 .back:hover { color: #000000; }
+.back-top { display: block; margin: -14px 0 6px -4px; padding: 6px 4px; }     /* top-left of a centred card */
+.login-card .back-top { margin-top: -18px; }
 .next {
   background: #40319F; color: #fff; border: none; border-radius: 12px; padding: 13px 30px;
   font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .2s;
