@@ -434,11 +434,14 @@ const needTxt = j => { const free = Math.max(0, j.need - (j.taken || 0)); return
 const logoStyle = j => j.logo ? `background:url('${j.logo}') center/cover` : `background:${j.lg}`;
 const logoText  = j => j.logo ? '' : j.ini;
 
-function isAdult() {                                       // student age from birth date; unknown → adult
-  if (!state.birth) return true;
-  const b = new Date(state.birth), n = new Date();
-  return (n.getFullYear() - b.getFullYear() - ((n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) ? 1 : 0)) >= 18;
+function ageOf(iso) {                                      // full years from an ISO date; null when unknown/invalid
+  if (!iso) return null;
+  const b = new Date(iso), n = new Date();
+  if (isNaN(b)) return null;
+  return n.getFullYear() - b.getFullYear() - ((n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) ? 1 : 0);
 }
+// Privacy policy §3.1: without a birth date the 18+ postings stay hidden.
+function isAdult() { const a = ageOf(state.birth); return a !== null && a >= 18; }
 function remaining() {                                     // l.1243–1245
   const adult = isAdult();
   return state.postings
@@ -884,8 +887,10 @@ function layers() {                                        // banner l.946, toas
 })();
 
 // ─── OB — student onboarding — l.97–194 ───
+// Privacy policy §10: Robiq is for people aged 16+, younger cannot register.
+const MIN_AGE = 16;
 function obCanContinue() {
-  if (state.obStep === 1) return state.obName.trim() && state.obEmail.trim() && state.obPass.length >= 6;
+  if (state.obStep === 1) return state.obName.trim() && state.obEmail.trim() && state.obPass.length >= 6 && (ageOf(state.birth) ?? -1) >= MIN_AGE;
   if (state.obStep === 2) return state.obSkills.length > 0;
   return true;
 }
@@ -898,7 +903,7 @@ document.getElementById('ob-next').addEventListener('click', async () => {      
 async function registerStudent() {
   const btn = document.getElementById('ob-next'); btn.disabled = true; setErr('ob-err', '');
   const { data, error } = await sb.auth.signUp({ email: state.obEmail.trim(), password: state.obPass,
-    options: { data: { role: 'student', name: state.obName.trim(), skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes } } });
+    options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes } } });
   btn.disabled = false;
   if (error) { setErr('ob-err', error.message); return; }
   if (!data.session) {                                    // e-mail confirmation is on
@@ -922,17 +927,25 @@ const obEl = document.getElementById('ob-step');
 function obStep1() {                                       // l.111–119 + e-mail a heslo (nutné pre skutočný účet)
   obEl.innerHTML = `
     <h2>Ako sa <b>voláš?</b></h2>
-    <p class="desc" style="margin-bottom:26px">Žiadne CV, žiadny motivačný list. Stačí meno a fotka.</p>
+    <p class="desc" style="margin-bottom:26px">Žiadne CV, žiadny motivačný list. Stačí meno a e-mail.</p>
     <div class="s1-row"><div class="avatar" id="avatar">${initials()}</div>
       <div class="col"><input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
         <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
         <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">
-        <button class="photo-btn" type="button">Nahrať fotku (voliteľné)</button></div></div>`;
-  const upd = () => { document.getElementById('ob-next').style.opacity = obCanContinue() ? 1 : .45; };
+        <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" autocomplete="bday"></label>
+        <div class="ob-age-note" id="ob-age-note">Robiq je pre ľudí od ${MIN_AGE} rokov.</div></div></div>`;
+  const upd = () => {
+    document.getElementById('ob-next').style.opacity = obCanContinue() ? 1 : .45;
+    const a = ageOf(state.birth), note = document.getElementById('ob-age-note');
+    note.textContent = a !== null && a < MIN_AGE ? `Robiq je pre ľudí od ${MIN_AGE} rokov — registrácia zatiaľ nie je možná.` : `Robiq je pre ľudí od ${MIN_AGE} rokov.`;
+    note.classList.toggle('err', a !== null && a < MIN_AGE);
+  };
   const nameEl = document.getElementById('ob-name');
   nameEl.addEventListener('input', () => { state.obName = nameEl.value; document.getElementById('avatar').textContent = initials(); upd(); });
   const emailEl = document.getElementById('ob-email'); emailEl.addEventListener('input', () => { state.obEmail = emailEl.value; upd(); });
   const passEl = document.getElementById('ob-pass');    passEl.addEventListener('input', () => { state.obPass = passEl.value; upd(); });
+  const birthEl = document.getElementById('ob-birth');  birthEl.addEventListener('input', () => { state.birth = birthEl.value; upd(); });
+  upd();
   obEl.onclick = null;
 }
 function initials() {                                      // l.1247–1248
@@ -1101,7 +1114,7 @@ function fobStep3() {                                      // l.272–282
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
       <input class="input" id="fob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.fobPass)}" autocomplete="new-password"></div>
     <button type="button" class="terms ${state.fobTerms ? 'on' : ''}" id="terms"><span class="box">${state.fobTerms ? '✓' : ''}</span>
-      <span class="txt">Súhlasím s <a href="https://robiq.sk/ochrana-osobnych-udajov.html" target="_blank" rel="noopener" data-stop="1">podmienkami Robiq</a> a potvrdzujem, že som oprávnený zastupovať túto firmu.</span></button>`;
+      <span class="txt">Súhlasím s <a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">podmienkami Robiq</a> a potvrdzujem, že som oprávnený zastupovať túto firmu.</span></button>`;
   const upd = () => { document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
   bindInput('fob-contact', 'fobContact'); bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd);
   document.getElementById('terms').addEventListener('click', e => {

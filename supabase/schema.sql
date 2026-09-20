@@ -145,8 +145,8 @@ begin
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'fields', '[]'::jsonb)) x), '{}'),
             coalesce(d->>'contact_name', ''));
   else
-    insert into students (id, name, skills, hours, avail_days, avail_times)
-    values (new.id, coalesce(d->>'name', ''), coalesce(d->'skills', '[]'::jsonb), coalesce((d->>'hours')::smallint, 1),
+    insert into students (id, name, birth, skills, hours, avail_days, avail_times)
+    values (new.id, coalesce(d->>'name', ''), nullif(d->>'birth', '')::date, coalesce(d->'skills', '[]'::jsonb), coalesce((d->>'hours')::smallint, 1),
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'avail_days',  '[]'::jsonb)) x), '{}'),
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'avail_times', '[]'::jsonb)) x), '{}'));
   end if;

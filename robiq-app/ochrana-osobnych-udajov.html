@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ochrana osobných údajov — Robiq</title>
+<meta name="description" content="Ako aplikácia Robiq spracúva osobné údaje brigádnikov a firiem. Aké údaje zbierame, na čo ich používame, komu ich odovzdávame a aké máš práva.">
+<meta name="robots" content="index, follow">
+<style>
+  :root {
+    --bg: #0a0710;
+    --surface: #140e1d;
+    --surface-2: #1b1327;
+    --line: rgba(255,255,255,.10);
+    --text: #ece7f3;
+    --muted: #a99fbb;
+    --accent: #a855f7;
+    --accent-2: #22d3ee;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 16px 96px; }
+
+  header.top {
+    padding: 56px 0 28px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 15px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); text-decoration: none; margin-bottom: 28px;
+  }
+  .brand::before {
+    content: ""; width: 26px; height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  }
+  h1 {
+    font-size: clamp(30px, 7vw, 46px);
+    font-weight: 200;
+    letter-spacing: -.02em;
+    line-height: 1.12;
+    margin: 0 0 14px;
+  }
+  .meta { color: var(--muted); font-size: 14.5px; margin: 0; }
+  .lede { color: var(--muted); font-size: 17px; margin: 20px 0 0; max-width: 60ch; }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin: 0 0 44px;
+  }
+  nav.toc h2 {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 12px; font-weight: 500; border: 0; padding: 0;
+  }
+  nav.toc ol { margin: 0; padding: 0; list-style: none; }
+  nav.toc li { margin: 5px 0; }
+  nav.toc a { color: var(--text); text-decoration: none; font-size: 15.5px; }
+  nav.toc a:hover { color: var(--accent); }
+
+  h2 {
+    font-size: clamp(21px, 4.4vw, 27px);
+    font-weight: 300;
+    letter-spacing: -.01em;
+    margin: 56px 0 6px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    scroll-margin-top: 20px;
+  }
+  h3 {
+    font-size: 18.5px; font-weight: 500; margin: 34px 0 6px;
+    color: #fff; scroll-margin-top: 20px;
+  }
+  p { margin: 14px 0; }
+  strong { font-weight: 600; color: #fff; }
+  a { color: var(--accent); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 7px 0; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 48px 0; }
+
+  blockquote {
+    margin: 24px 0; padding: 16px 20px;
+    background: var(--surface);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    color: var(--muted);
+  }
+  blockquote p { margin: 0; font-size: 15.5px; }
+
+  .tablewrap { overflow-x: auto; margin: 22px 0; -webkit-overflow-scrolling: touch; }
+  table {
+    border-collapse: collapse; width: 100%; min-width: 520px;
+    font-size: 15px; background: var(--surface); border-radius: var(--radius); overflow: hidden;
+  }
+  th, td { padding: 11px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  th { background: var(--surface-2); font-weight: 500; color: #fff; font-size: 13.5px; letter-spacing: .02em; }
+  tr:last-child td { border-bottom: 0; }
+
+  code {
+    background: var(--surface-2); padding: 2px 6px; border-radius: 5px;
+    font-size: 14px; font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent-2);
+  }
+
+  footer.bot {
+    margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 14.5px;
+  }
+  @media (max-width: 560px) {
+    body { font-size: 16.5px; }
+    header.top { padding-top: 36px; }
+    table { min-width: 460px; font-size: 14px; }
+  }
+  @media print {
+    body { background: #fff; color: #000; }
+    nav.toc { display: none; }
+    a { color: #000; }
+    table, blockquote { background: #fff; border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./">Robiq — späť do aplikácie</a>
+    <h1>Ochrana osobných údajov</h1>
+    <p class="meta">Aplikácia Robiq · Verzia 1.0 · Posledná aktualizácia 20. 9. 2026</p>
+    <p class="lede">Tu nájdeš, aké údaje o tebe spracúvame, prečo, kto sa k nim dostane a ako ich máš pod kontrolou. Bez právnickej hmly — píšeme to tak, aby to dávalo zmysel.</p>
+  </header>
+
+  <nav class="toc" aria-label="Obsah">
+    <h2>Obsah</h2>
+    <ol>
+      <li><a href="#sek-1-kto-spracuva-tvoje-udaje">1. Kto spracúva tvoje údaje</a></li>
+<li><a href="#sek-2-cim-robiq-je-a-koho-sa-dokument-tyka">2. Čím Robiq je a koho sa dokument týka</a></li>
+<li><a href="#sek-3-ake-udaje-spracuvame">3. Aké údaje spracúvame</a></li>
+<li><a href="#sek-4-na-co-udaje-pouzivame-a-na-akom-pravnom-zaklade">4. Na čo údaje používame a na akom právnom základe</a></li>
+<li><a href="#sek-5-kto-ktore-udaje-vidi">5. Kto ktoré údaje vidí</a></li>
+<li><a href="#sek-6-komu-udaje-odovzdavame">6. Komu údaje odovzdávame</a></li>
+<li><a href="#sek-7-co-si-ukladame-do-tvojho-zariadenia">7. Čo si ukladáme do tvojho zariadenia</a></li>
+<li><a href="#sek-8-ako-dlho-udaje-uchovavame">8. Ako dlho údaje uchovávame</a></li>
+<li><a href="#sek-9-automatizovane-rozhodovanie-a-profilovanie">9. Automatizované rozhodovanie a profilovanie</a></li>
+<li><a href="#sek-10-vek-kto-moze-robiq-pouzivat">10. Vek – kto môže Robiq používať</a></li>
+<li><a href="#sek-11-tvoje-prava">11. Tvoje práva</a></li>
+<li><a href="#sek-12-bezpecnost">12. Bezpečnosť</a></li>
+<li><a href="#sek-13-zmeny-tohto-dokumentu">13. Zmeny tohto dokumentu</a></li>
+<li><a href="#sek-14-kontakt">14. Kontakt</a></li>
+    </ol>
+  </nav>
+
+  <main>
+<blockquote>
+<p><strong>Poznámka k štýlu:</strong> Brigádnikom v tomto dokumente tykáme, firmám vykáme. Nemení to nič na obsahu – práva aj povinnosti sú pre obe strany rovnaké.</p>
+</blockquote>
+<hr />
+<h2 id="sek-1-kto-spracuva-tvoje-udaje">1. Kto spracúva tvoje údaje</h2>
+<p>Prevádzkovateľom, teda tým, kto rozhoduje o tom, prečo a ako sa tvoje osobné údaje spracúvajú, je:</p>
+<ul>
+<li><strong>Meno:</strong> Matej Majtán</li>
+<li><strong>Adresa:</strong> [DOPLNIŤ — adresa miesta podnikania / bydliska; povinný údaj podľa čl. 13 ods. 1 písm. a) GDPR]</li>
+<li><strong>IČO:</strong> [DOPLNIŤ, ak existuje; ak nie, riadok vymazať]</li>
+<li><strong>E-mail:</strong> ceo@robiq.sk</li>
+<li><strong>Služba:</strong> webová aplikácia Robiq, dostupná na <a href="https://bejewelled-pika-5337ed.netlify.app">bejewelled-pika-5337ed.netlify.app</a> (testovacia adresa; po spustení app.robiq.sk)</li>
+</ul>
+<p>Robiq nemá určenú zodpovednú osobu (data protection officer). Zákon nám to v tejto fáze neukladá. Vo všetkých otázkach ochrany údajov píš na <strong>ceo@robiq.sk</strong>.</p>
+<p>Tento dokument sa týka <strong>aplikácie Robiq</strong>. Pre prihlasovanie do čakacej listiny na webe robiq.sk platí samostatný dokument.</p>
+<h3 id="sek-podla-coho-postupujeme">Podľa čoho postupujeme</h3>
+<ul>
+<li>Nariadenie Európskeho parlamentu a Rady (EÚ) 2016/679 (GDPR)</li>
+<li>Zákon č. 18/2018 Z. z. o ochrane osobných údajov v platnom znení</li>
+<li>Zákon č. 452/2021 Z. z. o elektronických komunikáciách (ukladanie údajov v zariadení používateľa)</li>
+<li>Zákon č. 22/2004 Z. z. o elektronickom obchode</li>
+</ul>
+<hr />
+<h2 id="sek-2-cim-robiq-je-a-koho-sa-dokument-tyka">2. Čím Robiq je a koho sa dokument týka</h2>
+<p><strong>Robiq je inzertná platforma.</strong> Firmy si u nás zverejňujú inzeráty, brigádnici si ich prezerajú a ak prejavia záujem obe strany, Robiq im sprístupní chat. Tým naša úloha končí.</p>
+<p>Robiq nie je zamestnávateľ ani agentúra. Nie sme stranou žiadnej dohody o brigádnickej práci, nevyberáme za teba odmenu, neurčujeme podmienky práce a neručíme za to, že firma dodrží, čo v inzeráte sľubuje. Pracovnoprávny vzťah vzniká priamo medzi tebou a firmou, mimo Robiqu. Od chvíle, keď firme odovzdáš svoje údaje v chate alebo mimo aplikácie, je prevádzkovateľom týchto údajov ona a jej vlastné pravidlá ochrany údajov.</p>
+<p>V Robiqu sú tri typy používateľov:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Kto</th>
+<th>Čo o ňom spracúvame</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Brigádnik</strong> (študent, fyzická osoba hľadajúca krátkodobú prácu)</td>
+<td>účet a profil – pozri kapitolu 3.1</td>
+</tr>
+<tr>
+<td><strong>Firma</strong> (zamestnávateľ; registruje ju konkrétna kontaktná osoba)</td>
+<td>údaje o firme a o kontaktnej osobe – pozri kapitolu 3.2</td>
+</tr>
+<tr>
+<td><strong>Návštevník bez účtu</strong></td>
+<td>nič sa o ňom neukladá do našej databázy – pozri kapitolu 3.3</td>
+</tr>
+</tbody>
+</table></div>
+<p>Aj keď je firma právnická osoba, údaje o jej kontaktnej osobe (meno, e-mail) sú osobné údaje konkrétneho človeka a chránime ich rovnako. Ak je firmou živnostník, jeho meno, IČO a e-mail sú tiež osobné údaje.</p>
+<hr />
+<h2 id="sek-3-ake-udaje-spracuvame">3. Aké údaje spracúvame</h2>
+<p>Všetky údaje získavame <strong>priamo od teba</strong> – z registrácie, onboardingu, profilu a z toho, ako aplikáciu používaš. Nekupujeme údaje od tretích strán, nesťahujeme ich zo sociálnych sietí ani z verejných registrov.</p>
+<h3 id="sek-3-1-ak-si-brigadnik">3.1 Ak si brigádnik</h3>
+<p><strong>Pri registrácii (povinné):</strong></p>
+<ul>
+<li><strong>e-mailová adresa</strong> – slúži ako prihlasovacie meno a na kontakt</li>
+<li><strong>heslo</strong> – ukladá ho prihlasovacia služba Supabase Auth výlučne v podobe kryptografického odtlačku (hash). My tvoje heslo nikdy nevidíme a nevieme ho zistiť.</li>
+<li><strong>meno a priezvisko</strong></li>
+</ul>
+<p><strong>V onboardingu a v profile (dobrovoľné, môžeš ich kedykoľvek zmeniť alebo vymazať):</strong></p>
+<ul>
+<li><strong>zručnosti</strong> – čo vieš a na akej úrovni (Základy / Dobré / Top), pri jazykoch úroveň A1–C2. Vrátane vlastného textu, ktorý si sám doplníš do poľa „Niečo iné?“.</li>
+<li><strong>koľko hodín týždenne môžeš pracovať</strong></li>
+<li><strong>dni v týždni</strong>, kedy si k dispozícii</li>
+<li><strong>časy dňa</strong> (ráno, poobede, večer, nočné)</li>
+<li><strong>dátum narodenia</strong> – používame ho <strong>výlučne</strong> na to, aby sme ti neukazovali inzeráty označené „Len 18+“. Ak ho nevyplníš, tieto inzeráty sa ti nezobrazia. Firma tvoj dátum narodenia <strong>nikdy nevidí</strong>.</li>
+<li><strong>bio</strong> – voľný text do 240 znakov. Napíš si doň, čo chceš, aby o tebe firma vedela. Firma ho zatiaľ <strong>nevidí</strong> (pozri kapitolu 5).</li>
+<li><strong>profilová fotka</strong> – ak si ju nahráš. Uloží sa do nášho úložiska a firma ju uvidí <strong>až vtedy, keď ty sám prejavíš záujem o jej inzerát</strong> – rovnako ako zvyšok profilu. Verejná nie je: bez prihlásenia sa k nej nikto nedostane. Kedykoľvek ju môžeš vymeniť alebo odstrániť.</li>
+</ul>
+<blockquote>
+<p><strong>Pri fotke zvažuj dvakrát.</strong> Fotka o tebe prezradí viac než ostatné polia – vek, pohlavie, etnický pôvod, niekedy aj zdravotný stav. Pri hľadaní práce to môže zavážiť spôsobom, ktorý si neželáš. Je preto úplne dobrovoľná a bez nej máš v Robiqu presne rovnaké možnosti.</p>
+</blockquote>
+<p><strong>Vzniká pri používaní aplikácie:</strong></p>
+<ul>
+<li><strong>prejavené záujmy</strong> – o ktoré inzeráty si klikol „Mám záujem“ a kedy</li>
+<li><strong>preskočené inzeráty</strong> – ktoré inzeráty si preskočil (slúži len na to, aby sa ti tá istá karta nezobrazovala stále dokola; vidíš to len ty)</li>
+<li><strong>záujem firiem o teba</strong> – ktorá firma o teba prejavila záujem a kedy</li>
+<li><strong>zhody</strong> – kedy vznikla zhoda, s ktorou firmou a na ktorý inzerát</li>
+<li><strong>správy</strong> – celý obsah chatu so zhodnutou firmou</li>
+<li><strong>technické údaje účtu</strong> – čas vytvorenia účtu, časy prihlásení a IP adresa pri prihlásení. Tieto zaznamenáva prihlasovacia služba Supabase ako súčasť bezpečnostného protokolu.</li>
+<li><strong>technická kópia registračných údajov</strong> – prihlasovacia služba si popri profile drží aj kópiu údajov, ktoré si zadal pri registrácii a v onboardingu. Je to technické duplikovanie v rámci tej istej databázy, nie ďalší príjemca, a maže sa spolu s účtom.</li>
+</ul>
+<h3 id="sek-3-2-ak-ste-firma">3.2 Ak ste firma</h3>
+<p><strong>Pri registrácii:</strong></p>
+<ul>
+<li><strong>e-mailová adresa</strong> a <strong>heslo</strong> (opäť len ako hash) – konto kontaktnej osoby</li>
+<li><strong>názov firmy</strong> (povinný) – je <strong>verejne viditeľný</strong> pri každom vašom inzeráte, teda aj pre neprihlásených návštevníkov</li>
+<li><strong>IČO</strong> (nepovinné)</li>
+<li><strong>odvetvia</strong>, v ktorých pôsobíte (povinné)</li>
+<li><strong>meno kontaktnej osoby</strong> (nepovinné) – verejné <strong>nie je</strong>, vidíte ho len vy</li>
+</ul>
+<p><strong>Vo firemnom profile:</strong></p>
+<ul>
+<li><strong>popis firmy</strong> – voľný text, <strong>verejne viditeľný</strong></li>
+<li><strong>logo</strong> – obrázok uložený v úložisku Supabase Storage. <strong>Upozornenie: súbor s logom je dostupný cez priamy odkaz komukoľvek, kto ten odkaz pozná</strong>, aj bez prihlásenia. Nenahrávajte preto do loga nič, čo nemá byť verejné.</li>
+</ul>
+<p><strong>V inzerátoch:</strong></p>
+<ul>
+<li>názov pozície, odmena, počet ľudí, typ práce, termín, popis – <strong>verejné</strong></li>
+<li>príznak „Len 18+“</li>
+<li><strong>poznámka pre AI</strong> („Povedzte AI, koho hľadáte“) – voľný text, ktorý vidíte len vy. Dnes ho <strong>nespracúva žiadny AI systém</strong>, len sa ukladá. Ak to zmeníme, tento dokument aktualizujeme skôr, než AI zapneme (pozri kapitolu 9).</li>
+<li>počet zobrazení inzerátu, stav a čas vytvorenia</li>
+</ul>
+<p><strong>Vzniká pri používaní aplikácie:</strong></p>
+<ul>
+<li>prejavené záujmy o konkrétnych brigádnikov, zhody, správy v chate, technické údaje účtu a technická kópia registračných údajov – rovnako ako pri brigádnikoch</li>
+<li><strong>príznak overenia firmy</strong> – systémový údaj, ktorý zatiaľ nepoužívame (overovanie podľa IČO nie je spustené)</li>
+</ul>
+<h3 id="sek-3-3-ak-si-stranku-len-prezeras-bez-uctu">3.3 Ak si stránku len prezeráš bez účtu</h3>
+<p>Bez prihlásenia si môžeš pozrieť zoznam ponúk. <strong>Do našej databázy sa o tebe neuloží nič</strong> – nevytvárame ti žiadny záznam, nesledujeme ťa, nemáme analytiku ani reklamné skripty.</p>
+<p>Tvoj prehliadač však pri načítaní stránky sám pošle svoju IP adresu a hlavičky (typ prehliadača, jazyk) serverom, z ktorých sa načítava aplikácia a jej súčasti – pozri kapitolu 6.</p>
+<h3 id="sek-3-4-volne-texty-a-spravy-dolezite-upozornenie">3.4 Voľné texty a správy – dôležité upozornenie</h3>
+<p>Niektoré polia sú voľný text, do ktorého môžeš napísať čokoľvek:</p>
+<ul>
+<li>bio brigádnika</li>
+<li>vlastné zručnosti („Niečo iné?“)</li>
+<li>popis firmy a poznámka pre AI</li>
+<li><strong>obsah správ v chate</strong></li>
+</ul>
+<p><strong>Nepýtame sa v nich na citlivé údaje a neprajeme si ich tam.</strong> Do voľných textov a do chatu nepíš údaje o svojom zdraví, o zdravotnom postihnutí, o náboženskom vyznaní, politických názoroch, členstve v odboroch, etnickom pôvode, sexuálnom živote ani rodné číslo, číslo občianskeho preukazu či platobnej karty. Sú to podľa čl. 9 GDPR osobitné kategórie údajov (alebo údaje s vysokým rizikom zneužitia) a Robiq ich zámerne nespracúva.</p>
+<p>Ak ich tam niekto napriek tomu napíše, spracujeme ich len ako súčasť obsahu, ktorý sám zverejnil alebo odoslal druhej strane, a na požiadanie ich vymažeme. Zmazať ich môžeš aj sám – úpravou profilu alebo zmazaním účtu.</p>
+<p><strong>Chat nie je end-to-end šifrovaný.</strong> Správy sú uložené v našej databáze. Vidí ich druhá strana zhody a technicky k nim má prístup prevádzkovateľ ako správca databázy. Do chatu si dohodni stretnutie, ale neposielaj tam napríklad fotky dokladov.</p>
+<h3 id="sek-3-5-co-o-tebe-nezbierame">3.5 Čo o tebe nezbierame</h3>
+<p>Telefónne číslo, adresu bydliska, rodné číslo, číslo dokladu, údaje o polohe, platobné údaje, údaje zo sociálnych sietí, cookies, analytiku správania ani žiadne údaje o zariadení nad rámec bežných serverových protokolov.</p>
+<p>Ak niekedy pribudne pole, ktoré tu nie je uvedené (napríklad telefónne číslo), doplníme ho do tohto dokumentu <strong>skôr</strong>, než ho v aplikácii spustíme.</p>
+<hr />
+<h2 id="sek-4-na-co-udaje-pouzivame-a-na-akom-pravnom-zaklade">4. Na čo údaje používame a na akom právnom základe</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Účel</th>
+<th>Ktoré údaje</th>
+<th>Právny základ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Vytvorenie a vedenie účtu, prihlasovanie</strong></td>
+<td>e-mail, hash hesla, rola, časy prihlásení</td>
+<td>čl. 6 ods. 1 písm. b) GDPR – plnenie zmluvy (podmienok používania)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Zobrazovanie inzerátov a prepojenie s inzerentom</strong> – zobrazovanie ponúk brigádnikom, sprístupnenie profilu brigádnika firme po tom, ako brigádnik sám prejaví záujem o jej inzerát, vznik zhody</td>
+<td>profil brigádnika, inzeráty firmy, záujmy, preskočenia, zhody</td>
+<td>čl. 6 ods. 1 písm. b) GDPR – plnenie zmluvy; toto je jadro služby, o ktorú si požiadal</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Chat medzi brigádnikom a firmou po zhode</strong></td>
+<td>obsah správ, odosielateľ, čas</td>
+<td>čl. 6 ods. 1 písm. b) GDPR – plnenie zmluvy</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Vekové obmedzenie inzerátov „Len 18+“</strong></td>
+<td>dátum narodenia</td>
+<td>čl. 6 ods. 1 písm. b) GDPR – funkcia služby, ktorú si si vyžiadal, v spojení s ochranou mladistvých podľa Zákonníka práce</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Štatistika inzerátu pre firmu</strong> (počet zobrazení, záujmov, zhôd)</td>
+<td>agregované počty bez ďalších osobných údajov</td>
+<td>čl. 6 ods. 1 písm. f) GDPR – oprávnený záujem firmy a náš na vyhodnotení, či inzerát funguje</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Bezpečnosť, prevencia zneužitia a riešenie sporov</strong></td>
+<td>protokoly prihlásení, IP adresa pri prihlásení, obsah účtu</td>
+<td>čl. 6 ods. 1 písm. f) GDPR – oprávnený záujem na ochrane služby a jej používateľov</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Podpora a vybavovanie tvojich žiadostí</strong> (vrátane práv podľa kapitoly 12)</td>
+<td>e-mail a údaje potrebné na vybavenie</td>
+<td>čl. 6 ods. 1 písm. c) GDPR – plnenie zákonnej povinnosti</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Čo nerobíme:</strong> neposielame newsletter z aplikácie, nerobíme marketingové profilovanie, nepredávame ani neposkytujeme údaje inzerentom mimo popísaných prípadov a nepoužívame údaje na trénovanie žiadneho AI modelu.</p>
+<p><strong>Ak niektorý údaj neposkytneš:</strong> e-mail, heslo a meno sú nevyhnutné na vznik účtu – bez nich sa registrovať nedá. Všetko ostatné je dobrovoľné; bez zručností a dostupnosti ťa však firmy ťažšie nájdu a bez dátumu narodenia neuvidíš inzeráty označené „Len 18+“.</p>
+<hr />
+<h2 id="sek-5-kto-ktore-udaje-vidi">5. Kto ktoré údaje vidí</h2>
+<p>Prístup k údajom je vynútený priamo v databáze (pravidlá RLS – row level security), nie iba v rozhraní aplikácie.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Údaj</th>
+<th>Návštevník bez účtu</th>
+<th>Brigádnik</th>
+<th>Firma</th>
+<th>Prevádzkovateľ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aktívne inzeráty, názov, popis a logo firmy</td>
+<td>áno</td>
+<td>áno</td>
+<td>áno</td>
+<td>áno</td>
+</tr>
+<tr>
+<td>Meno, zručnosti, hodiny a dostupnosť brigádnika</td>
+<td>nie</td>
+<td>len svoje</td>
+<td><strong>len tých brigádnikov, ktorí prejavili záujem o jej inzerát</strong></td>
+<td>áno</td>
+</tr>
+<tr>
+<td>Profilová fotka brigádnika</td>
+<td>nie</td>
+<td>len svoju</td>
+<td><strong>len tých brigádnikov, ktorí prejavili záujem o jej inzerát</strong></td>
+<td>áno</td>
+</tr>
+<tr>
+<td>Dátum narodenia a bio brigádnika</td>
+<td>nie</td>
+<td>len svoje</td>
+<td><strong>nie – technicky vylúčené</strong></td>
+<td>áno</td>
+</tr>
+<tr>
+<td>IČO a meno kontaktnej osoby firmy</td>
+<td>nie</td>
+<td>nie</td>
+<td>len svoje</td>
+<td>áno</td>
+</tr>
+<tr>
+<td>Prejavené záujmy</td>
+<td>nie</td>
+<td>svoje</td>
+<td>len na svoje inzeráty</td>
+<td>áno</td>
+</tr>
+<tr>
+<td>Správy v chate</td>
+<td>nie</td>
+<td>len vo svojich zhodách</td>
+<td>len vo svojich zhodách</td>
+<td>áno (ako správca databázy)</td>
+</tr>
+<tr>
+<td>E-mail</td>
+<td>nie</td>
+<td>svoj</td>
+<td>svoj</td>
+<td>áno</td>
+</tr>
+<tr>
+<td>Heslo</td>
+<td>nie</td>
+<td>nie</td>
+<td>nie</td>
+<td><strong>nie – existuje len ako hash</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Dve veci stoja za zvýraznenie:</p>
+<ol>
+<li><strong>Firma sa k tvojmu profilu dostane až vtedy, keď ty sám klikneš „Mám záujem“ na jej inzerát.</strong> Dovtedy o tebe nevie nič. Kontrolu nad tým, kto ťa vidí, máš teda v ruke ty.</li>
+<li><strong>Firma nevidí tvoj dátum narodenia ani bio.</strong> Nie je to len sľub v texte – firma číta kandidátov cez databázový pohľad, ktorý tieto stĺpce vôbec neobsahuje, a k základnej tabuľke prístup nemá.</li>
+</ol>
+<hr />
+<h2 id="sek-6-komu-udaje-odovzdavame">6. Komu údaje odovzdávame</h2>
+<p>Údaje nepredávame. Odovzdávame ich len týmto príjemcom a len v rozsahu, ktorý je nevyhnutný:</p>
+<h3 id="sek-sprostredkovatelia-v-zmysle-gdpr-spracuvaju-udaje-pre-nas-podla-nasich-pokynov">Sprostredkovatelia v zmysle GDPR (spracúvajú údaje pre nás, podľa našich pokynov)</h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Kto</th>
+<th>Čo spracúva</th>
+<th>Kde sú údaje uložené</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Supabase Inc.</strong> (USA) – databáza, prihlasovanie, úložisko súborov, prenos správ v reálnom čase</td>
+<td>všetky údaje uvedené v kapitole 3</td>
+<td>serverový región <strong>Central EU – Frankfurt, Nemecko</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>So Supabase máme uzavretú zmluvu o spracúvaní osobných údajov (Data Processing Addendum) podľa čl. 28 GDPR. Databáza, prihlasovacia služba aj úložisko súborov bežia vo frankfurtskom regióne, teda v Európskej únii. Spoločnosť Supabase Inc. má sídlo v USA a v obmedzenom rozsahu (technická podpora, prevádzka infraštruktúry) môže mať k údajom prístup zo Spojených štátov. Takýto prenos je zabezpečený <strong>štandardnými zmluvnými doložkami</strong> schválenými Európskou komisiou podľa čl. 46 ods. 2 písm. c) GDPR, ktoré sú súčasťou uvedenej zmluvy. Kópiu týchto záruk ti na požiadanie pošleme na ceo@robiq.sk.</p>
+<h3 id="sek-dalsi-prijemcovia">Ďalší príjemcovia</h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Kto</th>
+<th>Čo sa mu dostane</th>
+<th>Poznámka</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Druhá strana zhody</strong> (firma alebo brigádnik)</td>
+<td>údaje uvedené v kapitole 5</td>
+<td>ide o podstatu služby</td>
+</tr>
+<tr>
+<td><strong>jsDelivr</strong> (Prospect One, Poľsko) – sieť CDN, z ktorej sa načítava programová knižnica</td>
+<td>IP adresa a hlavičky tvojho prehliadača v momente načítania stránky</td>
+<td>prevádzkovateľ so sídlom v EÚ, ide o globálnu sieť serverov</td>
+</tr>
+<tr>
+<td><strong>CDNFonts</strong> – sieť CDN, z ktorej sa načítavajú písma Satoshi a Open Sauce One</td>
+<td>IP adresa a hlavičky tvojho prehliadača</td>
+<td>globálna sieť serverov; pri tomto poskytovateľovi nevieme vylúčiť, že obsah doručí server mimo EÚ</td>
+</tr>
+<tr>
+<td><strong>Orgány verejnej moci</strong> (súd, polícia, Úrad na ochranu osobných údajov)</td>
+<td>len to, čo nám ukladá zákon</td>
+<td>údaje im poskytneme iba na základe zákonnej povinnosti</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Prenos IP adresy do tretích krajín:</strong> siete CDN doručujú obsah z najbližšieho servera, ktorý nemusí byť v EÚ. Ide o jediný osobný údaj (IP adresa), ktorý sa pritom prenáša, a deje sa to priamo medzi tvojím prehliadačom a daným serverom. Ak chceš tomu zabrániť, môžeš použiť VPN – a my do budúcna plánujeme knižnicu aj písma hostovať priamo v aplikácii, čím tento prenos odpadne úplne.</p>
+<hr />
+<h2 id="sek-7-co-si-ukladame-do-tvojho-zariadenia">7. Čo si ukladáme do tvojho zariadenia</h2>
+<p><strong>Aplikácia Robiq nepoužíva cookies.</strong> Nemáme analytické ani reklamné skripty, nesledujeme, odkiaľ prichádzaš, a nespájame tvoje správanie naprieč webmi.</p>
+<p>Do pamäte tvojho prehliadača (localStorage) ukladáme jedinú vec: <strong>prihlasovací token</strong>, vďaka ktorému zostaneš prihlásený a nemusíš zadávať heslo pri každom otvorení aplikácie. Je to podľa § 109 ods. 8 zákona č. 452/2021 Z. z. údaj nevyhnutne potrebný na poskytnutie služby, ktorú si výslovne vyžiadal, a preto naň nepotrebujeme tvoj súhlas. Token zmizne, keď sa odhlásiš alebo vymažeš údaje stránky v prehliadači.</p>
+<hr />
+<h2 id="sek-8-ako-dlho-udaje-uchovavame">8. Ako dlho údaje uchovávame</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Údaj</th>
+<th>Ako dlho</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Účet, profil, profilová fotka, inzeráty, záujmy, zhody, správy, logo firmy</td>
+<td>po celý čas, čo máš účet</td>
+</tr>
+<tr>
+<td>Všetko uvedené vyššie po zmazaní účtu</td>
+<td>okamžite sa maže z databázy; zo záložných kópií poskytovateľa sa odstráni najneskôr do 30 dní</td>
+</tr>
+<tr>
+<td>Protokoly prihlásení a IP adresy v systéme Supabase Auth</td>
+<td>krátkodobo, podľa nastavenia poskytovateľa, najviac 90 dní</td>
+</tr>
+<tr>
+<td>E-mailová komunikácia s nami (žiadosti, podpora)</td>
+<td>1 rok od vybavenia, aby sme vedeli doložiť, ako sme žiadosť vybavili</td>
+</tr>
+<tr>
+<td>Údaje, ktoré musíme uchovať podľa zákona (napr. účtovné doklady, keď firma začne platiť)</td>
+<td>po dobu stanovenú zákonom</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="sek-zmazanie-uctu">Zmazanie účtu</h3>
+<p>Účet si môžeš <strong>zmazať sám kedykoľvek</strong>: menu účtu → <strong>Zmazať účet</strong> → potvrdenie. Zmaže sa účet, profil, profilová fotka, inzeráty, prejavené záujmy, zhody, správy aj logo firmy. Nepotrebuješ na to nás a nemusíš to nijako odôvodňovať.</p>
+<p>Ak sa do účtu neprihlásiš viac ako 24 mesiacov, môžeme ho po predchádzajúcom upozornení na tvoj e-mail zmazať, aby sme nedržali údaje, ktoré už nikto nepotrebuje.</p>
+<p><strong>Čo zmazanie účtu neovplyvní:</strong> správy, ktoré si už odoslal druhej strane, zostanú v jej schránke – rovnako ako pri e-maile. Rovnako nevieme zmazať údaje, ktoré si firme oznámil mimo Robiqu (napr. telefonicky alebo e-mailom); tam už je prevádzkovateľom daná firma a so žiadosťou sa treba obrátiť na ňu.</p>
+<hr />
+<h2 id="sek-9-automatizovane-rozhodovanie-a-profilovanie">9. Automatizované rozhodovanie a profilovanie</h2>
+<p>Robiq <strong>nerobí automatizované rozhodovanie s právnym alebo podobne významným účinkom</strong> v zmysle čl. 22 GDPR. Nikoho nevyraďuje algoritmus – o tom, komu prejaví záujem, rozhoduje vždy človek na oboch stranách.</p>
+<p>Aplikácia zoraďuje a filtruje inzeráty podľa údajov, ktoré si sám zadal (zručnosti, dostupnosť, vek pri inzerátoch „Len 18+“). Je to bežné triedenie obsahu, ktoré ti nič nezakazuje ani neprisudzuje – inzeráty si môžeš prezrieť aj tak.</p>
+<p>Pole „Povedzte AI, koho hľadáte“ sa dnes <strong>len ukladá a nespracúva sa žiadnym AI systémom</strong>.</p>
+<p>Ak niekedy nasadíme automatické vyhodnocovanie alebo poradie kandidátov na základe AI, bude to pre nás vysokorizikový systém podľa prílohy III bodu 4 písm. a) nariadenia (EÚ) 2024/1689 o umelej inteligencii. V takom prípade ťa o tom vopred informujeme priamo v aplikácii, aktualizujeme tento dokument a doplníme vysvetlenie, ako systém funguje a ako proti jeho výstupu namietať. <strong>Nezapneme to potichu.</strong></p>
+<hr />
+<h2 id="sek-10-vek-kto-moze-robiq-pouzivat">10. Vek – kto môže Robiq používať</h2>
+<p>Robiq je určený osobám, ktoré dovŕšili <strong>16 rokov</strong>. Mladším registráciu neumožňujeme.</p>
+<p>Dôvod je právny: podľa čl. 8 GDPR a § 15 zákona č. 18/2018 Z. z. je v Slovenskej republike hranica, od ktorej môže dieťa samo platne súhlasiť so spracúvaním údajov v službách informačnej spoločnosti, <strong>16 rokov</strong>. Pri mladších by sme museli zakaždým získať a overiť súhlas zákonného zástupcu, čo v tejto fáze neriešime.</p>
+<p>Ak zistíme, že účet si založil niekto mladší ako 16 rokov, účet zrušíme a údaje zmažeme. Ak ste rodič alebo zákonný zástupca a myslíte si, že vaše dieťa mladšie ako 16 rokov má v Robiqu účet, napíšte nám na <strong>ceo@robiq.sk</strong> a bezodkladne to vyriešime.</p>
+<p><strong>Pre brigádnikov mladších ako 18 rokov:</strong> Robiq používať môžeš, ale inzeráty označené „Len 18+“ sa ti nezobrazia. Pri samotnej brigáde ti navyše zo Zákonníka práce vyplývajú ďalšie obmedzenia (druh práce, nočná práca, súhlas zákonného zástupcu pri uzatváraní dohody) – to však rieši zamestnávateľ, nie Robiq.</p>
+<hr />
+<h2 id="sek-11-tvoje-prava">11. Tvoje práva</h2>
+<p>Ako dotknutá osoba máš voči nám tieto práva:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Právo</th>
+<th>Čo znamená</th>
+<th>Článok GDPR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Právo na prístup</strong></td>
+<td>Dozvedieť sa, či o tebe niečo spracúvame, a dostať kópiu týchto údajov.</td>
+<td>čl. 15</td>
+</tr>
+<tr>
+<td><strong>Právo na opravu</strong></td>
+<td>Dať si opraviť nesprávny alebo doplniť neúplný údaj. Väčšinu si opravíš sám v profile.</td>
+<td>čl. 16</td>
+</tr>
+<tr>
+<td><strong>Právo na vymazanie</strong> („právo byť zabudnutý“)</td>
+<td>Dať si zmazať údaje. Účet si zmažeš sám v aplikácii – pozri kapitolu 8.</td>
+<td>čl. 17</td>
+</tr>
+<tr>
+<td><strong>Právo na obmedzenie spracúvania</strong></td>
+<td>Dočasne nám zakázať s údajmi pracovať, kým sa nevyrieši napr. spor o ich správnosť.</td>
+<td>čl. 18</td>
+</tr>
+<tr>
+<td><strong>Právo na prenosnosť</strong></td>
+<td>Dostať údaje, ktoré si nám poskytol, v strojovo čitateľnom formáte a preniesť ich inam. Aplikácia zatiaľ nemá tlačidlo na export – <strong>napíš nám a pošleme ti súbor e-mailom</strong>.</td>
+<td>čl. 20</td>
+</tr>
+<tr>
+<td><strong>Právo namietať</strong></td>
+<td>Namietať proti spracúvaniu, ktoré staviame na oprávnenom záujme (účely 5 a 6 v kapitole 4).</td>
+<td>čl. 21</td>
+</tr>
+<tr>
+<td><strong>Právo nebyť predmetom automatizovaného rozhodovania</strong></td>
+<td>Pozri kapitolu 9 – takéto rozhodovanie nerobíme.</td>
+<td>čl. 22</td>
+</tr>
+<tr>
+<td><strong>Právo podať sťažnosť</strong></td>
+<td>Obrátiť sa na dozorný orgán, ak si myslíš, že tvoje údaje spracúvame v rozpore so zákonom.</td>
+<td>čl. 77</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="sek-ako-si-pravo-uplatnit">Ako si právo uplatniť</h3>
+<p>Napíš na <strong>ceo@robiq.sk</strong> z e-mailovej adresy, ktorou si sa registroval – tak vieme, že píšeš naozaj ty. Ak nám píšeš z inej adresy, môžeme požiadať o doplňujúce overenie; nikdy však nebudeme pýtať kópiu dokladu totožnosti.</p>
+<p>Odpovieme <strong>do jedného mesiaca</strong> od doručenia žiadosti. Ak by bola žiadosť zložitá alebo by ich prišlo viac naraz, lehotu môžeme predĺžiť najviac o dva mesiace – o predĺžení aj jeho dôvode ťa upovedomíme do jedného mesiaca. Vybavenie je bezplatné; spoplatniť alebo odmietnuť môžeme len zjavne neopodstatnenú alebo opakovanú žiadosť, a aj to s vysvetlením.</p>
+<h3 id="sek-dozorny-organ">Dozorný orgán</h3>
+<p><strong>Úrad na ochranu osobných údajov Slovenskej republiky</strong>
+Hraničná 12, 820 07 Bratislava 27
+telefón: +421 2 32 31 32 14
+e-mail: statny.dozor@pdp.gov.sk
+web: dataprotection.gov.sk</p>
+<p>Budeme však radi, ak dáš najprv šancu nám – väčšinu vecí vybavíme rýchlejšie a bez papierovania.</p>
+<hr />
+<h2 id="sek-12-bezpecnost">12. Bezpečnosť</h2>
+<p>Čo konkrétne robíme, aby sa k údajom nedostal niekto nepovolaný:</p>
+<ul>
+<li><strong>Prístupové pravidlá priamo v databáze (RLS).</strong> Každý riadok v databáze má pravidlo, kto ho smie čítať a meniť. Neopiera sa to o to, čo zobrazí aplikácia – aj keby sa niekto pokúsil pýtať sa databázy priamo, dostane len to, na čo má právo.</li>
+<li><strong>Oddelený pohľad pre firmy.</strong> Firma nečíta tabuľku brigádnikov, ale obmedzený pohľad, ktorý neobsahuje dátum narodenia ani bio.</li>
+<li><strong>Profilové fotky v neverejnom úložisku.</strong> Logá firiem sú verejné, lebo sa zobrazujú pri inzerátoch. Profilové fotky brigádnikov sú v oddelenom, neverejnom priečinku – súbor sa nedá otvoriť len preto, že niekto pozná alebo uhádne jeho odkaz.</li>
+<li><strong>Heslá v podobe hashu.</strong> Heslá spracúva Supabase Auth a ukladá ich len ako nezvratný kryptografický odtlačok.</li>
+<li><strong>Šifrovaný prenos.</strong> Celá komunikácia medzi tvojím zariadením a servermi prebieha cez HTTPS.</li>
+<li><strong>Údaje v EÚ.</strong> Databáza, prihlasovanie aj úložisko súborov bežia vo Frankfurte.</li>
+<li><strong>Minimalizácia.</strong> Nezbierame telefónne číslo, adresu ani platobné údaje, pretože ich na fungovanie služby nepotrebujeme.</li>
+</ul>
+<p>Žiadny systém nie je stopercentne bezpečný. Ak by aj napriek tomu došlo k porušeniu ochrany údajov s rizikom pre tvoje práva, oznámime to Úradu na ochranu osobných údajov do 72 hodín a ak bude riziko vysoké, budeme informovať aj teba.</p>
+<p><strong>Chráň si aj ty svoju stranu:</strong> používaj heslo, ktoré nemáš nikde inde, a neodhlásené konto nenechávaj na cudzom zariadení.</p>
+<hr />
+<h2 id="sek-13-zmeny-tohto-dokumentu">13. Zmeny tohto dokumentu</h2>
+<p>Robiq sa vyvíja, takže sa bude meniť aj tento dokument. Vždy v ňom uvidíš číslo verzie a dátum poslednej aktualizácie.</p>
+<p>Pri podstatných zmenách – napríklad ak pribudne nový sprostredkovateľ, nový účel spracúvania alebo spomínané AI vyhodnocovanie kandidátov – ťa upozorníme e-mailom alebo oznámením priamo v aplikácii, a to <strong>skôr, než zmena nadobudne účinnosť</strong>. Staršie verzie na požiadanie poskytneme.</p>
+<hr />
+<h2 id="sek-14-kontakt">14. Kontakt</h2>
+<p>Čokoľvek k ochrane údajov – otázka, žiadosť, sťažnosť, podozrenie na chybu:</p>
+<p><strong>ceo@robiq.sk</strong></p>
+<p>Matej Majtán, Robiq
+[DOPLNIŤ — adresa]</p>
+  </main>
+
+  <footer class="bot">
+    Robiq · ceo@robiq.sk · Táto stránka nepoužíva cookies, analytiku ani sledovacie skripty.
+  </footer>
+</div>
+</body>
+</html>

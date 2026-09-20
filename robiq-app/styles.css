@@ -569,8 +569,11 @@ h2 b { font-weight: 700; color: #40319F; }
 .s1-row { display: flex; gap: 22px; align-items: center; margin-bottom: 26px; }
 .avatar { width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, #5546C4, #9F8FF2); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; }
 .col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-.photo-btn { background: rgba(36,27,69,.05); border: 1px dashed #DEDBEC; border-radius: 12px; padding: 11px 0; font-size: 12.5px; color: #3F3A55; cursor: pointer; }
-.photo-btn:hover { border-color: #40319F; color: #40319F; }
+.ob-birth { display: flex; align-items: center; gap: 12px; }
+.ob-birth span { font-size: 12.5px; font-weight: 700; color: #000000; white-space: nowrap; }
+.ob-birth .input { padding: 11px 14px; font-size: 13.5px; font-weight: 700; }
+.ob-age-note { font-size: 11.5px; color: #6E688C; }
+.ob-age-note.err { color: #DC2626; font-weight: 700; }
 .sel-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
 .sel-row { display: flex; align-items: center; gap: 12px; border: 1px solid rgba(85,70,196,.35); background: rgba(85,70,196,.06); border-radius: 13px; padding: 9px 10px 9px 16px; }
 .sel-name { flex: 1; font-size: 13.5px; font-weight: 700; color: #000000; }
