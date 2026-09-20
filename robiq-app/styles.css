@@ -553,6 +553,14 @@ h2 b { font-weight: 700; color: #40319F; }
 
 /* ═══════════ LOGIN — l.59–94 ═══════════ */
 #scr-login { position: relative; overflow: hidden; background: #F0EFF5; padding: 28px; }
+/* Phones: the dark panel fills the whole screen (no light frame, no rounded corners); page background goes dark too
+   so Safari's bars and overscroll match — see html.dark below and the theme-color switch in app.js. */
+@media (max-width: 640px) {
+  #scr-login { background: #120d2b; padding: 24px 16px; min-height: 100vh; min-height: 100dvh; }
+  #scr-login .panel { inset: 0; border-radius: 0; }
+  #scr-login .login-card { -webkit-mask: none; mask: none; }   /* concave sides only make sense inside the framed panel */
+}
+html.dark, html.dark body { background: #120d2b; }
 #scr-login input::placeholder { color: #000000; }
 .panel { position: absolute; inset: 22px; border-radius: 34px; overflow: hidden; pointer-events: none; background: radial-gradient(120% 120% at 50% 50%, #1c1540 0%, #120d2b 55%, #08050f 100%); }
 .ring { position: absolute; top: 50%; transform: translateY(-50%); width: 760px; height: 820px; border-radius: 50%; filter: blur(2px); }

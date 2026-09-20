@@ -450,6 +450,10 @@ document.getElementById('login-form').addEventListener('submit', e => { e.preven
 // ═══════════ Render ═══════════
 function render() {
   for (const s of ['app', 'login', 'pick', 'ob', 'fob']) document.getElementById('scr-' + s).hidden = state.screen !== s;
+  // Login screen is dark on phones: page background + Safari bar colour follow it
+  const dark = state.screen === 'login' && matchMedia('(max-width: 640px)').matches;
+  document.documentElement.classList.toggle('dark', dark);
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#120d2b' : '#EEEBF7');
   if (state.screen === 'pick') {
     const note = document.getElementById('pick-note');
     note.hidden = !state.oauth;
