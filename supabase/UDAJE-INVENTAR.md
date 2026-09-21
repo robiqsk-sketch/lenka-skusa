@@ -55,7 +55,8 @@ Vzniká pri registrácii študenta aj firmy.
 | `hours` | onboarding krok 3 / profil | nie | koľko hodín týždenne môže pracovať (4 stupne) |
 | `avail_days` | onboarding / profil | nie | dni v týždni |
 | `avail_times` | onboarding / profil | nie | časy dňa (ráno, poobede, večer, nočné) |
-| `birth` | profil → Upraviť | nie | **dátum narodenia** — používa sa na výpočet, či má 18 rokov (inzeráty „Len 18+" sa mladším neukazujú) |
+| `birth` | onboarding krok 1 | **áno** | **dátum narodenia** — vek 16+ (DB trigger), inzeráty „Len 18+" sa mladším neukazujú; po nastavení nemenný |
+| `city_id`, `commute` | onboarding krok 3 / profil | **áno** (mesto) | mesto z pevného zoznamu `cities` + dochádzanie (city / 15km / 30km / any); vzdialenosť sa počíta v DB medzi mestami, bez GPS používateľa; mesto vidí firma v anonymných návrhoch a po záujme |
 | `bio` | profil → Upraviť | nie | voľný text do 240 znakov — **môže obsahovať čokoľvek**, čo človek napíše (škola, záľuby…) |
 | `updated_at` | systém | | |
 

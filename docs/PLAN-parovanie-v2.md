@@ -1,11 +1,11 @@
 # Plán: párovanie v2 + miesto
 
-Stav: **návrh na schválenie** (20. 9. 2026). V kóde zatiaľ nič nezmenené.
+Stav: **implementované 21. 9. 2026** (`supabase/migration-2026-09-21-cities-matching-v2.sql`, `robiq-app/app.js`).
 
-Otvorené otázky pred štartom:
-1. Dochádzanie — stačia 3 stupne (*moje mesto / do 30 km / celé Slovensko*), alebo aj „do 15 km"?
-2. Mesto študenta **povinné** pri registrácii, alebo **voliteľné** s prúžkom „doplň si mesto"?
-3. Súhlas so zrušením bodov „Remote pre všetkých" a s bránou miesta pre ne-remote inzeráty?
+Rozhodnutia (21. 9. 2026):
+1. Dochádzanie — **4 stupne**: len moje mesto / do 15 km / do 30 km / celé Slovensko (`commute`: city · 15km · 30km · any).
+2. Mesto študenta **povinné** pri registrácii (krok 3); existujúci bez mesta vidia prúžok „Doplň si mesto".
+3. **Áno** — miesto je brána, body „Remote pre všetkých" zrušené. Feed študenta: inzeráty v dosahu najprv (nič sa neskrýva).
 
 ---
 

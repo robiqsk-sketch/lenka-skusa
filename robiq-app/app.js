@@ -16,6 +16,7 @@ const initialState = () => ({
   // student
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   profEdit: false, birth: '', bio: '', obTerms: false,
+  cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
   matches: [], activeChat: 0, draft: '', myInterests: [],
   // company
@@ -24,12 +25,36 @@ const initialState = () => ({
   fpName: '', fpDesc: '', fpLogo: '', fpIco: '', fpVerified: false, fpRpo: null,
   offers: [], candidates: [], suggestions: {}, contacted: [], blocked: [], fchats: [], activeFChat: 0, fdraft: '',
   invitedPostingIds: [],                                   // student: postings whose company reached out first
-  fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '',
+  fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fCityId: null, fRemote: false, fpCityId: null,
   fPhotos: [],                                             // new posting: [{ file, url }] previews, max 3
   photoEdit: null,                                         // existing posting: { offerId, photos: [url] } overlay
 });
 let state = initialState();
 let order = [];                                            // guest feed order (shuffled)
+
+// ═══════════ Cities (table `cities`, loaded once) ═══════════
+let CITIES = [];                                           // [{ id, name, district, lat, lng }]
+const cityById = id => CITIES.find(c => c.id === id) || null;
+const cityName = id => cityById(id)?.name || '';
+const cityByName = name => { const n = (name || '').trim().toLowerCase(); return CITIES.find(c => c.name.toLowerCase() === n) || null; };
+function kmBetween(a, b) {                                 // haversine between two city ids (same as distance_km in the DB)
+  const ca = cityById(a), cb = cityById(b); if (!ca || !cb) return null; if (a === b) return 0;
+  const r = x => x * Math.PI / 180, dLat = r(cb.lat - ca.lat), dLng = r(cb.lng - ca.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(ca.lat)) * Math.cos(r(cb.lat)) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(h));
+}
+const COMMUTES = [['city', 'Len moje mesto'], ['15km', 'Do 15 km'], ['30km', 'Do 30 km'], ['any', 'Celé Slovensko']];
+const commuteLabel = c => (COMMUTES.find(x => x[0] === c) || COMMUTES[2])[1];
+const inReach = j => j.remote || !j.cityId || !state.cityId ? true : (() => {   // student's reach vs. a posting (feed order, badge)
+  const d = kmBetween(state.cityId, j.cityId); if (d === null) return true;
+  return j.cityId === state.cityId || (state.commute === '15km' && d <= 15) || (state.commute === '30km' && d <= 30) || state.commute === 'any';
+})();
+const cityDatalist = () => `<datalist id="cities-dl">${CITIES.map(c => `<option value="${esc(c.name)}">${esc(c.district)}</option>`).join('')}</datalist>`;
+async function loadCities() {
+  const { data, error } = await sb.from('cities').select('id, name, district, lat, lng').order('name');
+  if (error) { console.warn('cities', error.message); return; }
+  CITIES = data || [];
+}
 let loadT, toastT, bannerT, rt;
 const avatarUrls = {};                                     // storage path → signed URL (bucket "avatars" is private)
 
@@ -95,15 +120,15 @@ function jobFromRow(p) {                                   // posting row (+comp
     id: p.id, companyId: p.company_id, t: p.title, f: c.name || 'Firma', pay: p.pay + ' €', need: p.need, taken: p.taken,
     posted: ago(p.created_at), start: p.start, lg: colorFor(c.name), logo: c.logo_url, ini: (c.name || 'F')[0].toUpperCase(),
     badges: c.verified ? ['✓ Overená firma'] : [], tags: p.types || [], desc: p.description || '', ice: [], only18: p.only18,
-    photos: p.photos || [],
+    photos: p.photos || [], cityId: p.city_id || null, city: p.cities?.name || cityName(p.city_id), remote: !!p.remote,
   };
 }
 function shuffle(list) { return list.map(x => x.id).sort(() => Math.random() - .5); }
 
 async function loadPostings() {
-  const q = () => sb.from('postings').select('*, companies(name, verified, logo_url)').eq('active', true).order('created_at', { ascending: false });
-  let { data, error } = await q().eq('blocked', false);
-  if (error?.code === '42703') ({ data, error } = await q());   // DB migration not applied yet (no `blocked` column) → feed still works
+  const q = (sel) => sb.from('postings').select(sel).eq('active', true).order('created_at', { ascending: false });
+  let { data, error } = await q('*, companies(name, verified, logo_url), cities(name)').eq('blocked', false);
+  if (error) ({ data, error } = await q('*, companies(name, verified, logo_url)'));   // DB migrations not applied yet (blocked / cities) → feed still works
   if (error) throw error;
   state.postings = data.map(jobFromRow);
   if (!order.length) order = shuffle(state.postings);
@@ -157,7 +182,7 @@ async function loadStudent() {
   ]);
   state.invitedPostingIds = (invites || []).map(x => x.posting_id);
   if (s) Object.assign(state, { obName: s.name, obSkills: s.skills || [], obHours: s.hours, availDays: s.avail_days || [],
-    availTimes: s.avail_times || [], birth: s.birth || '', bio: s.bio || '', avatarPath: s.avatar_path || null });
+    availTimes: s.avail_times || [], birth: s.birth || '', bio: s.bio || '', avatarPath: s.avatar_path || null, cityId: s.city_id || null, commute: s.commute || '30km' });
   await resolveAvatars([state.avatarPath]);
   state.likedIds = (ints || []).map(i => i.posting_id);
   state.myInterests = (ints || []).filter(i => i.postings).map(i => ({
@@ -173,7 +198,7 @@ async function loadCompany() {
     sb.from('postings').select('*, interests(count), matches(count)').eq('company_id', state.uid).order('created_at', { ascending: false }),
     sb.from('company_interests').select('student_id, posting_id').eq('company_id', state.uid),
   ]);
-  if (c) Object.assign(state, { fpName: c.name, fpDesc: c.description || '', fpLogo: c.logo_url || '', fpIco: c.ico || '', fpVerified: c.verified });
+  if (c) Object.assign(state, { fpName: c.name, fpDesc: c.description || '', fpLogo: c.logo_url || '', fpIco: c.ico || '', fpVerified: c.verified, fpCityId: c.city_id || null });
   if (c && !c.verified && ICO_RE.test(c.ico)) await verifyCompany();   // not verified yet (e-mail confirmation, register was down…) → try again
   state.offers = (posts || []).map(p => ({ id: p.id, t: p.title, pay: p.pay + ' € / hod', views: p.views,
     likes: p.interests?.[0]?.count || 0, m: p.matches?.[0]?.count || 0, need: p.need, on: p.active,
@@ -209,7 +234,7 @@ async function loadCandidates() {                          // students who liked
   const profiles = await loadCandidateProfiles([...new Set(rows.map(r => r.student_id))]);
   state.candidates = rows.filter(r => profiles[r.student_id]).map(r => {
     const s = profiles[r.student_id];
-    return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: HOURS[s.hours] || '', photo: avatarUrl(s.avatar_path),
+    return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: (HOURS[s.hours] || '') + (s.city ? ' · 📍 ' + s.city : ''), photo: avatarUrl(s.avatar_path),
       skills: (s.skills || []).map(k => k.n), offer: r.postings.title, postingId: r.posting_id, at: r.created_at,
       g: `linear-gradient(135deg, ${colorFor(s.name)}, #9F8FF2)` };
   });
@@ -385,6 +410,7 @@ const go = {
   // account menu — l.1515–1524
   menuToggle:  el => { if (el && el.classList.contains('a-menu')) { state.accMenu = true; return; } state.accMenu = !state.accMenu; },
   menuProfile: () => { if (isStudent()) state.tab = 2; else state.ftab = 3; state.accMenu = false; },
+  goProfileEdit: () => { state.tab = 2; state.profEdit = true; },
   menuClose:   () => { state.accMenu = false; },
   menuHelp:    () => { state.accMenu = false; location.href = 'mailto:support@robiq.sk?subject=Robiq%20%E2%80%93%20pomoc'; },
   menuTerms:   () => { state.accMenu = false; window.open('podmienky.html', '_blank', 'noopener'); },
@@ -399,7 +425,7 @@ const go = {
     try { await loadPostings(); } catch (e) { fail(e); }
     state.loading = false;
   },
-  goNova:      () => { state.ftab = 9; },
+  goNova:      () => { state.ftab = 9; if (!state.fCityId) state.fCityId = state.fpCityId; },   // the company's seat prefills the place
   // feed — l.1577–1591
   resetDeck: async () => {
     try { await sb.from('skips').delete().eq('student_id', state.uid); state.skippedIds = []; } catch (e) { fail(e); }
@@ -450,10 +476,11 @@ const go = {
   set18All:  () => { state.only18 = false; },
   set18Only: () => { state.only18 = true; },
   publish: async () => {
-    if (!state.fT.trim()) return;
+    if (!novaCanPublish()) { showToast(!state.fT.trim() ? 'Zadajte názov pozície.' : 'Vyberte miesto výkonu zo zoznamu, alebo označte „Na diaľku“.'); return; }
     try {
       const { data: row, error } = await sb.from('postings').insert({ company_id: state.uid, title: state.fT.trim(), pay: state.fPay.trim() || '8',
-        need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote, description: state.fDesc.trim() })
+        need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote, description: state.fDesc.trim(),
+        city_id: state.fRemote ? null : state.fCityId, remote: state.fRemote })
         .select('id').single();
       if (error) throw error;
       if (state.fPhotos.length) {                          // the row exists now → upload the photos under its id
@@ -462,7 +489,7 @@ const go = {
         if (urls.length) await sb.from('postings').update({ photos: urls }).eq('id', row.id);
         if (urls.length < state.fPhotos.length) showToast('Niektoré fotky sa nepodarilo nahrať.');
       }
-      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fPhotos: [], ftab: 0 });   // straight to candidates
+      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fPhotos: [], fCityId: state.fpCityId, fRemote: false, ftab: 0 });   // straight to candidates
       await loadCompany(); await loadPostings();
       const n = Object.values(state.suggestions)[0]?.length ?? 0;
       const first = state.offers[0] && state.suggestions[state.offers[0].id] ? state.suggestions[state.offers[0].id].length : n;
@@ -531,7 +558,7 @@ async function sendMsg(listKey, idxKey, draftKey) {
 async function saveStudent() {
   try {
     const { error } = await sb.from('students').update({ name: state.obName.trim(), skills: state.obSkills, hours: state.obHours,
-      avail_days: state.availDays, avail_times: state.availTimes, birth: state.birth || null, bio: state.bio, updated_at: new Date().toISOString() }).eq('id', state.uid);
+      avail_days: state.availDays, avail_times: state.availTimes, birth: state.birth || null, bio: state.bio, city_id: state.cityId, commute: state.commute, updated_at: new Date().toISOString() }).eq('id', state.uid);
     if (error) throw error;
   } catch (e) { fail(e); }
 }
@@ -675,10 +702,11 @@ function ageOf(iso) {                                      // full years from an
 function isAdult() { const a = ageOf(state.birth); return a !== null && a >= 18; }
 function remaining() {                                     // l.1243–1245
   const adult = isAdult();
-  const inv = id => state.invitedPostingIds.includes(id) ? 1 : 0;
+  const inv = id => state.invitedPostingIds.includes(id) ? 1 : 0, near = j => inReach(j) ? 1 : 0;
   return state.postings
     .filter(j => !state.skippedIds.includes(j.id) && !state.blockedFirms.includes(j.f) && (!j.only18 || adult))
-    .sort(state.authed ? (a, b) => (inv(b) - inv(a)) || (b.id - a.id) : (a, b) => order.indexOf(a.id) - order.indexOf(b.id));   // invitations first
+    .sort(state.authed ? (a, b) => (inv(b) - inv(a)) || (near(b) - near(a)) || (b.id - a.id)   // invitations, then within reach, then newest
+                       : (a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 }
 function aiJob() { return remaining().find(j => !state.likedIds.includes(j.id)) || null; }
 
@@ -699,11 +727,21 @@ function feed() {                                          // l.408–475
       <p>Robiq medzitým aktívne hľadá ďalšie ponuky, ktoré ti sadnú. Vráť sa večer.</p>
       ${state.skippedIds.length ? '<button data-go="resetDeck">Prezrieť znova</button>' : ''}
     </div>`;
+  const noCity = state.authed && isStudent() && !state.cityId && CITIES.length ? `
+    <div class="city-nudge">📍 <b>Doplň si mesto</b> — firmy ťa potom nájdu na brigády vo svojom okolí a ponuky zoradíme podľa vzdialenosti.
+      <button data-go="goProfileEdit">Doplniť</button></div>` : '';
   return `<div class="a-wrap">
     <div class="a-title"><h2>Ponuky <b>pre teba</b></h2>${state.authed ? '<span class="sorted">✦ zoradené podľa zhody s tvojím profilom</span>' : ''}</div>
-    ${tip}${cards}</div>`;
+    ${noCity}${tip}${cards}</div>`;
 }
 
+// "Trnava" · "Na diaľku" · "Trnava · 12 km od teba" (student with a city)
+function placeTxt(j) {
+  if (j.remote) return 'Na diaľku';
+  if (!j.city) return '';
+  const d = state.authed && isStudent() && state.cityId && j.cityId ? kmBetween(state.cityId, j.cityId) : null;
+  return d === null || d === 0 ? j.city : `${j.city} · ${Math.round(d)} km od teba`;
+}
 function jobCard(j) {                                      // l.425–463
   const liked = state.likedIds.includes(j.id);
   const pct = Math.round(Math.max(0, j.need - (j.taken || 0)) / j.need * 100);
@@ -719,7 +757,7 @@ function jobCard(j) {                                      // l.425–463
       <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-job="${j.id}" data-act="menu">⋯</button>${menu}</div></div>
     <div class="who" data-job="${j.id}" data-act="open">
       <div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
-      <div style="flex:1;min-width:0"><div class="t">${esc(j.t)}</div><div class="f">${esc(j.f)}</div>
+      <div style="flex:1;min-width:0"><div class="t">${esc(j.t)}</div><div class="f">${esc(j.f)}${placeTxt(j) ? ` · ${esc(placeTxt(j))}` : ''}</div>
         ${j.badges.length ? `<div class="rat"><b>${esc(j.badges[0])}</b></div>` : ''}</div>
     </div>
     <div class="pay">${esc(j.pay)} <small>/ hod</small></div>
@@ -767,7 +805,7 @@ function profile() {                                       // l.515–635
     <div class="pcard">
       <div class="p-head">
         ${avatarHtml('p-ava', avatarUrl(s.avatarPath), initials())}
-        <div style="flex:1;min-width:0"><div class="p-name">${esc(s.obName.trim() || 'Študent')}</div><div class="p-sub">Študent · <span id="p-hours">${HOURS[s.obHours]}</span></div></div>
+        <div style="flex:1;min-width:0"><div class="p-name">${esc(s.obName.trim() || 'Študent')}</div><div class="p-sub">Študent · <span id="p-hours">${HOURS[s.obHours]}</span>${s.cityId ? ` · ${esc(cityName(s.cityId))}${s.commute !== 'city' ? ' (' + commuteLabel(s.commute).toLowerCase() + ')' : ''}` : ''}</div></div>
         <button class="p-edit" data-go="profEditToggle">${s.profEdit ? '✓ Hotovo' : 'Upraviť'}</button>
       </div>
       ${s.profEdit ? edit : view}
@@ -874,10 +912,11 @@ function suggCard(o, r) {
   const days = (r.avail_days || []).length === 7 ? 'každý deň' : (r.avail_days || []).join(', ');
   const times = (r.avail_times || []).map(t => t.toLowerCase()).join(', ');
   const avail = [days, times].filter(Boolean).join(' · ') || 'dostupnosť neuvedená';
+  const place = !r.city ? '' : (r.distance_km === null || r.distance_km === undefined || r.distance_km === 0) ? `📍 ${r.city}` : `📍 ${r.city} · ${r.distance_km} km`;
   return `<div class="cand sugg">
     <div class="top">
       <div class="av anon">${PERSON}</div>
-      <div><div class="n">Brigádnik</div><div class="s">${esc(HOURS[r.hours] || '')}</div><div class="s">${esc(avail)}</div></div>
+      <div><div class="n">Brigádnik</div><div class="s">${esc(HOURS[r.hours] || '')}${r.score ? ` · zhoda ${r.score} %` : ''}</div><div class="s">${esc(avail)}</div>${place ? `<div class="s">${esc(place)}</div>` : ''}</div>
     </div>
     ${(r.skills || []).length ? `<div class="skills">${r.skills.map(k => `<span>${esc(k)}</span>`).join('')}</div>` : ''}
     ${done ? `<div class="sent">✓ Oslovený — čaká sa na odpoveď</div>` : `<button class="contact" data-sugg="${key}" data-act="invite">✦ Osloviť</button>`}
@@ -943,6 +982,7 @@ function ponuky() {
 }
 
 // ─── Nová ponuka — l.793–828 ───
+const novaCanPublish = () => !!state.fT.trim() && (state.fRemote || !!state.fCityId);   // title + a place (city or remote)
 function nova() {
   const s = state;
   return `<div class="nova-wrap">
@@ -955,6 +995,10 @@ function nova() {
         <div><div class="label">Hodinová sadzba (€)</div><input class="input" id="f-pay" placeholder="napr. 8,50" value="${esc(s.fPay)}"></div>
         <div><div class="label">Koľko ľudí hľadáte?</div><input class="input" id="f-need" type="number" min="1" placeholder="napr. 3" value="${esc(s.fNeed)}"></div>
       </div>
+      <div><div class="label">Miesto výkonu</div>
+        <div class="place-row"><input class="input" id="f-city" list="cities-dl" placeholder="Mesto" value="${esc(cityName(s.fCityId))}" autocomplete="off" ${s.fRemote ? 'disabled' : ''}>
+          <button type="button" class="tchip ${s.fRemote ? 'on' : ''}" data-act="remote">🏠 Na diaľku</button></div>${cityDatalist()}
+        <div class="note">${s.fRemote ? 'Práca na diaľku — mesto sa nevyžaduje, inzerát uvidia brigádnici z celého Slovenska.' : 'Vyberte mesto zo zoznamu. Brigádnikom ho ukážeme pri ponuke a navrhneme vám ľudí z okolia.'}</div></div>
       <div><div class="label">Vek kandidátov</div>
         <div class="seg"><button class="${s.only18 ? '' : 'on'}" data-go="set18All">Bez obmedzenia</button><button class="${s.only18 ? 'on' : ''}" data-go="set18Only">Len 18+</button></div>
         <div class="note">Platí pre tento inzerát — kandidáti mladší ako 18 ho neuvidia.</div></div>
@@ -970,7 +1014,7 @@ function nova() {
       <div><div class="label" style="margin-bottom:4px">Fotky „deň v práci“ <span class="muted-l">(voliteľné, max. 3)</span></div>
         <div class="ai-sub">Reálne zábery z prevádzky zvyšujú záujem. Nefoťte ľudí, ktorí s tým nesúhlasili.</div>
         ${photoGrid(s.fPhotos.map(p => p.url), 'f-photo', 'f-photo-rm', 'data-act="fphoto-rm"')}</div>
-      <button class="publish" id="f-publish" data-go="publish" style="opacity:${s.fT.trim() ? 1 : .45}">Zverejniť ponuku</button>
+      <button class="publish" id="f-publish" data-go="publish" style="opacity:${novaCanPublish() ? 1 : .45}">Zverejniť ponuku</button>
     </div></div>`;
 }
 
@@ -1013,6 +1057,7 @@ function fprofil() {
       </div>
       <div class="fp-fields">
         <div><div class="label">Názov firmy</div><input class="input" id="fp-name" value="${esc(s.fpName)}"></div>
+        <div><div class="label">Sídlo (mesto) — predvyplní miesto v novom inzeráte</div><input class="input" id="fp-city" list="cities-dl" value="${esc(cityName(s.fpCityId))}" placeholder="Mesto" autocomplete="off">${cityDatalist()}</div>
         <div><div class="label">IČO — overujeme v Registri právnických osôb</div>
           <div class="fp-ico-row"><input class="input" id="fp-ico" value="${esc(s.fpIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
             ${s.fpVerified ? '' : '<button class="p-edit" data-go="fpVerify">Overiť znova</button>'}</div>
@@ -1038,7 +1083,7 @@ function bindAppInputs() {
     el.addEventListener('keydown', e => { if (e.key === 'Enter') go[isStudent() ? 'sendMsg' : 'fSendMsg'](); });
   });
   on('chat-msgs', el => { el.scrollTop = el.scrollHeight; });                 // l.1598
-  on('f-t',    el => el.addEventListener('input', () => { state.fT = el.value; document.getElementById('f-publish').style.opacity = el.value.trim() ? 1 : .45; }));
+  on('f-t',    el => el.addEventListener('input', () => { state.fT = el.value; document.getElementById('f-publish').style.opacity = novaCanPublish() ? 1 : .45; }));
   on('f-pay',  el => el.addEventListener('input', () => { state.fPay = el.value; }));
   on('f-need', el => el.addEventListener('input', () => { state.fNeed = el.value; }));
   on('f-ai',   el => el.addEventListener('input', () => { state.aiNote = el.value; }));
@@ -1055,6 +1100,12 @@ function bindAppInputs() {
     try { state.fpLogo = await uploadLogo(f); await saveCompany({ logo_url: state.fpLogo }); render(); } catch (err) { fail(err); }
   }));
   on('f-desc', el => el.addEventListener('input', () => { state.fDesc = el.value; }));
+  on('f-city', el => el.addEventListener('input', () => { const c = cityByName(el.value); state.fCityId = c ? c.id : null;
+    const b = document.getElementById('f-publish'); if (b) b.style.opacity = novaCanPublish() ? 1 : .45; }));
+  on('fp-city', el => el.addEventListener('change', async () => {   // company profile: seat → prefills new postings
+    const c = cityByName(el.value); if (!c && el.value.trim()) { showToast('Vyberte mesto zo zoznamu.'); return; }
+    state.fpCityId = c ? c.id : null; await saveCompany({ city_id: state.fpCityId }); render();
+  }));
   on('f-photo', el => el.addEventListener('change', e => {   // new posting: previews only, uploaded on publish
     for (const f of pickPhotos(e.target.files || [], state.fPhotos.length)) state.fPhotos.push({ file: f, url: URL.createObjectURL(f) });
     render();
@@ -1079,14 +1130,14 @@ document.getElementById('a-main').addEventListener('click', async e => {
     if (a === 'like')   act(j, 'like');
     if (a === 'skip')   act(j, 'skip');
     if (a === 'menu')   { state.rowMenu = state.rowMenu === 'j' + j.id ? null : 'j' + j.id; render(); }
-    if (a === 'report') showToast('Inzerát sme nahlásili — pozrieme sa na to.');
+    if (a === 'report') { state.rowMenu = null; state.report = { type: 'posting', id: String(j.id), label: `${j.t} — ${j.f}`, reason: 'scam', note: '' }; render(); }
     if (a === 'block')  { state.blockedFirms.push(j.f); showToast('Firmu sme skryli z tvojho feedu.'); }
   }
   else if (d.cand) {
     const [sid, pid] = d.cand.split(':');
     const c = state.candidates.find(x => x.id === sid && x.postingId === +pid);
     if (a === 'menu')   { state.rowMenu = state.rowMenu === 'c' + d.cand ? null : 'c' + d.cand; render(); }
-    if (a === 'report') showToast('Profil sme nahlásili — pozrieme sa na to.');
+    if (a === 'report') { state.rowMenu = null; state.report = { type: 'student', id: sid, label: c?.name || 'Brigádnik', reason: 'inappropriate', note: '' }; render(); }
     if (a === 'block')  { state.blocked.push(sid); showToast('Profil zablokovaný.'); }
     if (a === 'contact') {
       try {
@@ -1125,6 +1176,7 @@ document.getElementById('a-main').addEventListener('click', async e => {
     } catch (err) { fail(err); }
   }
   else if (a === 'type') { toggleInList(state.fTypes, d.type); render(); }
+  else if (a === 'remote') { state.fRemote = !state.fRemote; if (state.fRemote && !state.fTypes.includes('Remote')) state.fTypes.push('Remote'); render(); }
   else if (a === 'fphoto-rm') {                            // new posting form: remove a preview
     const p = state.fPhotos.splice(+d.fPhotoRm, 1)[0]; if (p) URL.revokeObjectURL(p.url); render();
   }
@@ -1190,7 +1242,7 @@ function layers() {                                        // banner l.946, toas
   const d = state.detail;
   if (d) h += `<div class="overlay detail" data-go="closeDetail"><div class="dmodal" data-go="noop">
     <div class="top"><div class="who"><div class="lg" style="${logoStyle(d)}">${logoText(d)}</div>
-      <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)}</div></div></div>
+      <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)}${placeTxt(d) ? ` · ${esc(placeTxt(d))}` : ''}</div></div></div>
       <button class="x" data-go="closeDetail">✕</button></div>
     ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
@@ -1235,7 +1287,7 @@ const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLoc
 function obCanContinue() {
   if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && isOldEnough();
   if (state.obStep === 2) return state.obSkills.length > 0;
-  return state.obTerms;                                    // step 3: terms + privacy consent (also for Google sign-ups)
+  return state.obTerms && !!state.cityId;                  // step 3: city (required) + terms/privacy consent (also for Google sign-ups)
 }
 // Consent line for the last registration step (student and company). Links open in a new tab so the form is not lost.
 const TERMS_HTML = (who) => `<button type="button" class="terms ${state[who] ? 'on' : ''}" id="terms"><span class="box">${state[who] ? '✓' : ''}</span>
@@ -1252,6 +1304,7 @@ document.getElementById('ob-back').addEventListener('click', () => { if (state.o
 document.getElementById('ob-next').addEventListener('click', async () => {           // l.1566–1570
   if (!obCanContinue()) {
     if (state.obStep === 1) { setErr('ob-err', obStep1Problem()); if (state.birth && !isOldEnough()) track('reg_blocked', { reason: 'age' }); }
+    if (state.obStep === 3) setErr('ob-err', !state.cityId ? 'Vyber svoje mesto zo zoznamu.' : 'Potvrď, že máš 16+ a súhlasíš s podmienkami.');
     return;
   }
   if (state.obStep === 1 && !state.oauth && await emailTaken(state.obEmail, 'ob-err', 'ob-next', EMAIL_TAKEN_S)) { track('reg_blocked', { reason: 'email_taken' }); return; }
@@ -1278,7 +1331,7 @@ async function registerStudent() {
     // upsert: a profile row left behind by an interrupted registration must not block finishing it
     const p = await sb.from('profiles').upsert({ id: state.uid, role: 'student' }, { onConflict: 'id', ignoreDuplicates: true });
     const s = p.error ? p : await sb.from('students').upsert({ id: state.uid, name: state.obName.trim(), birth: state.birth || null,
-      skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes });
+      skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute });
     btn.disabled = false;
     if (s.error) { setErr('ob-err', s.error.message); return; }
     if (state.obPhotoFile) { try { await uploadAvatar(state.obPhotoFile); } catch (e) { console.warn('avatar upload failed', e); } state.obPhotoFile = null; state.obPhotoPreview = ''; }
@@ -1287,7 +1340,7 @@ async function registerStudent() {
     return;
   }
   const { data, error } = await sb.auth.signUp({ email: state.obEmail.trim(), password: state.obPass,
-    options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes } } });
+    options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute } } });
   btn.disabled = false;
   if (signUpTaken(data, error)) { state.obStep = 1; render(); setErr('ob-err', EMAIL_TAKEN_S); return; }   // back to the e-mail field
   if (error) { setErr('ob-err', error.message); return; }
@@ -1401,6 +1454,14 @@ function skillsEditor() {                                  // l.126–162, logic
         <div class="custom-row"><input class="input" id="custom" placeholder="Napíš vlastnú zručnosť a stlač Enter…" value="${esc(state.customSkill)}"><button type="button" class="add-btn" id="add-custom">Pridať</button></div>
         <div class="hint">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami. Nepíš sem citlivé údaje (zdravie, náboženstvo, politické názory).</div></div></div>`;
 }
+// "Kde môžeš pracovať?" — city (fixed list with suggestions) + how far the student travels. Onboarding step 3 and the profile.
+function placeEditor() {
+  return `<div class="label">Kde môžeš pracovať?</div>
+    <div class="place-row"><input class="input" id="city" list="cities-dl" placeholder="Tvoje mesto" value="${esc(cityName(state.cityId))}" autocomplete="off">
+      ${state.cityId ? '<span class="ok">✓</span>' : ''}</div>${cityDatalist()}
+    <div class="commute">${COMMUTES.map(([k, l]) => `<button type="button" class="${state.commute === k ? 'on' : ''}" data-commute="${k}">${l}</button>`).join('')}</div>
+    <div class="hint" id="city-hint">${state.cityId ? '' : 'Vyber mesto zo zoznamu — podľa neho ťa firmy nájdu.'}</div>`;
+}
 function availabilityEditor() {                            // l.169–188, logic l.1542–1563
   return `<input type="range" id="hours" min="0" max="3" step="1" value="${state.obHours}">
     <div class="ticks"><span>5 h</span><span>10 h</span><span>20 h</span><span>Fulltime</span></div>
@@ -1408,7 +1469,8 @@ function availabilityEditor() {                            // l.169–188, logic
     <div class="days">${DAYS.map(d => `<button type="button" class="${state.availDays.includes(d) ? 'on' : ''}" data-day="${d}">${d}</button>`).join('')}</div>
     <div class="label">Kedy počas dňa?</div>
     <div class="times">${TIMES.map(([t, sub]) => `<button type="button" class="${state.availTimes.includes(t) ? 'on' : ''}" data-time="${t}"><span>${t}</span><small>${sub}</small></button>`).join('')}</div>
-    <div class="summary">${availSummary()}</div>`;
+    <div class="summary">${availSummary()}</div>
+    <div style="margin-top:22px">${placeEditor()}</div>`;
 }
 function editorClick(el) {                                 // returns true when it handled the click
   if (el.dataset.add)    { addSkill(el.dataset.add); return true; }
@@ -1416,6 +1478,7 @@ function editorClick(el) {                                 // returns true when 
   if (el.dataset.speak)  { const s = state.obSkills[+el.dataset.speak]; s.speak = !(s.speak !== false); render(); return true; }
   if (el.dataset.lvl)    { const [i, l] = el.dataset.lvl.split(':'); state.obSkills[+i].lvl = +l; render(); return true; }
   if (el.dataset.day)    { toggleInList(state.availDays, el.dataset.day); render(); return true; }
+  if (el.dataset.commute) { state.commute = el.dataset.commute; render(); return true; }
   if (el.dataset.time)   { toggleInList(state.availTimes, el.dataset.time); render(); return true; }
   if (el.id === 'add-custom') { addCustom(); return true; }
   return false;
@@ -1433,6 +1496,13 @@ function bindEditors() {
   });
   const birth = document.getElementById('p-birth');
   if (birth) birth.addEventListener('input', () => { state.birth = birth.value; });
+  const city = document.getElementById('city');          // matches the typed name against the list; no re-render while typing
+  if (city) city.addEventListener('input', () => {
+    const c = cityByName(city.value); state.cityId = c ? c.id : null;
+    const hint = document.getElementById('city-hint'); if (hint) hint.textContent = c ? '' : 'Vyber mesto zo zoznamu — podľa neho ťa firmy nájdu.';
+    const ok = city.parentElement.querySelector('.ok'); if (ok && !c) ok.remove();
+    const next = document.getElementById('ob-next'); if (next && state.screen === 'ob') next.style.opacity = obCanContinue() ? 1 : .45;
+  });
   const bio = document.getElementById('p-bio');
   if (bio) bio.addEventListener('input', () => { state.bio = bio.value; });
   const photo = document.getElementById('p-photo');
@@ -1657,7 +1727,7 @@ sb.auth.onAuthStateChange(event => { if (event === 'PASSWORD_RECOVERY' && state.
 document.getElementById('reset-form').addEventListener('submit', e => { e.preventDefault(); go.doReset(); });
 (async () => {
   state.loading = true; render();
-  try { await loadMe(); await loadPostings(); } catch (e) { fail(e); }
+  try { await loadCities(); await loadMe(); await loadPostings(); } catch (e) { fail(e); }
   state.loading = false;
   subscribe();
   if (state.oauth) resumeOnboarding();                     // back from Google, or a registration that was not finished

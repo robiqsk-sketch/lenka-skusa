@@ -653,6 +653,17 @@ html.dark, html.dark body { background: #120d2b; }
 .ob-birth { display: flex; align-items: center; gap: 12px; }
 .ob-birth span { font-size: 12.5px; font-weight: 700; color: #000000; white-space: nowrap; }
 .ob-birth .input { padding: 11px 14px; font-size: 13.5px; font-weight: 700; }
+/* place: city input + commute (onboarding step 3, profile, new posting) */
+.place-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.place-row .input { flex: 1; min-width: 0; }
+.place-row .ok { color: #15803D; font-weight: 700; }
+.place-row .tchip { white-space: nowrap; }
+.commute { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.commute button { border: 1px solid #DEDBEC; background: #fff; color: #6E688C; border-radius: 12px; padding: 10px 6px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.commute button.on { border-color: #40319F; background: rgba(85,70,196,.1); color: #33277F; }
+@media (max-width: 480px) { .commute { grid-template-columns: repeat(2, 1fr); } }
+.city-nudge { display: flex; align-items: center; gap: 12px; background: rgba(85,70,196,.08); border: 1px solid rgba(85,70,196,.25); border-radius: 14px; padding: 12px 16px; font-size: 13px; color: #33277F; margin-bottom: 18px; flex-wrap: wrap; }
+.city-nudge button { margin-left: auto; background: #40319F; color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
 .ob-age-note { font-size: 11.5px; color: #6E688C; }
 .ob-age-note.err { color: #DC2626; font-weight: 700; }
 /* IČO lookup result (company registration step 1 + company profile) */

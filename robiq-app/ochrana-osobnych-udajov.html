@@ -201,7 +201,8 @@
 <li><strong>koľko hodín týždenne môžeš pracovať</strong></li>
 <li><strong>dni v týždni</strong>, kedy si k dispozícii</li>
 <li><strong>časy dňa</strong> (ráno, poobede, večer, nočné)</li>
-<li><strong>dátum narodenia</strong> – používame ho <strong>výlučne</strong> na to, aby sme ti neukazovali inzeráty označené „Len 18+“. Ak ho nevyplníš, tieto inzeráty sa ti nezobrazia. Firma tvoj dátum narodenia <strong>nikdy nevidí</strong>.</li>
+<li><strong>mesto</strong> (povinné, z pevného zoznamu slovenských miest) a <strong>ako ďaleko si ochotný dochádzať</strong> (len moje mesto / do 15 km / do 30 km / celé Slovensko). Používame ich na to, aby sme ti ponuky zoradili podľa vzdialenosti a aby ťa firmy z tvojho okolia našli. Vzdialenosť počítame len medzi mestami zo zoznamu, priamo v našej databáze – <strong>tvoju presnú polohu nezisťujeme</strong>. Mesto vidí firma v anonymných návrhoch (bez mena, pozri kapitolu 5) a po tvojom záujme pri profile.</li>
+<li><strong>dátum narodenia</strong> (povinný pri registrácii, potom sa nedá zmeniť) – používame ho <strong>výlučne</strong> na overenie, že máš aspoň 16 rokov (kapitola 10), a na to, aby sme ti neukazovali inzeráty označené „Len 18+“. Firma tvoj dátum narodenia <strong>nikdy nevidí</strong>.</li>
 <li><strong>bio</strong> – voľný text do 240 znakov. Napíš si doň, čo chceš, aby o tebe firma vedela. Firma ho zatiaľ <strong>nevidí</strong> (pozri kapitolu 5).</li>
 <li><strong>profilová fotka</strong> – ak si ju nahráš. Uloží sa do nášho úložiska a firma ju uvidí <strong>až vtedy, keď ty sám prejavíš záujem o jej inzerát</strong> – rovnako ako zvyšok profilu. Verejná nie je: bez prihlásenia sa k nej nikto nedostane. Kedykoľvek ju môžeš vymeniť alebo odstrániť.</li>
 </ul>
@@ -223,8 +224,9 @@
 <ul>
 <li><strong>e-mailová adresa</strong> a <strong>heslo</strong> (opäť len ako hash) – konto kontaktnej osoby</li>
 <li><strong>názov firmy</strong> (povinný) – je <strong>verejne viditeľný</strong> pri každom vašom inzeráte, teda aj pre neprihlásených návštevníkov</li>
-<li><strong>IČO</strong> (nepovinné)</li>
+<li><strong>IČO</strong> (povinné) – overujeme ho v Registri právnických osôb, pozri „príznak overenia firmy“ nižšie</li>
 <li><strong>odvetvia</strong>, v ktorých pôsobíte (povinné)</li>
+<li><strong>sídlo (mesto)</strong> vo firemnom profile a <strong>miesto výkonu</strong> pri každom inzeráte (mesto zo zoznamu alebo „na diaľku“) – miesto inzerátu je <strong>verejné</strong>, zobrazuje sa pri ponuke</li>
 <li><strong>meno kontaktnej osoby</strong> (nepovinné) – verejné <strong>nie je</strong>, vidíte ho len vy</li>
 </ul>
 <p><strong>Vo firemnom profile:</strong></p>
@@ -342,10 +344,17 @@
 <td>áno</td>
 </tr>
 <tr>
-<td>Meno, zručnosti, hodiny a dostupnosť brigádnika</td>
+<td>Meno, zručnosti, hodiny, dostupnosť a mesto brigádnika</td>
 <td>nie</td>
 <td>len svoje</td>
 <td><strong>len tých brigádnikov, ktorí prejavili záujem o jej inzerát</strong></td>
+<td>áno</td>
+</tr>
+<tr>
+<td>Anonymný návrh brigádnika k inzerátu (zručnosti, hodiny, dostupnosť, mesto a vzdialenosť, % zhody – <strong>bez mena, fotky a dátumu narodenia</strong>)</td>
+<td>nie</td>
+<td>nie</td>
+<td>len k svojim inzerátom, len brigádnikov v dosahu podľa ich nastavenia dochádzania</td>
 <td>áno</td>
 </tr>
 <tr>
@@ -506,7 +515,8 @@
 <hr />
 <h2 id="sek-9-automatizovane-rozhodovanie-a-profilovanie">9. Automatizované rozhodovanie a profilovanie</h2>
 <p>Robiq <strong>nerobí automatizované rozhodovanie s právnym alebo podobne významným účinkom</strong> v zmysle čl. 22 GDPR. Nikoho nevyraďuje algoritmus – o tom, komu prejaví záujem, rozhoduje vždy človek na oboch stranách.</p>
-<p>Aplikácia zoraďuje a filtruje inzeráty podľa údajov, ktoré si sám zadal (zručnosti, dostupnosť, vek pri inzerátoch „Len 18+“). Je to bežné triedenie obsahu, ktoré ti nič nezakazuje ani neprisudzuje – inzeráty si môžeš prezrieť aj tak.</p>
+<p>Aplikácia zoraďuje a filtruje inzeráty podľa údajov, ktoré si sám zadal (zručnosti, dostupnosť, mesto a dochádzanie, vek pri inzerátoch „Len 18+“). Je to bežné triedenie obsahu, ktoré ti nič nezakazuje ani neprisudzuje – inzeráty si môžeš prezrieť aj tak.</p>
+<p><strong>Návrhy kandidátov pre firmu:</strong> ku každému inzerátu firma vidí anonymný zoznam brigádnikov, ktorí naň sedia (kapitola 5). Poradie vzniká jednoduchým výpočtom bodov – zhoda zručností so slovami v inzeráte, odvetvie firmy, dostupnosť, vzdialenosť, hodiny a čerstvosť profilu. Brigádnici mimo dosahu podľa vlastného nastavenia dochádzania sa firme nenavrhnú vôbec. Nepoužíva sa žiadny model umelej inteligencie a firma sa rozhoduje sama; návrh nemá pre teba žiadny právny účinok – firma ťa môže osloviť a ty sa môžeš rozhodnúť, či odpovieš.</p>
 <p>Pole „Povedzte AI, koho hľadáte“ sa dnes <strong>len ukladá a nespracúva sa žiadnym AI systémom</strong>.</p>
 <p>Ak niekedy nasadíme automatické vyhodnocovanie alebo poradie kandidátov na základe AI, bude to pre nás vysokorizikový systém podľa prílohy III bodu 4 písm. a) nariadenia (EÚ) 2024/1689 o umelej inteligencii. V takom prípade ťa o tom vopred informujeme priamo v aplikácii, aktualizujeme tento dokument a doplníme vysvetlenie, ako systém funguje a ako proti jeho výstupu namietať. <strong>Nezapneme to potichu.</strong></p>
 <hr />
