@@ -505,6 +505,16 @@ end $$;
 revoke all on function public.delete_my_account() from public;
 grant execute on function public.delete_my_account() to authenticated;
 
+-- ─────────────────────────── Práva funkcií ───────────────────────────
+-- Supabase dáva novým funkciám automaticky EXECUTE aj pre `anon`; „revoke from public" to nezruší.
+-- Funkcie len pre prihlásených preto anon odoberáme výslovne (vnútri sa aj tak overuje auth.uid()).
+revoke execute on function public.candidate_profiles(uuid[])  from anon;
+revoke execute on function public.is_admin()                  from anon;
+revoke execute on function public.analytics_summary(int)      from anon;
+revoke execute on function public.verify_my_company()         from anon;
+revoke execute on function public.suggest_candidates(bigint)  from anon;
+revoke execute on function public.delete_my_account()         from anon;
+
 -- ─────────────────────────── Realtime ───────────────────────────
 -- Chat a banner „Máte zhodu!" počúvajú na nové riadky.
 alter publication supabase_realtime add table public.messages;

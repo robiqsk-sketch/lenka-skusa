@@ -21,3 +21,19 @@ $$;
 
 revoke all on function public.candidate_profiles(uuid[]) from public;
 grant execute on function public.candidate_profiles(uuid[]) to authenticated;
+
+-- is_admin(): appka podľa toho ukáže adminovi „Štatistika Robiq" v menu (chýbala v prvej verzii analytics migrácie).
+create or replace function public.is_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from admins where email = auth.jwt() ->> 'email')
+$$;
+
+-- Supabase dáva novým funkciám automaticky EXECUTE aj pre `anon` (neprihlásených) — „revoke from public" to nezruší.
+-- Funkcie určené len prihláseným preto odoberáme anon výslovne. (Všetky si aj tak vnútri overujú auth.uid(), toto je poistka navyše.)
+revoke execute on function public.candidate_profiles(uuid[]) from anon;
+revoke execute on function public.is_admin()               from anon;
+revoke execute on function public.analytics_summary(int)   from anon;
+revoke execute on function public.verify_my_company()      from anon;
+revoke execute on function public.suggest_candidates(bigint) from anon;
+revoke execute on function public.delete_my_account()      from anon;
+grant  execute on function public.is_admin() to authenticated;
