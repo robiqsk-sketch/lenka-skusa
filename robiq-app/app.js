@@ -98,8 +98,9 @@ function jobFromRow(p) {                                   // posting row (+comp
 function shuffle(list) { return list.map(x => x.id).sort(() => Math.random() - .5); }
 
 async function loadPostings() {
-  const { data, error } = await sb.from('postings')
-    .select('*, companies(name, verified, logo_url)').eq('active', true).eq('blocked', false).order('created_at', { ascending: false });
+  const q = () => sb.from('postings').select('*, companies(name, verified, logo_url)').eq('active', true).order('created_at', { ascending: false });
+  let { data, error } = await q().eq('blocked', false);
+  if (error?.code === '42703') ({ data, error } = await q());   // DB migration not applied yet (no `blocked` column) → feed still works
   if (error) throw error;
   state.postings = data.map(jobFromRow);
   if (!order.length) order = shuffle(state.postings);
@@ -332,6 +333,31 @@ const go = {
     await enterApp();
     track('login', { via: 'email' });
   },
+  // Forgotten password: Supabase e-mails a link that opens this page with type=recovery → screen 'reset' (see start).
+  forgot: async () => {
+    const email = document.getElementById('login-email').value.trim();
+    setErr('login-err', '');
+    if (!email) { setErr('login-err', 'Napíš hore svoj e-mail a klikni znova na „Zabudol som heslo“.'); return; }
+    const btn = document.getElementById('forgot-btn'); btn.disabled = true;
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    btn.disabled = false;
+    if (error) { setErr('login-err', error.message); return; }
+    setErr('login-err', 'Ak tento e-mail má účet, poslali sme naň odkaz na nastavenie nového hesla. Pozri aj spam.');
+    track('password_reset_sent');
+  },
+  doReset: async () => {
+    const p1 = document.getElementById('reset-pass').value, p2 = document.getElementById('reset-pass2').value;
+    setErr('reset-err', '');
+    if (p1.length < 6) { setErr('reset-err', 'Heslo musí mať aspoň 6 znakov.'); return; }
+    if (p1 !== p2) { setErr('reset-err', 'Heslá sa nezhodujú.'); return; }
+    const btn = document.getElementById('reset-btn'); btn.disabled = true;
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    btn.disabled = false;
+    if (error) { setErr('reset-err', error.message.includes('different from the old') ? 'Nové heslo musí byť iné ako staré.' : error.message); return; }
+    document.getElementById('reset-pass').value = ''; document.getElementById('reset-pass2').value = '';
+    await enterApp();
+    showToast('Heslo je zmenené. ✓');
+  },
   goRegister:  () => { state.pickFrom = 'login'; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },   // from the login card
   goSignup:    () => { state.pickFrom = 'app';   state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },   // from the feed header
   goFirmReg:   () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },
@@ -496,7 +522,7 @@ document.getElementById('login-form').addEventListener('submit', e => { e.preven
 
 // ═══════════ Render ═══════════
 function render() {
-  for (const s of ['app', 'login', 'pick', 'ob', 'fob']) document.getElementById('scr-' + s).hidden = state.screen !== s;
+  for (const s of ['app', 'login', 'reset', 'pick', 'ob', 'fob']) document.getElementById('scr-' + s).hidden = state.screen !== s;
   // Login screen is dark on phones: page background + Safari bar colour follow it
   const dark = state.screen === 'login' && matchMedia('(max-width: 640px)').matches;
   document.documentElement.classList.toggle('dark', dark);
@@ -1485,14 +1511,20 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 // ═══════════ Start ═══════════
+// The "forgot password" e-mail link opens this page with type=recovery: the session is set from the link,
+// and the user has to choose a new password before anything else (screen 'reset').
+const isRecovery = location.hash.includes('type=recovery');
+sb.auth.onAuthStateChange(event => { if (event === 'PASSWORD_RECOVERY' && state.screen !== 'reset') { state.screen = 'reset'; render(); } });
+document.getElementById('reset-form').addEventListener('submit', e => { e.preventDefault(); go.doReset(); });
 (async () => {
   state.loading = true; render();
   try { await loadMe(); await loadPostings(); } catch (e) { fail(e); }
   state.loading = false;
   subscribe();
   if (state.oauth) resumeOnboarding();                     // back from Google, or a registration that was not finished
-  const fromGoogle = location.hash.includes('access_token') || location.search.includes('code=');
-  if (fromGoogle) history.replaceState(null, '', location.pathname);
+  const fromLink = location.hash.includes('access_token') || location.search.includes('code=');
+  if (fromLink) history.replaceState(null, '', location.pathname);
+  if (isRecovery) state.screen = 'reset';
   render();
-  track('visit', fromGoogle ? { via: 'google_return' } : {});
+  track('visit', isRecovery ? { via: 'password_reset' } : fromLink ? { via: 'google_return' } : {});
 })();
