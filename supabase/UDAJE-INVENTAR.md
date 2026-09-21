@@ -8,7 +8,7 @@ Stav k: 20. 9. 2026.
 
 ## 1. Kto je kto
 
-- **Prevádzkovateľ:** Robiq (Matej Majtán), kontakt ceo@robiq.sk — rovnako ako pri waitliste.
+- **Prevádzkovateľ:** Robiq (Matej Majtán), kontakt info@robiq.sk, žiadosti support@robiq.sk — rovnako ako pri waitliste.
 - **Používatelia:** dve roly
   - **študent / brigádnik** (fyzická osoba hľadajúca krátkodobú prácu),
   - **firma** (zamestnávateľ; registruje ju kontaktná osoba — tiež fyzická osoba).
@@ -143,4 +143,4 @@ Telefónne číslo študenta ani firmy (pole neexistuje), adresu, fotografiu št
 
 ## Príloha: prompt pre AI
 
-> Na základe priloženého inventára údajov (UDAJE-INVENTAR.md) a databázovej schémy (schema.sql) napíš dokument „Ochrana osobných údajov" pre webovú aplikáciu Robiq v slovenčine, v súlade s GDPR a zákonom č. 18/2018 Z. z. Prevádzkovateľ: Matej Majtán, ceo@robiq.sk. Dokument má mať sekcie: kto spracúva údaje; aké údaje zbierame (rozdelené pre študentov a firmy, vrátane voľných textov a správ); účely a právne základy pre každý účel; komu údaje odovzdávame (Supabase — Frankfurt, EÚ, jsDelivr, CDNFonts) a prenosy mimo EÚ; kto vidí čo (firma vidí profil študenta až po jeho záujme, nikdy dátum narodenia ani bio); ako dlho údaje uchovávame a ako si používateľ zmaže účet sám v aplikácii; práva používateľa a ako ich uplatniť; vekové obmedzenie (mladší ako 16 rokov — súhlas zákonného zástupcu); bezpečnosť; kontakt. Študentom tykaj, firmám vykaj. Krátke vecné vety, bez emoji. Pri veciach, ktoré aplikácia zatiaľ nerieši automaticky (export údajov), uveď, že sa riešia na žiadosť e-mailom.
+> Na základe priloženého inventára údajov (UDAJE-INVENTAR.md) a databázovej schémy (schema.sql) napíš dokument „Ochrana osobných údajov" pre webovú aplikáciu Robiq v slovenčine, v súlade s GDPR a zákonom č. 18/2018 Z. z. Prevádzkovateľ: Matej Majtán, support@robiq.sk. Dokument má mať sekcie: kto spracúva údaje; aké údaje zbierame (rozdelené pre študentov a firmy, vrátane voľných textov a správ); účely a právne základy pre každý účel; komu údaje odovzdávame (Supabase — Frankfurt, EÚ, jsDelivr, CDNFonts) a prenosy mimo EÚ; kto vidí čo (firma vidí profil študenta až po jeho záujme, nikdy dátum narodenia ani bio); ako dlho údaje uchovávame a ako si používateľ zmaže účet sám v aplikácii; práva používateľa a ako ich uplatniť; vekové obmedzenie (mladší ako 16 rokov — súhlas zákonného zástupcu); bezpečnosť; kontakt. Študentom tykaj, firmám vykaj. Krátke vecné vety, bez emoji. Pri veciach, ktoré aplikácia zatiaľ nerieši automaticky (export údajov), uveď, že sa riešia na žiadosť e-mailom.

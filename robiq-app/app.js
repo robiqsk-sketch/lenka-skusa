@@ -819,7 +819,7 @@ function ponuky() {
         <button class="danger" data-offer="${i}" data-act="askDel">Zmazať inzerát</button></div>`;
     return `<div class="offer ${o.on && !o.blocked ? '' : 'off'}">
       <div><div class="t">${esc(o.t)}</div><div class="pay">${esc(o.pay)}</div>
-        ${o.blocked ? `<div class="blocked-note">⛔ Pozastavené Robiqom${o.blockReason ? ': ' + esc(o.blockReason) : ''} · napíšte na ceo@robiq.sk</div>` : ''}</div>
+        ${o.blocked ? `<div class="blocked-note">⛔ Pozastavené Robiqom${o.blockReason ? ': ' + esc(o.blockReason) : ''} · napíšte na support@robiq.sk</div>` : ''}</div>
       <div class="stat"><div class="n">${o.views}</div><div class="l">zobrazenia</div></div>
       <div class="stat"><div class="n">${o.likes}</div><div class="l">záujmy</div></div>
       <div class="stat"><div class="n green">${o.m}</div><div class="l">zhody</div></div>
