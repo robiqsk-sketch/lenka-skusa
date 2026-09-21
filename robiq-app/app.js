@@ -988,31 +988,24 @@ function nova() {
   return `<div class="nova-wrap">
     <button class="back back-top" data-go="goPonuky">← Späť na inzeráty</button>
     <h2>Nový <b>inzerát</b></h2>
-    <p class="desc">Robiq ju aktívne doručí študentom, ktorí sedia na profil pozície.</p>
     <div class="form-card">
-      <div><div class="label">Názov pozície</div><input class="input" id="f-t" placeholder="napr. Barista — víkendy" value="${esc(s.fT)}"></div>
+      <div><div class="label">Názov pozície <b class="req">*</b></div><input class="input" id="f-t" placeholder="napr. Barista — víkendy" value="${esc(s.fT)}"></div>
       <div class="two">
         <div><div class="label">Hodinová sadzba (€)</div><input class="input" id="f-pay" placeholder="napr. 8,50" value="${esc(s.fPay)}"></div>
-        <div><div class="label">Koľko ľudí hľadáte?</div><input class="input" id="f-need" type="number" min="1" placeholder="napr. 3" value="${esc(s.fNeed)}"></div>
+        <div><div class="label">Počet ľudí</div><input class="input" id="f-need" type="number" min="1" placeholder="1" value="${esc(s.fNeed)}"></div>
       </div>
-      <div><div class="label">Miesto výkonu</div>
-        <div class="place-row"><input class="input" id="f-city" list="cities-dl" placeholder="Mesto" value="${esc(cityName(s.fCityId))}" autocomplete="off" ${s.fRemote ? 'disabled' : ''}>
-          <button type="button" class="tchip ${s.fRemote ? 'on' : ''}" data-act="remote">🏠 Na diaľku</button></div>${cityDatalist()}
-        <div class="note">${s.fRemote ? 'Práca na diaľku — mesto sa nevyžaduje, inzerát uvidia brigádnici z celého Slovenska.' : 'Vyberte mesto zo zoznamu. Brigádnikom ho ukážeme pri ponuke a navrhneme vám ľudí z okolia.'}</div></div>
+      <div><div class="label">Miesto <b class="req">*</b></div>
+        <div class="place-row"><input class="input" id="f-city" list="cities-dl" placeholder="Mesto zo zoznamu" value="${esc(cityName(s.fCityId))}" autocomplete="off" ${s.fRemote ? 'disabled' : ''}>
+          <button type="button" class="tchip ${s.fRemote ? 'on' : ''}" data-act="remote">🏠 Na diaľku</button></div>${cityDatalist()}</div>
       <div><div class="label">Vek kandidátov</div>
-        <div class="seg"><button class="${s.only18 ? '' : 'on'}" data-go="set18All">Bez obmedzenia</button><button class="${s.only18 ? 'on' : ''}" data-go="set18Only">Len 18+</button></div>
-        <div class="note">Platí pre tento inzerát — kandidáti mladší ako 18 ho neuvidia.</div></div>
+        <div class="seg"><button class="${s.only18 ? '' : 'on'}" data-go="set18All">Bez obmedzenia</button><button class="${s.only18 ? 'on' : ''}" data-go="set18Only">Len 18+</button></div></div>
       <div><div class="label" style="margin-bottom:10px">Typ brigády</div>
         <div class="tchips">${TYPES.map(t => `<button class="tchip ${s.fTypes.includes(t) ? 'on' : ''}" data-type="${t}" data-act="type">${t}</button>`).join('')}</div></div>
-      <div><div class="label" style="margin-bottom:4px">✦ Povedzte AI, koho hľadáte</div>
-        <div class="ai-sub">Vlastnými slovami — AI podľa toho vyberie a zoradí kandidátov pre tento inzerát.</div>
-        <textarea id="f-ai" rows="3" placeholder="napr. Potrebujem niekoho komunikatívneho na ranné zmeny, ideálne so skúsenosťou z gastra. Výhodou angličtina kvôli turistom…">${esc(s.aiNote)}</textarea>
-        <div class="hint" style="margin-top:6px">Opíšte prácu a zručnosti — nie požiadavky na vek, pohlavie, pôvod či zdravie (zákaz diskriminácie).</div></div>
       <div><div class="label" style="margin-bottom:4px">Popis práce</div>
-        <div class="ai-sub">Uvidia ho brigádnici v detaile inzerátu — čo budú robiť, kde, od kedy.</div>
-        <textarea id="f-desc" rows="3" maxlength="1500" placeholder="napr. Obsluha zákazníkov, príprava kávy, drobné upratovanie. Zaškolíme. Kaviareň v centre, víkendové zmeny 8–14 h.">${esc(s.fDesc)}</textarea></div>
-      <div><div class="label" style="margin-bottom:4px">Fotky „deň v práci“ <span class="muted-l">(voliteľné, max. 3)</span></div>
-        <div class="ai-sub">Reálne zábery z prevádzky zvyšujú záujem. Nefoťte ľudí, ktorí s tým nesúhlasili.</div>
+        <textarea id="f-desc" rows="3" maxlength="1500" placeholder="Čo bude brigádnik robiť, kde a od kedy.">${esc(s.fDesc)}</textarea></div>
+      <div><div class="label" style="margin-bottom:4px">✦ Koho hľadáte</div>
+        <textarea id="f-ai" rows="2" placeholder="Zručnosti a povaha práce — podľa toho zoradíme kandidátov. Nie vek, pohlavie či zdravie.">${esc(s.aiNote)}</textarea></div>
+      <div><div class="label" style="margin-bottom:4px">Fotky „deň v práci“</div>
         ${photoGrid(s.fPhotos.map(p => p.url), 'f-photo', 'f-photo-rm', 'data-act="fphoto-rm"')}</div>
       <button class="publish" id="f-publish" data-go="publish" style="opacity:${novaCanPublish() ? 1 : .45}">Zverejniť ponuku</button>
     </div></div>`;
