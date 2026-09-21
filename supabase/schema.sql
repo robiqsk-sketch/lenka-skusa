@@ -106,6 +106,7 @@ create table public.postings (
   types       text[] not null default '{}',        -- Víkendy, Poobede, …
   only18      boolean not null default false,
   city_id     int references public.cities (id),   -- miesto výkonu (null len pri remote / starých inzerátoch)
+  address     text not null default '' check (length(address) <= 200),   -- ulica a číslo prevádzky (nepovinné, verejné)
   remote      boolean not null default false,
   ai_note     text not null default '',
   description text not null default '',

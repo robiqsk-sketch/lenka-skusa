@@ -25,7 +25,7 @@ const initialState = () => ({
   fpName: '', fpDesc: '', fpLogo: '', fpIco: '', fpVerified: false, fpRpo: null,
   offers: [], candidates: [], suggestions: {}, contacted: [], blocked: [], fchats: [], activeFChat: 0, fdraft: '',
   invitedPostingIds: [],                                   // student: postings whose company reached out first
-  fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fCityId: null, fRemote: false, fpCityId: null,
+  fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fCityId: null, fRemote: false, fAddress: '', fpCityId: null,
   fPhotos: [],                                             // new posting: [{ file, url }] previews, max 3
   photoEdit: null,                                         // existing posting: { offerId, photos: [url] } overlay
 });
@@ -120,7 +120,7 @@ function jobFromRow(p) {                                   // posting row (+comp
     id: p.id, companyId: p.company_id, t: p.title, f: c.name || 'Firma', pay: p.pay + ' €', need: p.need, taken: p.taken,
     posted: ago(p.created_at), start: p.start, lg: colorFor(c.name), logo: c.logo_url, ini: (c.name || 'F')[0].toUpperCase(),
     badges: c.verified ? ['✓ Overená firma'] : [], tags: p.types || [], desc: p.description || '', ice: [], only18: p.only18,
-    photos: p.photos || [], cityId: p.city_id || null, city: p.cities?.name || cityName(p.city_id), remote: !!p.remote,
+    photos: p.photos || [], cityId: p.city_id || null, city: p.cities?.name || cityName(p.city_id), remote: !!p.remote, address: p.address || '',
   };
 }
 function shuffle(list) { return list.map(x => x.id).sort(() => Math.random() - .5); }
@@ -478,10 +478,11 @@ const go = {
   publish: async () => {
     if (!novaCanPublish()) { showToast(!state.fT.trim() ? 'Zadajte názov pozície.' : 'Vyberte miesto výkonu zo zoznamu, alebo označte „Na diaľku“.'); return; }
     try {
-      const { data: row, error } = await sb.from('postings').insert({ company_id: state.uid, title: state.fT.trim(), pay: state.fPay.trim() || '8',
+      const rec = { company_id: state.uid, title: state.fT.trim(), pay: state.fPay.trim() || '8',
         need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote, description: state.fDesc.trim(),
-        city_id: state.fRemote ? null : state.fCityId, remote: state.fRemote })
-        .select('id').single();
+        city_id: state.fRemote ? null : state.fCityId, remote: state.fRemote, address: state.fRemote ? '' : state.fAddress.trim() };
+      let { data: row, error } = await sb.from('postings').insert(rec).select('id').single();
+      if (error?.code === '42703') { delete rec.address; ({ data: row, error } = await sb.from('postings').insert(rec).select('id').single()); }   // DB migration (address) not applied yet
       if (error) throw error;
       if (state.fPhotos.length) {                          // the row exists now → upload the photos under its id
         const urls = [];
@@ -489,7 +490,7 @@ const go = {
         if (urls.length) await sb.from('postings').update({ photos: urls }).eq('id', row.id);
         if (urls.length < state.fPhotos.length) showToast('Niektoré fotky sa nepodarilo nahrať.');
       }
-      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fPhotos: [], fCityId: state.fpCityId, fRemote: false, ftab: 0 });   // straight to candidates
+      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fPhotos: [], fCityId: state.fpCityId, fRemote: false, fAddress: '', ftab: 0 });   // straight to candidates
       await loadCompany(); await loadPostings();
       const n = Object.values(state.suggestions)[0]?.length ?? 0;
       const first = state.offers[0] && state.suggestions[state.offers[0].id] ? state.suggestions[state.offers[0].id].length : n;
@@ -996,7 +997,8 @@ function nova() {
       </div>
       <div><div class="label">Miesto <b class="req">*</b></div>
         <div class="place-row"><input class="input" id="f-city" list="cities-dl" placeholder="Mesto zo zoznamu" value="${esc(cityName(s.fCityId))}" autocomplete="off" ${s.fRemote ? 'disabled' : ''}>
-          <button type="button" class="tchip ${s.fRemote ? 'on' : ''}" data-act="remote">🏠 Na diaľku</button></div>${cityDatalist()}</div>
+          <button type="button" class="tchip ${s.fRemote ? 'on' : ''}" data-act="remote">🏠 Na diaľku</button></div>${cityDatalist()}
+        ${s.fRemote ? '' : `<input class="input" id="f-address" placeholder="Adresa prevádzky (ulica a číslo)" value="${esc(s.fAddress)}" maxlength="200" style="margin-top:8px">`}</div>
       <div><div class="label">Vek kandidátov</div>
         <div class="seg"><button class="${s.only18 ? '' : 'on'}" data-go="set18All">Bez obmedzenia</button><button class="${s.only18 ? 'on' : ''}" data-go="set18Only">Len 18+</button></div></div>
       <div><div class="label" style="margin-bottom:10px">Typ brigády</div>
@@ -1093,6 +1095,7 @@ function bindAppInputs() {
     try { state.fpLogo = await uploadLogo(f); await saveCompany({ logo_url: state.fpLogo }); render(); } catch (err) { fail(err); }
   }));
   on('f-desc', el => el.addEventListener('input', () => { state.fDesc = el.value; }));
+  on('f-address', el => el.addEventListener('input', () => { state.fAddress = el.value; }));
   on('f-city', el => el.addEventListener('input', () => { const c = cityByName(el.value); state.fCityId = c ? c.id : null;
     const b = document.getElementById('f-publish'); if (b) b.style.opacity = novaCanPublish() ? 1 : .45; }));
   on('fp-city', el => el.addEventListener('change', async () => {   // company profile: seat → prefills new postings
@@ -1239,6 +1242,8 @@ function layers() {                                        // banner l.946, toas
       <button class="x" data-go="closeDetail">✕</button></div>
     ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
+    ${d.remote ? '' : d.address || d.city ? `<div class="addr">📍 ${esc([d.address, d.city].filter(Boolean).join(', '))}
+      ${d.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([d.address, d.city].filter(Boolean).join(', '))}" target="_blank" rel="noopener">mapa ↗</a>` : ''}</div>` : ''}
     ${d.desc ? `<p>${esc(d.desc)}</p>` : ''}
     ${d.ice.length ? `<div class="sec">Icebreakery</div><div class="ice">${d.ice.map(i => `<div>${esc(i)}</div>`).join('')}</div>` : ''}
     ${d.photos.length ? `<div class="sec">Deň v práci</div>

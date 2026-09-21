@@ -558,6 +558,8 @@ h2 b { font-weight: 700; color: #40319F; }
   height: 110px; border-radius: 14px; background: repeating-linear-gradient(45deg, rgba(36,27,69,.05) 0 10px, rgba(36,27,69,.02) 10px 20px);
   border: 1px dashed #DEDBEC; display: flex; align-items: center; justify-content: center; font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: #3F3A55;
 }
+.dmodal .addr { font-size: 13px; color: #3F3A55; margin: -6px 0 14px; }
+.dmodal .addr a { margin-left: 8px; color: #40319F; font-weight: 700; text-decoration: none; font-size: 12px; }
 .dmodal .day .ph { display: block; height: 110px; border-radius: 14px; background-size: cover; background-position: center; border: 1px solid #DEDBEC; }
 /* photo picker (new posting form + "Fotky" overlay) */
 .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
