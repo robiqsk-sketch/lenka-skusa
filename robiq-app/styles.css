@@ -785,3 +785,9 @@ html.theme-dark .a-menu { background: var(--card); }
 html.theme-dark .tag, html.theme-dark .badge { background: var(--fill); }
 html.theme-dark .job, html.theme-dark .pcard, html.theme-dark .offer, html.theme-dark .cand, html.theme-dark .form-card, html.theme-dark .card, html.theme-dark .login-card, html.theme-dark .dmodal, html.theme-dark .delm, html.theme-dark .gate { box-shadow: 0 12px 34px -12px var(--shadow); }
 html.theme-dark img, html.theme-dark .has-img { filter: brightness(.92); }
+html.theme-dark .chat-warn { background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.4); color: #FDE68A; }
+html.theme-dark .chat-warn button { background: rgba(251,191,36,.18); border-color: rgba(251,191,36,.5); color: #FDE68A; }
+html.theme-dark .blocked-note, html.theme-dark .ico-note.err, html.theme-dark .form-err { color: #FCA5A5; }
+html.theme-dark .ico-note.warn { color: #FCD34D; }
+html.theme-dark .ico-note.ok { color: #86EFAC; }
+html.theme-dark .city-nudge { background: rgba(123,107,238,.16); border-color: rgba(123,107,238,.4); color: #E4DFFF; }
