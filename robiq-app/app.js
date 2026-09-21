@@ -36,7 +36,38 @@ let order = [];                                            // guest feed order (
 let CITIES = [];                                           // [{ id, name, district, lat, lng }]
 const cityById = id => CITIES.find(c => c.id === id) || null;
 const cityName = id => cityById(id)?.name || '';
-const cityByName = name => { const n = (name || '').trim().toLowerCase(); return CITIES.find(c => c.name.toLowerCase() === n) || null; };
+const fold = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();   // "Trenčín" → "trencin"
+const cityByName = name => { const n = fold(name); return n ? CITIES.find(c => fold(c.name) === n) || null : null; };
+// Custom autocomplete (a <datalist> cannot ignore diacritics): matches the start of any word, e.g. "nove m" → Nové Mesto nad Váhom.
+function cityAutocomplete(input, onPick) {
+  const dd = document.createElement('div'); dd.className = 'city-dd'; dd.hidden = true;
+  input.insertAdjacentElement('afterend', dd);
+  let items = [], sel = -1;
+  const close = () => { dd.hidden = true; sel = -1; };
+  const pick = c => { input.value = c.name; close(); onPick(c); };
+  const show = () => {
+    const q = fold(input.value);
+    if (cityByName(input.value)?.name === input.value) { close(); return; }   // exact city already chosen → nothing to suggest
+    items = !q ? [] : CITIES.filter(c => { const f = fold(c.name); return f.startsWith(q) || f.split(/\s+/).some(w => w.startsWith(q)); }).slice(0, 8);
+    if (!items.length) { close(); return; }
+    sel = -1;
+    dd.innerHTML = items.map((c, i) => `<button type="button" data-i="${i}">${esc(c.name)}<small>${esc(c.district)}</small></button>`).join('');
+    dd.hidden = false;
+  };
+  input.addEventListener('input', show);
+  input.addEventListener('focus', show);
+  input.addEventListener('blur', () => setTimeout(close, 150));               // let a click on an item land first
+  input.addEventListener('keydown', e => {
+    if (dd.hidden) return;
+    if (e.key === 'ArrowDown') { sel = Math.min(sel + 1, items.length - 1); }
+    else if (e.key === 'ArrowUp') { sel = Math.max(sel - 1, 0); }
+    else if (e.key === 'Enter') { e.preventDefault(); pick(items[sel >= 0 ? sel : 0]); return; }
+    else if (e.key === 'Escape') { close(); return; }
+    else return;
+    e.preventDefault(); [...dd.children].forEach((b, i) => b.classList.toggle('on', i === sel));
+  });
+  dd.addEventListener('mousedown', e => { const b = e.target.closest('button'); if (b) { e.preventDefault(); pick(items[+b.dataset.i]); } });
+}
 function kmBetween(a, b) {                                 // haversine between two city ids (same as distance_km in the DB)
   const ca = cityById(a), cb = cityById(b); if (!ca || !cb) return null; if (a === b) return 0;
   const r = x => x * Math.PI / 180, dLat = r(cb.lat - ca.lat), dLng = r(cb.lng - ca.lng);
@@ -732,7 +763,7 @@ function feed() {                                          // l.408–475
     <div class="city-nudge">📍 <b>Doplň si mesto</b> — firmy ťa potom nájdu na brigády vo svojom okolí a ponuky zoradíme podľa vzdialenosti.
       <button data-go="goProfileEdit">Doplniť</button></div>` : '';
   return `<div class="a-wrap">
-    <div class="a-title"><h2>Ponuky <b>pre teba</b></h2>${state.authed ? '<span class="sorted">✦ zoradené podľa zhody s tvojím profilom</span>' : ''}</div>
+    <div class="a-title"><h2>Ponuky <b>pre teba</b></h2></div>
     ${noCity}${tip}${cards}</div>`;
 }
 
@@ -996,8 +1027,8 @@ function nova() {
         <div><div class="label">Počet ľudí</div><input class="input" id="f-need" type="number" min="1" placeholder="1" value="${esc(s.fNeed)}"></div>
       </div>
       <div><div class="label">Miesto <b class="req">*</b></div>
-        <div class="place-row"><input class="input" id="f-city" list="cities-dl" placeholder="Mesto zo zoznamu" value="${esc(cityName(s.fCityId))}" autocomplete="off" ${s.fRemote ? 'disabled' : ''}>
-          <button type="button" class="tchip ${s.fRemote ? 'on' : ''}" data-act="remote">🏠 Na diaľku</button></div>${cityDatalist()}
+        <div class="place-row"><input class="input" id="f-city" placeholder="Mesto" value="${esc(cityName(s.fCityId))}" autocomplete="off" ${s.fRemote ? 'disabled' : ''}>
+          <button type="button" class="tchip ${s.fRemote ? 'on' : ''}" data-act="remote">🏠 Na diaľku</button></div>
         ${s.fRemote ? '' : `<input class="input" id="f-address" placeholder="Adresa prevádzky (ulica a číslo)" value="${esc(s.fAddress)}" maxlength="200" style="margin-top:8px">`}</div>
       <div><div class="label">Vek kandidátov</div>
         <div class="seg"><button class="${s.only18 ? '' : 'on'}" data-go="set18All">Bez obmedzenia</button><button class="${s.only18 ? 'on' : ''}" data-go="set18Only">Len 18+</button></div></div>
@@ -1052,7 +1083,7 @@ function fprofil() {
       </div>
       <div class="fp-fields">
         <div><div class="label">Názov firmy</div><input class="input" id="fp-name" value="${esc(s.fpName)}"></div>
-        <div><div class="label">Sídlo (mesto) — predvyplní miesto v novom inzeráte</div><input class="input" id="fp-city" list="cities-dl" value="${esc(cityName(s.fpCityId))}" placeholder="Mesto" autocomplete="off">${cityDatalist()}</div>
+        <div><div class="label">Sídlo (mesto) — predvyplní miesto v novom inzeráte</div><div class="place-row"><input class="input" id="fp-city" value="${esc(cityName(s.fpCityId))}" placeholder="Mesto" autocomplete="off"></div></div>
         <div><div class="label">IČO — overujeme v Registri právnických osôb</div>
           <div class="fp-ico-row"><input class="input" id="fp-ico" value="${esc(s.fpIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
             ${s.fpVerified ? '' : '<button class="p-edit" data-go="fpVerify">Overiť znova</button>'}</div>
@@ -1096,8 +1127,10 @@ function bindAppInputs() {
   }));
   on('f-desc', el => el.addEventListener('input', () => { state.fDesc = el.value; }));
   on('f-address', el => el.addEventListener('input', () => { state.fAddress = el.value; }));
-  on('f-city', el => el.addEventListener('input', () => { const c = cityByName(el.value); state.fCityId = c ? c.id : null;
-    const b = document.getElementById('f-publish'); if (b) b.style.opacity = novaCanPublish() ? 1 : .45; }));
+  on('f-city', el => { cityAutocomplete(el, () => el.dispatchEvent(new Event('input')));
+    el.addEventListener('input', () => { const c = cityByName(el.value); state.fCityId = c ? c.id : null;
+      const b = document.getElementById('f-publish'); if (b) b.style.opacity = novaCanPublish() ? 1 : .45; }); });
+  on('fp-city', el => cityAutocomplete(el, () => el.dispatchEvent(new Event('change'))));
   on('fp-city', el => el.addEventListener('change', async () => {   // company profile: seat → prefills new postings
     const c = cityByName(el.value); if (!c && el.value.trim()) { showToast('Vyberte mesto zo zoznamu.'); return; }
     state.fpCityId = c ? c.id : null; await saveCompany({ city_id: state.fpCityId }); render();
@@ -1455,8 +1488,8 @@ function skillsEditor() {                                  // l.126–162, logic
 // "Kde môžeš pracovať?" — city (fixed list with suggestions) + how far the student travels. Onboarding step 3 and the profile.
 function placeEditor() {
   return `<div class="label">Kde môžeš pracovať?</div>
-    <div class="place-row"><input class="input" id="city" list="cities-dl" placeholder="Tvoje mesto" value="${esc(cityName(state.cityId))}" autocomplete="off">
-      ${state.cityId ? '<span class="ok">✓</span>' : ''}</div>${cityDatalist()}
+    <div class="place-row"><input class="input" id="city" placeholder="Tvoje mesto" value="${esc(cityName(state.cityId))}" autocomplete="off">
+      ${state.cityId ? '<span class="ok">✓</span>' : ''}</div>
     <div class="commute">${COMMUTES.map(([k, l]) => `<button type="button" class="${state.commute === k ? 'on' : ''}" data-commute="${k}">${l}</button>`).join('')}</div>
     <div class="hint" id="city-hint">${state.cityId ? '' : 'Vyber mesto zo zoznamu — podľa neho ťa firmy nájdu.'}</div>`;
 }
@@ -1495,6 +1528,7 @@ function bindEditors() {
   const birth = document.getElementById('p-birth');
   if (birth) birth.addEventListener('input', () => { state.birth = birth.value; });
   const city = document.getElementById('city');          // matches the typed name against the list; no re-render while typing
+  if (city) cityAutocomplete(city, () => city.dispatchEvent(new Event('input')));
   if (city) city.addEventListener('input', () => {
     const c = cityByName(city.value); state.cityId = c ? c.id : null;
     const hint = document.getElementById('city-hint'); if (hint) hint.textContent = c ? '' : 'Vyber mesto zo zoznamu — podľa neho ťa firmy nájdu.';
