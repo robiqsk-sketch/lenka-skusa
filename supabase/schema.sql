@@ -51,6 +51,7 @@ create table public.postings (
   ai_note     text not null default '',
   description text not null default '',
   start       text not null default 'ihneď',
+  photos      text[] not null default '{}',         -- „deň v práci": verejné URL (bucket posting-photos), max. 3
   active      boolean not null default true,        -- pozastavené firmou
   blocked     boolean not null default false,       -- pozastavené Robiqom (admin) — firma to späť nezapne
   block_reason text not null default '',
@@ -196,6 +197,14 @@ create policy "logos: public read"  on storage.objects for select using (bucket_
 create policy "logos: own upload"   on storage.objects for insert with check (bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "logos: own update"   on storage.objects for update using (bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "logos: own delete"   on storage.objects for delete using (bucket_id = 'logos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Fotky „deň v práci" pri inzeráte: verejný bucket, firma zapisuje do <uid>/<posting_id>/. URL sú v postings.photos.
+insert into storage.buckets (id, name, public) values ('posting-photos', 'posting-photos', true)
+on conflict (id) do nothing;
+create policy "posting-photos: public read" on storage.objects for select using (bucket_id = 'posting-photos');
+create policy "posting-photos: own write"   on storage.objects for all
+  using      (bucket_id = 'posting-photos' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'posting-photos' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- Profilové fotky brigádnikov: NEVEREJNÝ bucket. Vlastník robí všetko; firma číta len fotky svojich kandidátov (cez podpísané URL).
 insert into storage.buckets (id, name, public) values ('avatars', 'avatars', false)

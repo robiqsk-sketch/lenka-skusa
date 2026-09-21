@@ -24,7 +24,9 @@ const initialState = () => ({
   fpName: '', fpDesc: '', fpLogo: '', fpIco: '', fpVerified: false, fpRpo: null,
   offers: [], candidates: [], suggestions: {}, contacted: [], blocked: [], fchats: [], activeFChat: 0, fdraft: '',
   invitedPostingIds: [],                                   // student: postings whose company reached out first
-  fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false,
+  fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '',
+  fPhotos: [],                                             // new posting: [{ file, url }] previews, max 3
+  photoEdit: null,                                         // existing posting: { offerId, photos: [url] } overlay
 });
 let state = initialState();
 let order = [];                                            // guest feed order (shuffled)
@@ -93,6 +95,7 @@ function jobFromRow(p) {                                   // posting row (+comp
     id: p.id, companyId: p.company_id, t: p.title, f: c.name || 'Firma', pay: p.pay + ' €', need: p.need, taken: p.taken,
     posted: ago(p.created_at), start: p.start, lg: colorFor(c.name), logo: c.logo_url, ini: (c.name || 'F')[0].toUpperCase(),
     badges: c.verified ? ['✓ Overená firma'] : [], tags: p.types || [], desc: p.description || '', ice: [], only18: p.only18,
+    photos: p.photos || [],
   };
 }
 function shuffle(list) { return list.map(x => x.id).sort(() => Math.random() - .5); }
@@ -174,7 +177,7 @@ async function loadCompany() {
   if (c && !c.verified && ICO_RE.test(c.ico)) await verifyCompany();   // not verified yet (e-mail confirmation, register was down…) → try again
   state.offers = (posts || []).map(p => ({ id: p.id, t: p.title, pay: p.pay + ' € / hod', views: p.views,
     likes: p.interests?.[0]?.count || 0, m: p.matches?.[0]?.count || 0, need: p.need, on: p.active,
-    blocked: !!p.blocked, blockReason: p.block_reason || '' }));                 // blocked by Robiq (admin) — the company cannot lift it
+    blocked: !!p.blocked, blockReason: p.block_reason || '', photos: p.photos || [] }));   // blocked by Robiq (admin) — the company cannot lift it
   state.contacted = (cints || []).map(x => x.student_id + ':' + x.posting_id);
   await loadCandidates();
   await loadSuggestions();
@@ -449,10 +452,17 @@ const go = {
   publish: async () => {
     if (!state.fT.trim()) return;
     try {
-      const { error } = await sb.from('postings').insert({ company_id: state.uid, title: state.fT.trim(), pay: state.fPay.trim() || '8',
-        need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote });
+      const { data: row, error } = await sb.from('postings').insert({ company_id: state.uid, title: state.fT.trim(), pay: state.fPay.trim() || '8',
+        need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote, description: state.fDesc.trim() })
+        .select('id').single();
       if (error) throw error;
-      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, ftab: 0 });   // straight to candidates
+      if (state.fPhotos.length) {                          // the row exists now → upload the photos under its id
+        const urls = [];
+        for (const [n, p] of state.fPhotos.entries()) { try { urls.push(await uploadPostingPhoto(row.id, p.file, n)); } catch (e) { console.warn('photo upload', e); } }
+        if (urls.length) await sb.from('postings').update({ photos: urls }).eq('id', row.id);
+        if (urls.length < state.fPhotos.length) showToast('Niektoré fotky sa nepodarilo nahrať.');
+      }
+      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fPhotos: [], ftab: 0 });   // straight to candidates
       await loadCompany(); await loadPostings();
       const n = Object.values(state.suggestions)[0]?.length ?? 0;
       const first = state.offers[0] && state.suggestions[state.offers[0].id] ? state.suggestions[state.offers[0].id].length : n;
@@ -485,8 +495,24 @@ const go = {
   delCancel:  () => { state.delIdx = null; },
   delConfirm: async () => {
     const o = state.offers[state.delIdx]; state.delIdx = null;
-    try { const { error } = await sb.from('postings').delete().eq('id', o.id); if (error) throw error; await loadCompany(); await loadPostings(); showToast('Inzerát zmazaný.'); }
-    catch (e) { fail(e); }
+    try {
+      const { data: files } = await sb.storage.from('posting-photos').list(`${state.uid}/${o.id}`);   // photos go with the posting
+      if (files?.length) await sb.storage.from('posting-photos').remove(files.map(f => `${state.uid}/${o.id}/${f.name}`));
+      const { error } = await sb.from('postings').delete().eq('id', o.id); if (error) throw error;
+      await loadCompany(); await loadPostings(); showToast('Inzerát zmazaný.');
+    } catch (e) { fail(e); }
+  },
+  // "Fotky" on an existing posting (row menu ⋯)
+  photoClose: () => { state.photoEdit = null; },
+  photoRemove: async el => {
+    const pe = state.photoEdit; if (!pe) return;
+    const url = pe.photos[+el.dataset.i]; if (!url) return;
+    try {
+      await sb.storage.from('posting-photos').remove([photoPath(url)]);
+      pe.photos = pe.photos.filter(u => u !== url);
+      const { error } = await sb.from('postings').update({ photos: pe.photos }).eq('id', pe.offerId); if (error) throw error;
+      await loadCompany(); await loadPostings();
+    } catch (e) { fail(e); }
   },
 };
 
@@ -579,6 +605,17 @@ function renderApp() {
   updateDock();
   document.getElementById('a-layers').innerHTML = layers();
   const note = document.getElementById('report-note'); if (note) note.addEventListener('input', () => { state.report.note = note.value; });
+  const pePhoto = document.getElementById('pe-photo');     // photos overlay: upload straight away
+  if (pePhoto) pePhoto.addEventListener('change', async e => {
+    const pe = state.photoEdit; if (!pe) return;
+    const files = pickPhotos(e.target.files || [], pe.photos.length); if (!files.length) return;
+    showToast('Nahrávam…');
+    try {
+      for (const [n, f] of files.entries()) pe.photos.push(await uploadPostingPhoto(pe.offerId, f, pe.photos.length + n));
+      const { error } = await sb.from('postings').update({ photos: pe.photos }).eq('id', pe.offerId); if (error) throw error;
+      await loadCompany(); await loadPostings(); render(); showToast('Fotky uložené.');
+    } catch (err) { fail(err); }
+  });
 }
 
 function renderHeader() {                                  // l.342–372
@@ -875,6 +912,7 @@ function ponuky() {
   const rows = state.offers.map((o, i) => {
     const menu = state.rowMenu !== 'o' + i ? '' : `
       <div class="row-menu w186" data-rowmenu="1">
+        <button data-offer="${i}" data-act="photos">Fotky „deň v práci“${o.photos.length ? ` (${o.photos.length})` : ''}</button>
         <button data-offer="${i}" data-act="dup">Duplikovať</button>
         <button class="danger" data-offer="${i}" data-act="askDel">Zmazať inzerát</button></div>`;
     return `<div class="offer ${o.on && !o.blocked ? '' : 'off'}">
@@ -926,10 +964,41 @@ function nova() {
         <div class="ai-sub">Vlastnými slovami — AI podľa toho vyberie a zoradí kandidátov pre tento inzerát.</div>
         <textarea id="f-ai" rows="3" placeholder="napr. Potrebujem niekoho komunikatívneho na ranné zmeny, ideálne so skúsenosťou z gastra. Výhodou angličtina kvôli turistom…">${esc(s.aiNote)}</textarea>
         <div class="hint" style="margin-top:6px">Opíšte prácu a zručnosti — nie požiadavky na vek, pohlavie, pôvod či zdravie (zákaz diskriminácie).</div></div>
-      <div class="tip"><b>Tip:</b> pridajte 3 fotky „deň v práci" — reálne zábery z prevádzky zvyšujú záujem pracovníkov.</div>
+      <div><div class="label" style="margin-bottom:4px">Popis práce</div>
+        <div class="ai-sub">Uvidia ho brigádnici v detaile inzerátu — čo budú robiť, kde, od kedy.</div>
+        <textarea id="f-desc" rows="3" maxlength="1500" placeholder="napr. Obsluha zákazníkov, príprava kávy, drobné upratovanie. Zaškolíme. Kaviareň v centre, víkendové zmeny 8–14 h.">${esc(s.fDesc)}</textarea></div>
+      <div><div class="label" style="margin-bottom:4px">Fotky „deň v práci“ <span class="muted-l">(voliteľné, max. 3)</span></div>
+        <div class="ai-sub">Reálne zábery z prevádzky zvyšujú záujem. Nefoťte ľudí, ktorí s tým nesúhlasili.</div>
+        ${photoGrid(s.fPhotos.map(p => p.url), 'f-photo', 'f-photo-rm', 'data-act="fphoto-rm"')}</div>
       <button class="publish" id="f-publish" data-go="publish" style="opacity:${s.fT.trim() ? 1 : .45}">Zverejniť ponuku</button>
     </div></div>`;
 }
+
+// Photo grid shared by the new-posting form and the "Fotky" overlay: previews + remove ✕ + an "add" tile while under 3.
+const MAX_PHOTOS = 3;
+function photoGrid(urls, inputId, rmAttr, rmExtra = '') {
+  return `<div class="photo-grid">
+    ${urls.map((u, i) => `<div class="ph" style="background-image:url('${esc(u)}')"><button type="button" class="rm" ${rmExtra} data-${rmAttr}="${i}" aria-label="Odstrániť">✕</button></div>`).join('')}
+    ${urls.length < MAX_PHOTOS ? `<label class="ph add">＋ Pridať fotku<input type="file" accept="image/*" multiple id="${inputId}" hidden></label>` : ''}
+  </div>`;
+}
+const pickPhotos = (files, have) => {                      // validates size, respects the 3-photo limit
+  const out = [];
+  for (const f of files) {
+    if (have + out.length >= MAX_PHOTOS) { showToast(`Najviac ${MAX_PHOTOS} fotky.`); break; }
+    if (f.size > 8 * 1024 * 1024) { showToast(`${f.name}: fotka je príliš veľká (max. 8 MB).`); continue; }
+    out.push(f);
+  }
+  return out;
+};
+async function uploadPostingPhoto(postingId, file, n) {    // bucket posting-photos, path <uid>/<posting>/<time>-<n>.<ext>
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const path = `${state.uid}/${postingId}/${Date.now()}-${n}.${ext}`;
+  const { error } = await sb.storage.from('posting-photos').upload(path, file, { contentType: file.type });
+  if (error) throw error;
+  return sb.storage.from('posting-photos').getPublicUrl(path).data.publicUrl;
+}
+const photoPath = url => decodeURIComponent(url.split('/posting-photos/')[1] || '').split('?')[0];   // public URL → storage path
 
 // ─── Firemný profil — l.830–913 (bez kalendára) ───
 function fprofil() {
@@ -984,6 +1053,11 @@ function bindAppInputs() {
   on('fp-file', el => el.addEventListener('change', async e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
     try { state.fpLogo = await uploadLogo(f); await saveCompany({ logo_url: state.fpLogo }); render(); } catch (err) { fail(err); }
+  }));
+  on('f-desc', el => el.addEventListener('input', () => { state.fDesc = el.value; }));
+  on('f-photo', el => el.addEventListener('change', e => {   // new posting: previews only, uploaded on publish
+    for (const f of pickPhotos(e.target.files || [], state.fPhotos.length)) state.fPhotos.push({ file: f, url: URL.createObjectURL(f) });
+    render();
   }));
 }
 
@@ -1047,9 +1121,13 @@ document.getElementById('a-main').addEventListener('click', async e => {
         await loadCompany(); await loadPostings(); showToast('Inzerát zduplikovaný.');
       }
       if (a === 'askDel') { state.rowMenu = null; state.delIdx = i; render(); }
+      if (a === 'photos') { state.rowMenu = null; state.photoEdit = { offerId: o.id, title: o.t, photos: [...o.photos] }; render(); }
     } catch (err) { fail(err); }
   }
   else if (a === 'type') { toggleInList(state.fTypes, d.type); render(); }
+  else if (a === 'fphoto-rm') {                            // new posting form: remove a preview
+    const p = state.fPhotos.splice(+d.fPhotoRm, 1)[0]; if (p) URL.revokeObjectURL(p.url); render();
+  }
 });
 
 // Dock — l.929–941, logic l.1308–1326. Built once per role; afterwards only the active
@@ -1118,12 +1196,19 @@ function layers() {                                        // banner l.946, toas
     <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
     ${d.desc ? `<p>${esc(d.desc)}</p>` : ''}
     ${d.ice.length ? `<div class="sec">Icebreakery</div><div class="ice">${d.ice.map(i => `<div>${esc(i)}</div>`).join('')}</div>` : ''}
-    <div class="sec">Deň v práci</div>
-    <div class="day"><div>foto 1</div><div>foto 2</div><div>foto 3</div></div>
+    ${d.photos.length ? `<div class="sec">Deň v práci</div>
+    <div class="day">${d.photos.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" class="ph" style="background-image:url('${esc(u)}')"></a>`).join('')}</div>` : ''}
     ${state.likedIds.includes(d.id) ? `<div class="sent">✓ Záujem odoslaný</div>` : `
     <div class="act"><button class="like" data-go="detailLike">♥ Mám záujem</button><button class="skip" data-go="detailSkip">✕ Preskočiť</button></div>`}
     ${(state.authed && !isStudent() && d.companyId === state.uid) ? '' : `<div class="report-row"><button class="link" data-go="reportPosting">⚑ Nahlásiť inzerát</button></div>`}
   </div></div>`;
+  // Photos of an existing posting (row menu ⋯ → Fotky)
+  const pe = state.photoEdit;
+  if (pe) h += `<div class="overlay del" data-go="photoClose"><div class="delm report" data-go="noop">
+    <div class="h">Fotky „deň v práci“</div>
+    <div class="p" style="margin-bottom:12px"><b>${esc(pe.title)}</b> · max. ${MAX_PHOTOS} fotky, uvidia ich všetci v detaile inzerátu.</div>
+    ${photoGrid(pe.photos, 'pe-photo', 'i', 'data-go="photoRemove"')}
+    <div class="col" style="margin-top:14px"><button class="b2" data-go="photoClose">Hotovo</button></div></div></div>`;
   // Report form (posting / company / student) — table `reports`, handled by admin.html
   const r = state.report;
   if (r) h += `<div class="overlay del" data-go="reportCancel"><div class="delm report" data-go="noop">
