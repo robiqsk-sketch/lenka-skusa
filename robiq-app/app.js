@@ -99,7 +99,7 @@ function shuffle(list) { return list.map(x => x.id).sort(() => Math.random() - .
 
 async function loadPostings() {
   const { data, error } = await sb.from('postings')
-    .select('*, companies(name, verified, logo_url)').eq('active', true).order('created_at', { ascending: false });
+    .select('*, companies(name, verified, logo_url)').eq('active', true).eq('blocked', false).order('created_at', { ascending: false });
   if (error) throw error;
   state.postings = data.map(jobFromRow);
   if (!order.length) order = shuffle(state.postings);
@@ -172,7 +172,8 @@ async function loadCompany() {
   if (c) Object.assign(state, { fpName: c.name, fpDesc: c.description || '', fpLogo: c.logo_url || '', fpIco: c.ico || '', fpVerified: c.verified });
   if (c && !c.verified && ICO_RE.test(c.ico)) await verifyCompany();   // not verified yet (e-mail confirmation, register was down…) → try again
   state.offers = (posts || []).map(p => ({ id: p.id, t: p.title, pay: p.pay + ' € / hod', views: p.views,
-    likes: p.interests?.[0]?.count || 0, m: p.matches?.[0]?.count || 0, need: p.need, on: p.active }));
+    likes: p.interests?.[0]?.count || 0, m: p.matches?.[0]?.count || 0, need: p.need, on: p.active,
+    blocked: !!p.blocked, blockReason: p.block_reason || '' }));                 // blocked by Robiq (admin) — the company cannot lift it
   state.contacted = (cints || []).map(x => x.student_id + ':' + x.posting_id);
   await loadCandidates();
   await loadSuggestions();
@@ -182,7 +183,7 @@ async function loadCompany() {
 // Anonymous suggestions per posting (suggest_candidates): skills, hours, availability, score — no name or photo.
 async function loadSuggestions() {
   state.suggestions = {};
-  await Promise.all(state.offers.filter(o => o.on).map(async o => {
+  await Promise.all(state.offers.filter(o => o.on && !o.blocked).map(async o => {
     const { data } = await sb.rpc('suggest_candidates', { p_posting: o.id });
     state.suggestions[o.id] = (data || []).filter(r => !r.interested);   // those who already liked are in Brigádnici with a name
   }));
@@ -748,7 +749,7 @@ function brig() {
       <button class="btn-violet" data-go="goNova">＋ Nový inzerát</button></div>`;
   else {
     const visible = s.candidates.filter(c => !s.blocked.includes(c.id));
-    const groups = s.offers.filter(o => o.on).map(o => {
+    const groups = s.offers.filter(o => o.on && !o.blocked).map(o => {
       const cands = visible.filter(c => c.postingId === o.id).sort((a, b) => new Date(b.at) - new Date(a.at));
       const sugg = s.suggestions[o.id] || [];
       if (!cands.length && !sugg.length) return '';
@@ -804,7 +805,7 @@ function candCard(c) {                                     // l.674–699
 
 // ─── Ponuky firmy — l.745–791 ───
 const sums = () => ({
-  active: state.offers.filter(o => o.on).length,
+  active: state.offers.filter(o => o.on && !o.blocked).length,
   views: state.offers.reduce((a, o) => a + o.views, 0),
   likes: state.offers.reduce((a, o) => a + o.likes, 0),
   m: state.offers.reduce((a, o) => a + o.m, 0),
@@ -816,14 +817,15 @@ function ponuky() {
       <div class="row-menu w186" data-rowmenu="1">
         <button data-offer="${i}" data-act="dup">Duplikovať</button>
         <button class="danger" data-offer="${i}" data-act="askDel">Zmazať inzerát</button></div>`;
-    return `<div class="offer ${o.on ? '' : 'off'}">
-      <div><div class="t">${esc(o.t)}</div><div class="pay">${esc(o.pay)}</div></div>
+    return `<div class="offer ${o.on && !o.blocked ? '' : 'off'}">
+      <div><div class="t">${esc(o.t)}</div><div class="pay">${esc(o.pay)}</div>
+        ${o.blocked ? `<div class="blocked-note">⛔ Pozastavené Robiqom${o.blockReason ? ': ' + esc(o.blockReason) : ''} · napíšte na ceo@robiq.sk</div>` : ''}</div>
       <div class="stat"><div class="n">${o.views}</div><div class="l">zobrazenia</div></div>
       <div class="stat"><div class="n">${o.likes}</div><div class="l">záujmy</div></div>
       <div class="stat"><div class="n green">${o.m}</div><div class="l">zhody</div></div>
       <div class="stat"><div class="n">${Math.min(o.m, o.need || 1)} / ${o.need || 1}</div><div class="l">obsadené</div></div>
-      <span class="st ${o.on ? 'on' : 'paused'}">${o.on ? 'Aktívna' : 'Pozastavená'}</span>
-      <div class="act"><button class="tg" data-offer="${i}" data-act="toggle">${o.on ? 'Pozastaviť' : 'Aktivovať'}</button>
+      <span class="st ${o.on && !o.blocked ? 'on' : 'paused'}">${o.blocked ? 'Pozastavená Robiqom' : o.on ? 'Aktívna' : 'Pozastavená'}</span>
+      <div class="act">${o.blocked ? '' : `<button class="tg" data-offer="${i}" data-act="toggle">${o.on ? 'Pozastaviť' : 'Aktivovať'}</button>`}
         <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-offer="${i}" data-act="menu">⋯</button>${menu}</div></div>
     </div>`;
   }).join('');

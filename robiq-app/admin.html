@@ -45,17 +45,45 @@
     .err { color: #DC2626; font-size: 12.5px; font-weight: 700; min-height: 16px; margin: 4px 0 8px; }
     .muted { color: #6E688C; font-size: 12.5px; }
     @media (max-width: 640px) { .funnel { grid-template-columns: 1fr; } .chart .col:nth-child(even) .d { visibility: hidden; } }
+    /* tabs + tables (Firmy / Inzeráty) */
+    .tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+    .tabs button { border: 1px solid #DEDBEC; background: #fff; color: #6E688C; font: inherit; font-weight: 700; font-size: 13px; padding: 8px 16px; border-radius: 99px; cursor: pointer; }
+    .tabs button.on { background: #40319F; border-color: #40319F; color: #fff; }
+    .tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .tools .input { margin: 0; width: auto; flex: 1; min-width: 180px; padding: 9px 12px; font-size: 13px; }
+    .tools label { font-size: 12.5px; color: #6E688C; display: flex; align-items: center; gap: 6px; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .tbl th { text-align: left; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #6E688C; padding: 8px 10px; border-bottom: 1px solid #DEDBEC; white-space: nowrap; }
+    .tbl td { padding: 10px; border-bottom: 1px solid #EEEBF7; vertical-align: top; }
+    .tbl tr:last-child td { border-bottom: none; }
+    .tbl .num { text-align: right; white-space: nowrap; }
+    .tbl .sub { color: #6E688C; font-size: 11.5px; }
+    .tag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+    .tag.ok { background: rgba(21,128,61,.12); color: #15803D; }
+    .tag.warn { background: rgba(180,83,9,.12); color: #B45309; }
+    .tag.err { background: rgba(220,38,38,.12); color: #DC2626; }
+    .tag.off { background: rgba(36,27,69,.07); color: #6E688C; }
+    .act { display: flex; gap: 6px; flex-wrap: wrap; }
+    .mini { border: 1px solid #DEDBEC; background: #fff; color: #3F3A55; font: inherit; font-weight: 700; font-size: 11.5px; padding: 6px 10px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+    .mini:hover { border-color: #40319F; color: #40319F; }
+    .mini.danger:hover { border-color: #DC2626; color: #DC2626; }
+    .tblwrap { overflow-x: auto; }
+    details summary { cursor: pointer; color: #40319F; font-size: 12px; }
+    details p { margin: 6px 0 0; font-size: 12.5px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="top">
-      <h1>Robiq<b>.</b> štatistika</h1>
+      <h1>Robiq<b>.</b> admin</h1>
       <div id="controls" hidden>
         <span class="seg" id="seg"><button data-days="7" class="on">7 dní</button><button data-days="30">30 dní</button><button data-days="90">90 dní</button></span>
         <a class="btn ghost" href="index.html" style="text-decoration:none;display:inline-block">← Späť do appky</a>
         <button class="btn ghost" id="logout">Odhlásiť</button>
       </div>
+    </div>
+    <div class="tabs" id="tabs" hidden>
+      <button data-tab="stats" class="on">Štatistika</button><button data-tab="companies">Firmy</button><button data-tab="postings">Inzeráty</button>
     </div>
 
     <div class="card login" id="login">
@@ -134,15 +162,102 @@
         <p class="muted">Štatistika je anonymná: ukladá sa len názov udalosti, rola a čas — bez ID používateľa, relácie či cookies.</p>`;
     }
 
+    // ─── Firmy ───
+    const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('sk-SK') : '–';
+    let companies = [], postings = [], q = '';
+    function renderCompanies() {
+      const needle = q.toLowerCase();
+      const rows = companies.filter(c => !needle || [c.name, c.ico, c.contact_name].join(' ').toLowerCase().includes(needle));
+      $('dash').innerHTML = `<div class="card">
+        <div class="tools"><input class="input" id="q" placeholder="Hľadať firmu, IČO, kontakt…" value="${esc(q)}">
+          <span class="muted">${rows.length} z ${companies.length} firiem · ${companies.filter(c => c.verified).length} overených</span></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th>Firma</th><th>IČO</th><th>Stav</th><th class="num">Inzeráty</th><th class="num">Záujmy</th><th class="num">Zhody</th><th>Registrácia</th><th></th></tr></thead>
+        <tbody>${rows.map(c => `<tr>
+          <td><b>${esc(c.name)}</b><div class="sub">${esc(c.contact_name || '')}${c.fields?.length ? ' · ' + esc(c.fields.join(', ')) : ''}</div></td>
+          <td>${esc(c.ico || '–')}</td>
+          <td>${c.verified ? '<span class="tag ok">✓ overená</span>' : '<span class="tag warn">neoverená</span>'}</td>
+          <td class="num">${c.postings_active}/${c.postings}${c.postings_blocked ? ` <span class="tag err">${c.postings_blocked} ⛔</span>` : ''}</td>
+          <td class="num">${c.interests}</td><td class="num">${c.matches}</td>
+          <td class="sub">${fmtDate(c.created_at)}${c.last_posting_at ? '<br>posl. inzerát ' + fmtDate(c.last_posting_at) : ''}</td>
+          <td><div class="act"><button class="mini ${c.verified ? 'danger' : ''}" data-verify="${c.id}" data-to="${!c.verified}">${c.verified ? 'Odobrať overenie' : 'Overiť ručne'}</button></div></td>
+        </tr>`).join('') || '<tr><td colspan="8" class="muted">Žiadne firmy.</td></tr>'}</tbody></table></div>
+        <p class="muted" style="margin:12px 0 0">Ručné overenie prepíše výsledok z Registra právnických osôb. Pri zmene IČO firmou sa overenie zruší a skontroluje znova.</p></div>`;
+      $('q').addEventListener('input', e => { q = e.target.value; const pos = e.target.selectionStart; renderCompanies(); const el = $('q'); el.focus(); el.setSelectionRange(pos, pos); });
+    }
+
+    // ─── Inzeráty ───
+    let onlyProblem = false;
+    function renderPostings() {
+      const needle = q.toLowerCase();
+      const rows = postings.filter(p => (!needle || [p.title, p.company, p.description].join(' ').toLowerCase().includes(needle)) && (!onlyProblem || p.blocked || !p.verified));
+      const stateTag = p => p.blocked ? `<span class="tag err">⛔ pozastavené Robiqom</span>` : !p.active ? '<span class="tag off">pozastavené firmou</span>' : '<span class="tag ok">aktívny</span>';
+      $('dash').innerHTML = `<div class="card">
+        <div class="tools"><input class="input" id="q" placeholder="Hľadať inzerát, firmu, text…" value="${esc(q)}">
+          <label><input type="checkbox" id="onlyProblem" ${onlyProblem ? 'checked' : ''}> len pozastavené / neoverené firmy</label>
+          <span class="muted">${rows.length} z ${postings.length}</span></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th>Inzerát</th><th>Firma</th><th>Stav</th><th class="num">Zobr.</th><th class="num">Záujmy</th><th class="num">Zhody</th><th>Pridané</th><th></th></tr></thead>
+        <tbody>${rows.map(p => `<tr>
+          <td><b>${esc(p.title)}</b> <span class="sub">${esc(p.pay)} €/hod · ${p.need} ${p.need === 1 ? 'miesto' : 'miest'}${p.only18 ? ' · 18+' : ''}</span>
+            ${p.types?.length ? `<div class="sub">${esc(p.types.join(', '))}</div>` : ''}
+            ${p.description ? `<details><summary>popis</summary><p>${esc(p.description)}</p></details>` : ''}
+            ${p.blocked && p.block_reason ? `<div class="sub" style="color:#DC2626">dôvod: ${esc(p.block_reason)}</div>` : ''}</td>
+          <td>${esc(p.company)}<div class="sub">${p.verified ? '✓ overená' : '<span style="color:#B45309">neoverená</span>'}</div></td>
+          <td>${stateTag(p)}</td>
+          <td class="num">${p.views}</td><td class="num">${p.interests}</td><td class="num">${p.matches}</td>
+          <td class="sub">${fmtDate(p.created_at)}</td>
+          <td><div class="act">${p.blocked
+            ? `<button class="mini" data-unblock="${p.id}">Obnoviť</button>`
+            : `<button class="mini danger" data-block="${p.id}">Pozastaviť</button>`}</div></td>
+        </tr>`).join('') || '<tr><td colspan="8" class="muted">Žiadne inzeráty.</td></tr>'}</tbody></table></div>
+        <p class="muted" style="margin:12px 0 0">Pozastavený inzerát zmizne z feedu; firma vidí značku s dôvodom a sama ho zapnúť nevie. Ľudia, ktorí už dali záujem, ho stále vidia vo svojich záujmoch.</p></div>`;
+      $('q').addEventListener('input', e => { q = e.target.value; const pos = e.target.selectionStart; renderPostings(); const el = $('q'); el.focus(); el.setSelectionRange(pos, pos); });
+      $('onlyProblem').addEventListener('change', e => { onlyProblem = e.target.checked; renderPostings(); });
+    }
+
+    // Admin actions (buttons in the tables) — each DB function checks is_admin() itself.
+    $('dash').addEventListener('click', async e => {
+      const b = e.target.closest('button'); if (!b) return;
+      try {
+        if (b.dataset.verify) {
+          const { error } = await sb.rpc('admin_set_company_verified', { p_id: b.dataset.verify, p_verified: b.dataset.to === 'true' });
+          if (error) throw error; await loadCompanies(); renderCompanies();
+        }
+        if (b.dataset.block) {
+          const reason = prompt('Dôvod pozastavenia (uvidí ho firma):', 'Inzerát nespĺňa pravidlá Robiq');
+          if (reason === null) return;
+          const { error } = await sb.rpc('admin_set_posting_blocked', { p_id: +b.dataset.block, p_blocked: true, p_reason: reason.trim() });
+          if (error) throw error; await loadPostings(); renderPostings();
+        }
+        if (b.dataset.unblock) {
+          const { error } = await sb.rpc('admin_set_posting_blocked', { p_id: +b.dataset.unblock, p_blocked: false });
+          if (error) throw error; await loadPostings(); renderPostings();
+        }
+      } catch (err) { alert(err.message); }
+    });
+    async function loadCompanies() { const { data, error } = await sb.rpc('admin_companies'); if (error) throw error; companies = data || []; }
+    async function loadPostings()  { const { data, error } = await sb.rpc('admin_postings');  if (error) throw error; postings  = data || []; }
+
+    // ─── tabs ───
+    let tab = 'stats';
     async function load() {
       $('dash').innerHTML = '<p class="muted">Načítavam…</p>';
-      const { data, error } = await sb.rpc('analytics_summary', { p_days: days });
-      if (error) { $('dash').innerHTML = `<div class="card"><div class="err">${esc(error.message)}</div><p class="muted">Tento účet nie je v zozname adminov (tabuľka <code>admins</code>).</p></div>`; return; }
-      render(data);
+      $('seg').style.visibility = tab === 'stats' ? 'visible' : 'hidden';
+      try {
+        if (tab === 'stats') {
+          const { data, error } = await sb.rpc('analytics_summary', { p_days: days }); if (error) throw error; render(data);
+        } else if (tab === 'companies') { await loadCompanies(); renderCompanies(); }
+        else { await loadPostings(); renderPostings(); }
+      } catch (error) {
+        $('dash').innerHTML = `<div class="card"><div class="err">${esc(error.message)}</div><p class="muted">Tento účet nie je v zozname adminov (tabuľka <code>admins</code>), alebo ešte nebola spustená migrácia.</p></div>`;
+      }
     }
+    $('tabs').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      tab = b.dataset.tab; q = ''; [...$('tabs').children].forEach(x => x.classList.toggle('on', x === b)); load();
+    });
     async function show() {
       const { data: { session } } = await sb.auth.getSession();
-      $('login').hidden = !!session; $('controls').hidden = !session; $('dash').hidden = !session;
+      $('login').hidden = !!session; $('controls').hidden = !session; $('tabs').hidden = !session; $('dash').hidden = !session;
       if (session) load();
     }
     $('form').addEventListener('submit', async e => {
