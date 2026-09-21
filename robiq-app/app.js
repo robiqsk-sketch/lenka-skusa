@@ -10,7 +10,7 @@ const initialState = () => ({
   screen: 'app', authed: false, role: 'student', uid: null, pendingJob: null, gate: false, isAdmin: false,
   oauth: false, oauthEmail: '', oauthRole: null,           // signed in (Google) but registration unfinished → finish it in-app; oauthRole = role already chosen, if any
   tab: 0, ftab: 0, loading: false, accMenu: false, notifOn: true, rowMenu: null,
-  detail: null, toast: '', banner: false, bannerName: '', delIdx: null, delAccount: false,
+  detail: null, toast: '', banner: false, bannerName: '', delIdx: null, delAccount: false, report: null,
   // feed (guest + student)
   postings: [], likedIds: [], skippedIds: [], blockedFirms: [],
   // student
@@ -221,6 +221,7 @@ async function loadMatches() {
   const list = (data || []).map(m => {
     const other = isStudent() ? (m.companies?.name || 'Firma') : (names[m.student_id]?.name || 'Študent');
     return { id: m.id, postingId: m.posting_id, name: other, job: m.postings?.title || '', msgs: [],
+      otherId: isStudent() ? m.company_id : m.student_id,   // for „Nahlásiť" in the chat header
       photo: isStudent() ? (m.companies?.logo_url || '') : avatarUrl(names[m.student_id]?.avatar_path),
       ini: isStudent() ? other[0].toUpperCase() : initialsOf(other),
       lg: isStudent() ? colorFor(other) : `linear-gradient(135deg, ${colorFor(other)}, #9F8FF2)` };
@@ -404,6 +405,24 @@ const go = {
   detailSkip:  () => { const j = state.detail; state.detail = null; if (j) act(j, 'skip'); },
   bannerGo:    () => { state.banner = false; state.tab = 1; state.activeChat = state.matches.length - 1; },
   noop:        () => {},
+  // Reports (⚑) — a posting from its detail, the other party from the chat header.
+  reportPosting: () => { const d = state.detail; if (!d) return; state.detail = null; state.report = { type: 'posting', id: String(d.id), label: `${d.t} — ${d.f}`, reason: 'scam', note: '' }; },
+  reportChat:  () => {
+    const list = isStudent() ? state.matches : state.fchats, cur = list[isStudent() ? state.activeChat : state.activeFChat];
+    if (!cur) return;
+    state.report = { type: isStudent() ? 'company' : 'student', id: cur.otherId, label: cur.name, reason: 'inappropriate', note: '' };
+  },
+  reportCancel: () => { state.report = null; },
+  reportSend: async () => {
+    const r = state.report; if (!r) return;
+    r.note = document.getElementById('report-note').value.trim();
+    const btn = document.getElementById('report-send'); btn.disabled = true;
+    const { error } = await sb.from('reports').insert({ reporter_id: state.authed ? state.uid : null, target_type: r.type, target_id: r.id, reason: r.reason, note: r.note });
+    btn.disabled = false;
+    if (error) { setErr('report-err', error.message); return; }
+    state.report = null; showToast('Ďakujeme, nahlásenie sme dostali. Pozrieme sa na to.');
+    track('report', { type: r.type, reason: r.reason });
+  },
   // profile — l.1616; saving happens on "✓ Hotovo"
   fpVerify: async () => {                                  // company profile: "Overiť znova"
     const r = await verifyCompany();
@@ -519,6 +538,11 @@ document.addEventListener('pointerdown', e => {
   state.rowMenu = null; render();
 }, true);
 document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); go.doLogin(); });
+// Report form: reason buttons (inside the overlay, before the body's data-go handler)
+document.getElementById('a-layers').addEventListener('click', e => {
+  const b = e.target.closest('[data-reason]'); if (!b || !state.report) return;
+  e.stopPropagation(); state.report.reason = b.dataset.reason; render();
+});
 
 // ═══════════ Render ═══════════
 function render() {
@@ -551,6 +575,7 @@ function renderApp() {
   bindAppInputs();
   updateDock();
   document.getElementById('a-layers').innerHTML = layers();
+  const note = document.getElementById('report-note'); if (note) note.addEventListener('input', () => { state.report.note = note.value; });
 }
 
 function renderHeader() {                                  // l.342–372
@@ -735,8 +760,9 @@ function chatUI(list, active, isFirm) {
     </button>`).join('');
   const head = !cur ? '' : `
     <div class="chat-head">${face(cur)}
-      <div><div class="n">${esc(cur.name)}</div>
-        <div class="j ${isFirm ? 'firm' : ''}">${isFirm ? 'Uchádzač · ' : '✓ Zhoda · '}${esc(cur.job)}</div></div></div>`;
+      <div style="flex:1;min-width:0"><div class="n">${esc(cur.name)}</div>
+        <div class="j ${isFirm ? 'firm' : ''}">${isFirm ? 'Uchádzač · ' : '✓ Zhoda · '}${esc(cur.job)}</div></div>
+      <button class="chat-report" data-go="reportChat" title="Nahlásiť">⚑ Nahlásiť</button></div>`;
   const msgs = (cur ? cur.msgs : []).map(m => `<div class="msg ${m.me ? 'me' : 'them'}">${esc(m.txt)}</div>`).join('');
   if (!list.length) return `<div class="p-empty">${isFirm
     ? 'Zatiaľ žiadne konverzácie. Chat vznikne, keď o kandidáta prejavíte záujem a on oň prejavil záujem tiež.'
@@ -1087,9 +1113,20 @@ function layers() {                                        // banner l.946, toas
     <div class="day"><div>foto 1</div><div>foto 2</div><div>foto 3</div></div>
     ${state.likedIds.includes(d.id) ? `<div class="sent">✓ Záujem odoslaný</div>` : `
     <div class="act"><button class="like" data-go="detailLike">♥ Mám záujem</button><button class="skip" data-go="detailSkip">✕ Preskočiť</button></div>`}
+    ${(state.authed && !isStudent() && d.companyId === state.uid) ? '' : `<div class="report-row"><button class="link" data-go="reportPosting">⚑ Nahlásiť inzerát</button></div>`}
   </div></div>`;
+  // Report form (posting / company / student) — table `reports`, handled by admin.html
+  const r = state.report;
+  if (r) h += `<div class="overlay del" data-go="reportCancel"><div class="delm report" data-go="noop">
+    <div class="h">Nahlásiť ${r.type === 'posting' ? 'inzerát' : r.type === 'company' ? 'firmu' : 'používateľa'}</div>
+    <div class="p" style="margin-bottom:12px"><b>${esc(r.label)}</b></div>
+    <div class="reasons">${REPORT_REASONS.map(([k, l]) => `<button type="button" class="${r.reason === k ? 'on' : ''}" data-reason="${k}">${l}</button>`).join('')}</div>
+    <textarea id="report-note" rows="3" maxlength="1000" placeholder="Čo sa stalo? (nepovinné)">${esc(r.note)}</textarea>
+    <div class="form-err" id="report-err"></div>
+    <div class="col"><button class="b1" data-go="reportSend" id="report-send">Odoslať nahlásenie</button><button class="b2" data-go="reportCancel">Zrušiť</button></div></div></div>`;
   return h;
 }
+const REPORT_REASONS = [['scam', 'Podvod / vyzerá nedôveryhodne'], ['inappropriate', 'Nevhodný alebo urážlivý obsah'], ['duplicate', 'Duplicitný / spam'], ['other', 'Iné']];
 
 // The top bar is static (see styles.css): it scrolls away with the page and does not come back mid-page.
 // The document itself scrolls, so Safari can collapse its address bar.

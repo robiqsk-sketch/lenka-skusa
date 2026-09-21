@@ -83,7 +83,7 @@
       </div>
     </div>
     <div class="tabs" id="tabs" hidden>
-      <button data-tab="stats" class="on">Štatistika</button><button data-tab="companies">Firmy</button><button data-tab="postings">Inzeráty</button>
+      <button data-tab="stats" class="on">Štatistika</button><button data-tab="companies">Firmy</button><button data-tab="postings">Inzeráty</button><button data-tab="reports">Nahlásenia<span id="rep-badge"></span></button>
     </div>
 
     <div class="card login" id="login">
@@ -254,6 +254,36 @@
       $('onlyProblem').addEventListener('change', e => { onlyProblem = e.target.checked; renderPostings(); });
     }
 
+    // ─── Nahlásenia ───
+    let reports = [];
+    const REASONS = { scam: 'Podvod', inappropriate: 'Nevhodný obsah', duplicate: 'Duplicita / spam', other: 'Iné' };
+    const TYPES = { posting: 'inzerát', company: 'firma', student: 'brigádnik' };
+    function renderReports() {
+      const open = reports.filter(r => r.status === 'open'), done = reports.filter(r => r.status !== 'open');
+      const row = r => `<tr>
+        <td class="sub">${fmtDate(r.created_at)}<br>${r.reporter_role ? (r.reporter_role === 'student' ? 'brigádnik' : 'firma') : 'hosť'}</td>
+        <td><span class="tag off">${TYPES[r.target_type] || r.target_type}</span><br><b>${esc(r.target_label || '(zmazané)')}</b>
+          ${r.target_blocked ? '<br><span class="tag err">⛔ pozastavené</span>' : ''}</td>
+        <td><b>${REASONS[r.reason] || r.reason}</b>${r.note ? `<div class="sub" style="white-space:pre-wrap">${esc(r.note)}</div>` : ''}
+          ${r.admin_note ? `<div class="sub" style="color:#40319F">admin: ${esc(r.admin_note)}</div>` : ''}</td>
+        <td><div class="act">
+          ${r.status === 'open' ? `
+            ${r.target_type === 'posting' && !r.target_blocked ? `<button class="mini danger" data-block="${esc(r.target_id)}" data-report="${r.id}">Pozastaviť inzerát</button>` : ''}
+            <button class="mini" data-resolve="${r.id}" data-status="resolved">Vyriešené</button>
+            <button class="mini" data-resolve="${r.id}" data-status="dismissed">Zamietnuť</button>`
+          : `<span class="tag ${r.status === 'resolved' ? 'ok' : 'off'}">${r.status === 'resolved' ? 'vyriešené' : 'zamietnuté'}</span>
+             <button class="mini" data-resolve="${r.id}" data-status="open">Otvoriť znova</button>`}
+        </div></td></tr>`;
+      const table = list => `<div class="tblwrap"><table class="tbl"><thead><tr><th>Kedy · kto</th><th>Čo</th><th>Dôvod</th><th></th></tr></thead><tbody>${list.map(row).join('')}</tbody></table></div>`;
+      $('dash').innerHTML = `
+        <div class="card"><p class="sec">Otvorené (${open.length})</p>${open.length ? table(open) : '<p class="muted">Nič nečaká. 🎉</p>'}</div>
+        ${done.length ? `<div class="card"><p class="sec">Vybavené (${done.length})</p>${table(done)}</div>` : ''}
+        <p class="muted">Nahlásiť môže ktokoľvek (aj bez účtu) z detailu inzerátu alebo z chatu. Lehota na vybavenie nie je zákonom daná, ale DSA očakáva „bez zbytočného odkladu“ — ideálne do pár dní.</p>`;
+    }
+    async function loadReports() { const { data, error } = await sb.rpc('admin_reports'); if (error) throw error; reports = data || []; updateBadge(); }
+    function updateBadge() { const n = reports.filter(r => r.status === 'open').length; $('rep-badge').textContent = n ? ` ${n}` : ''; $('rep-badge').style.color = n ? '#FCA5A5' : ''; }
+    async function refreshBadge() { const { data } = await sb.rpc('admin_open_reports_count'); if (typeof data === 'number') { $('rep-badge').textContent = data ? ` ${data}` : ''; $('rep-badge').style.color = data ? '#FCA5A5' : ''; } }
+
     // Admin actions (buttons in the tables) — each DB function checks is_admin() itself.
     $('dash').addEventListener('click', async e => {
       const b = e.target.closest('button'); if (!b) return;
@@ -266,7 +296,18 @@
           const reason = prompt('Dôvod pozastavenia (uvidí ho firma):', 'Inzerát nespĺňa pravidlá Robiq');
           if (reason === null) return;
           const { error } = await sb.rpc('admin_set_posting_blocked', { p_id: +b.dataset.block, p_blocked: true, p_reason: reason.trim() });
-          if (error) throw error; await loadPostings(); renderPostings();
+          if (error) throw error;
+          if (b.dataset.report) {                            // from the reports tab: also close the report
+            await sb.rpc('admin_resolve_report', { p_id: +b.dataset.report, p_status: 'resolved', p_note: 'Inzerát pozastavený: ' + reason.trim() });
+            await loadReports(); renderReports();
+          } else { await loadPostings(); renderPostings(); }
+        }
+        if (b.dataset.resolve) {
+          const status = b.dataset.status;
+          const note = status === 'open' ? '' : (prompt('Poznámka (nepovinné):', '') ?? null);
+          if (note === null && status !== 'open') return;
+          const { error } = await sb.rpc('admin_resolve_report', { p_id: +b.dataset.resolve, p_status: status, p_note: note || '' });
+          if (error) throw error; await loadReports(); renderReports();
         }
         if (b.dataset.unblock) {
           const { error } = await sb.rpc('admin_set_posting_blocked', { p_id: +b.dataset.unblock, p_blocked: false });
@@ -286,7 +327,9 @@
         if (tab === 'stats') {
           const { data, error } = await sb.rpc('analytics_summary', { p_days: days }); if (error) throw error; render(data);
         } else if (tab === 'companies') { await loadCompanies(); renderCompanies(); }
+        else if (tab === 'reports') { await loadReports(); renderReports(); }
         else { await loadPostings(); renderPostings(); }
+        if (tab !== 'reports') refreshBadge();
       } catch (error) {
         $('dash').innerHTML = `<div class="card"><div class="err">${esc(error.message)}</div><p class="muted">Tento účet nie je v zozname adminov (tabuľka <code>admins</code>), alebo ešte nebola spustená migrácia.</p></div>`;
       }
