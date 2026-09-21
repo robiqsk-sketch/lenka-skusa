@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Podmienky používania — Robiq</title>
+<meta name="description" content="Pravidlá používania aplikácie Robiq pre brigádnikov a firmy: kto ju môže používať, čo je dovolené, ako riešime nahlásenia a čo Robiq je a nie je.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#EEEBF7">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/open-sauce-one">
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/satoshi">
+<style>
+  /* Same look as ochrana-osobnych-udajov.html (Robiq design system). */
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; background: #F7F6FB; }
+  body { margin: 0; background: #F7F6FB; color: #000000; font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.65; font-weight: 500; -webkit-font-smoothing: antialiased; }
+  ::selection { background: rgba(85,70,196,.45); }
+  .bar-wrap { padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 0; }
+  .bar { position: relative; max-width: 780px; margin: 0 auto; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; background: #241D45; border: 1px solid rgba(159,143,242,.28); border-radius: 18px; box-shadow: 0 8px 16px rgba(23,18,46,.18); }
+  .bar .glow { position: absolute; left: 18px; right: 18px; bottom: 0; height: 2px; border-radius: 99px; opacity: .85; background: linear-gradient(90deg, rgba(124,108,224,0), #7C6CE0 30%, #CBC0FF 50%, #7C6CE0 70%, rgba(124,108,224,0)); }
+  .logo { font-family: 'Open Sauce One', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .01em; color: #FFFFFF; text-decoration: none; }
+  .logo b { color: #CBC0FF; }
+  .back { color: #CBC0FF; border: 1px solid rgba(159,143,242,.42); border-radius: 99px; padding: 5px 12px; font-size: 11.5px; font-weight: 700; text-decoration: none; transition: background .2s, color .2s; }
+  .back:hover { background: rgba(159,143,242,.14); color: #FFFFFF; }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 36px 16px 80px; }
+  header.top { margin-bottom: 22px; }
+  .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #40319F; font-weight: 700; margin: 0 0 10px; }
+  h1 { font-size: clamp(28px, 6vw, 38px); font-weight: 700; letter-spacing: -.01em; line-height: 1.12; margin: 0 0 10px; }
+  h1 b { color: #40319F; font-weight: 700; }
+  .meta { color: #6E688C; font-size: 12.5px; margin: 0; }
+  .lede { color: #3F3A55; font-size: 15px; margin: 16px 0 0; max-width: 62ch; }
+  .card, nav.toc, blockquote { background: #FFFFFF; border: 1px solid #CEC6E4; border-radius: 22px; box-shadow: 0 12px 34px -12px rgba(48,36,110,.24); }
+  nav.toc { padding: 22px 26px; margin: 0 0 20px; }
+  nav.toc h2 { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #6E688C; margin: 0 0 12px; font-weight: 700; border: 0; padding: 0; }
+  nav.toc ol { margin: 0; padding: 0; list-style: none; columns: 2; column-gap: 24px; }
+  nav.toc li { margin: 0 0 7px; break-inside: avoid; }
+  nav.toc a { color: #000000; text-decoration: none; font-size: 13.5px; font-weight: 700; }
+  nav.toc a:hover { color: #40319F; }
+  @media (max-width: 560px) { nav.toc ol { columns: 1; } }
+  main.card { padding: 6px 30px 30px; }
+  @media (max-width: 560px) { main.card { padding: 4px 20px 24px; } nav.toc { padding: 18px 20px; } }
+  h2 { font-size: 22px; font-weight: 700; letter-spacing: -.01em; margin: 44px 0 8px; padding-bottom: 10px; border-bottom: 1px solid rgba(36,27,69,.07); scroll-margin-top: 90px; }
+  h2::first-letter { color: #40319F; }
+  h3 { font-size: 15.5px; font-weight: 700; margin: 28px 0 6px; color: #000000; scroll-margin-top: 90px; }
+  p { margin: 12px 0; color: #3F3A55; }
+  li { color: #3F3A55; margin: 6px 0; }
+  strong { font-weight: 700; color: #000000; }
+  a { color: #40319F; font-weight: 700; text-decoration: none; }
+  a:hover { color: #5546C4; }
+  ul, ol { padding-left: 22px; }
+  blockquote { margin: 20px 0; padding: 14px 18px; border-left: 3px solid #40319F; border-radius: 14px; box-shadow: none; background: rgba(124,108,224,.08); border-color: rgba(124,108,224,.35); border-left-color: #40319F; }
+  blockquote p { margin: 0; font-size: 13.5px; color: #3F3A55; }
+  footer.bot { max-width: 780px; margin: 40px auto 0; padding: 22px 16px 0; border-top: 1px solid rgba(36,27,69,.12); color: #6E688C; font-size: 12px; display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+  footer.bot .brand { font-family: 'Open Sauce One', sans-serif; font-weight: 700; color: #17122E; }
+  footer.bot .brand b { color: #5546C4; }
+  @media print { body { background: #fff; } .bar-wrap, nav.toc, footer.bot { display: none; } .card, main.card { box-shadow: none; border: 0; padding: 0; } a { color: #000; } }
+</style>
+</head>
+<body>
+<div class="bar-wrap">
+  <div class="bar"><span class="glow"></span>
+    <a class="logo" href="./">Robiq<b>.</b></a>
+    <a class="back" href="./">← Späť do aplikácie</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Aplikácia Robiq · Verzia 1.0 · Návrh</p>
+    <h1>Podmienky <b>používania</b></h1>
+    <p class="meta">Posledná aktualizácia 21. 9. 2026</p>
+    <p class="lede">Pravidlá hry pre brigádnikov aj firmy. Krátke, ľudské a bez právnickej hmly — ale platia. Používaním Robiqu s nimi súhlasíš.</p>
+  </header>
+
+  <nav class="toc" aria-label="Obsah">
+    <h2>Obsah</h2>
+    <ol>
+      <li><a href="#sek-1">1. Čo Robiq je (a čo nie je)</a></li>
+      <li><a href="#sek-2">2. Kto môže Robiq používať</a></li>
+      <li><a href="#sek-3">3. Účet</a></li>
+      <li><a href="#sek-4">4. Pravidlá pre brigádnikov</a></li>
+      <li><a href="#sek-5">5. Pravidlá pre firmy</a></li>
+      <li><a href="#sek-6">6. Čo je zakázané</a></li>
+      <li><a href="#sek-7">7. Nahlásenia a pozastavenie obsahu</a></li>
+      <li><a href="#sek-8">8. Chat</a></li>
+      <li><a href="#sek-9">9. Cena</a></li>
+      <li><a href="#sek-10">10. Za čo Robiq (ne)zodpovedá</a></li>
+      <li><a href="#sek-11">11. Obsah a autorské práva</a></li>
+      <li><a href="#sek-12">12. Ukončenie účtu</a></li>
+      <li><a href="#sek-13">13. Zmeny podmienok</a></li>
+      <li><a href="#sek-14">14. Právo a riešenie sporov</a></li>
+      <li><a href="#sek-15">15. Kontakt</a></li>
+    </ol>
+  </nav>
+
+<main class="card">
+<blockquote>
+<p><strong>Poznámka k štýlu:</strong> Brigádnikom tykáme, firmám vykáme. Pravidlá platia pre obe strany rovnako. Ochranu tvojich údajov rieši samostatný dokument <a href="ochrana-osobnych-udajov.html">Ochrana osobných údajov</a>.</p>
+</blockquote>
+
+<h2 id="sek-1">1. Čo Robiq je (a čo nie je)</h2>
+<p><strong>Robiq je inzertná platforma pre brigády.</strong> Firmy zverejňujú ponuky krátkodobej práce, brigádnici si vytvoria profil a dávajú najavo záujem. Keď záujem prejavia obe strany, vznikne zhoda a otvorí sa chat, v ktorom sa dohodnete priamo medzi sebou.</p>
+<p><strong>Čo Robiq nie je:</strong></p>
+<ul>
+<li>Robiq <strong>nie je zamestnávateľ</strong> brigádnika a nie je stranou žiadnej dohody medzi brigádnikom a firmou.</li>
+<li>Robiq <strong>nie je personálna agentúra</strong>. Nevyberáme ľudí za firmu, nerozhodujeme, koho firma osloví, a neposielame firmám zoznamy odporúčaných kandidátov. Ak sa v aplikácii ukáže „návrh kandidátov“, je to len anonymné zoradenie podľa zručností a času, ktoré vidí iba firma a o ktorom rozhoduje sama.</li>
+<li>Robiq <strong>nezaručuje</strong>, že brigádu dostaneš, ani že firma nájde človeka.</li>
+<li>Robiq <strong>nekontroluje</strong>, ako prebehne samotná práca, ako je zaplatená a či obe strany dodržia, na čom sa dohodli. Toto je medzi vami.</li>
+</ul>
+<p>Prevádzkovateľom Robiqu je Matej Majtán (ďalej „my“ alebo „Robiq“). Kontakt je v kapitole 15.</p>
+
+<h2 id="sek-2">2. Kto môže Robiq používať</h2>
+<h3>Brigádnici</h3>
+<ul>
+<li>Musíš mať <strong>aspoň 16 rokov</strong>. Pri registrácii zadávaš dátum narodenia a po nastavení sa už nedá zmeniť. Ak zistíme, že si mladší, účet zrušíme.</li>
+<li>Ak máš menej ako 18 rokov, niektoré ponuky (označené „Len 18+“) neuvidíš. Pri brigáde ako mladistvý platia osobitné pravidlá Zákonníka práce — za ich dodržanie zodpovedá firma, nie Robiq.</li>
+<li>Robiq používaš pre seba. Jeden človek = jeden účet.</li>
+</ul>
+<h3>Firmy</h3>
+<ul>
+<li>Firemný účet môže vytvoriť len osoba <strong>oprávnená konať za firmu</strong> (majiteľ, konateľ alebo poverený zamestnanec). Pri registrácii to potvrdzujete.</li>
+<li>Pri registrácii zadávate <strong>IČO</strong>. Overujeme ho v Registri právnických osôb; firmy, ktoré v registri nie sú alebo sú zrušené, sa registrovať nemôžu. Overená firma dostane označenie „✓ Overená firma“.</li>
+<li>Názov, popis a logo firmy sú <strong>verejne viditeľné</strong>, aj pre ľudí bez účtu.</li>
+</ul>
+
+<h2 id="sek-3">3. Účet</h2>
+<ul>
+<li>Údaje v profile musia byť <strong>pravdivé a tvoje</strong>. Nevydávaj sa za niekoho iného a nezakladaj účet za inú firmu.</li>
+<li>Za heslo a za všetko, čo sa cez tvoj účet urobí, zodpovedáš ty. Ak máš podozrenie, že sa k účtu dostal niekto iný, zmeň si heslo (na prihlásení „Zabudol som heslo“) a napíš nám.</li>
+<li>Prihlásiť sa dá aj cez Google. Pravidlá sú rovnaké.</li>
+<li>Účet môžeš <strong>kedykoľvek zmazať</strong> v menu účtu. Zmaže sa profil, záujmy, zhody aj správy — nedá sa to vrátiť.</li>
+</ul>
+
+<h2 id="sek-4">4. Pravidlá pre brigádnikov</h2>
+<ul>
+<li>Uvádzaj zručnosti a dostupnosť, ktoré naozaj máš. Firma sa podľa nich rozhoduje.</li>
+<li>Do bia, zručností ani do chatu <strong>nepíš citlivé údaje</strong> — zdravie, náboženstvo, politické názory, rodné číslo, číslo dokladu, platobnú kartu. Nepotrebujeme ich my ani firma.</li>
+<li>Keď dáš „Mám záujem“, firma uvidí tvoje meno, zručnosti, hodiny a fotku. Dovtedy ťa vidí len anonymne (bez mena a fotky) alebo vôbec.</li>
+<li>Ak sa s firmou na niečom dohodneš, dodrž to — alebo daj včas vedieť, že nemôžeš. Robiq ti v tom nepomôže, ale slušnosť sa počíta.</li>
+</ul>
+
+<h2 id="sek-5">5. Pravidlá pre firmy</h2>
+<ul>
+<li>Inzerát musí byť <strong>pravdivý a úplný</strong>: čo je náplň práce, koľko platíte, kedy a kde. Za obsah inzerátu zodpovedáte vy.</li>
+<li>Ponuka musí byť <strong>v súlade so zákonom</strong>: odmena aspoň na úrovni minimálnej mzdy pre daný druh dohody, žiadna diskriminácia (vek, pohlavie, pôvod, náboženstvo, zdravotné postihnutie…), pri mladistvých dodržanie pravidiel Zákonníka práce. Ak je práca len pre dospelých (napr. predaj alkoholu, nočná práca), <strong>označte ju „Len 18+“</strong>.</li>
+<li>Právny vzťah s brigádnikom (dohoda o brigádnickej práci študenta, dohoda o vykonaní práce a pod.) uzatvárate <strong>vy</strong>. Robiq nie je stranou a nezabezpečuje odvody, poistenie ani výplatu.</li>
+<li>Údaje brigádnikov, ktoré cez Robiq získate, smiete použiť <strong>len na obsadenie brigády</strong>, o ktorú prejavili záujem. Nesmiete ich ukladať do vlastných databáz, posielať tretím stranám ani používať na marketing.</li>
+<li>Jedna firma = jeden účet (viac členov tímu v jednom účte je v poriadku).</li>
+</ul>
+
+<h2 id="sek-6">6. Čo je zakázané</h2>
+<p>Toto v Robiqu nemá miesto. Pri porušení obsah pozastavíme a účet môžeme zrušiť (kapitola 7 a 12):</p>
+<ul>
+<li><strong>Podvody:</strong> ponuky, kde má brigádnik niečo zaplatiť vopred, poslať kópiu dokladu, číslo karty alebo prihlasovacie údaje; „práca“, ktorá je v skutočnosti MLM, pyramídová schéma alebo nábor do niečoho iného.</li>
+<li><strong>Nelegálna práca:</strong> práca bez akejkoľvek zmluvy/dohody, práca pod minimálnou mzdou, práca pre mladistvých v rozpore so zákonom.</li>
+<li><strong>Nevhodný obsah:</strong> urážky, vyhrážky, obťažovanie, sexuálny obsah, nenávisť voči skupinám ľudí.</li>
+<li><strong>Spam a duplicity:</strong> ten istý inzerát viackrát, inzeráty bez reálnej ponuky, reklama na cudzie služby.</li>
+<li><strong>Zneužitie platformy:</strong> falošné účty, sťahovanie dát, obchádzanie technických obmedzení, pokusy o prístup k cudzím účtom.</li>
+<li><strong>Obchádzanie Robiqu na škodu druhej strany:</strong> napr. dohodnúť sa v chate a potom tvrdiť, že sa nič nedohodlo. Chat je pre obe strany dôkazom, čo sa dohodlo.</li>
+</ul>
+
+<h2 id="sek-7">7. Nahlásenia a pozastavenie obsahu</h2>
+<ul>
+<li>Pri každom inzeráte a v každom chate je tlačidlo <strong>⚑ Nahlásiť</strong>. Nahlásiť môže ktokoľvek, aj bez účtu. Uvedieš dôvod a prípadne poznámku.</li>
+<li>Nahlásenia riešime <strong>bez zbytočného odkladu</strong>, spravidla do niekoľkých dní. Pozrieme sa na ne ručne — o pozastavení nerozhoduje automat.</li>
+<li>Ak inzerát porušuje tieto podmienky, <strong>pozastavíme ho</strong>. Firma v aplikácii uvidí, že je pozastavený Robiqom, aj dôvod. Ľudia, ktorí naň už reagovali, ho vo svojich záujmoch stále vidia.</li>
+<li>Ak s pozastavením nesúhlasíte, napíšte na <strong>support@robiq.sk</strong> — vysvetlíme dôvod a rozhodnutie prehodnotíme. Pozastavenie môžeme zrušiť, ak inzerát opravíte.</li>
+<li>Pri opakovanom alebo závažnom porušení môžeme účet zrušiť (kapitola 12).</li>
+<li>Robiq nemá povinnosť aktívne prehľadávať všetok obsah a nezodpovedá za obsah, o ktorom nevie. Keď sa o porušení dozvieme, konáme.</li>
+</ul>
+
+<h2 id="sek-8">8. Chat</h2>
+<ul>
+<li>Chat sa otvorí až po <strong>zhode</strong> — keď záujem prejavili obe strany. Nikto ti nemôže písať bez toho.</li>
+<li>Chat <strong>nie je šifrovaný medzi koncovými zariadeniami</strong>. Správy sú uložené v našej databáze, vidí ich druhá strana a technický prístup k nim má prevádzkovateľ. <strong>Neposielaj cez chat fotky dokladov, rodné číslo ani platobné údaje.</strong></li>
+<li>Správy sú tu na dohodnutie brigády. Nepoužívaj chat na reklamu, obťažovanie ani nič z kapitoly 6.</li>
+</ul>
+
+<h2 id="sek-9">9. Cena</h2>
+<p>Robiq je momentálne <strong>zadarmo</strong> pre brigádnikov aj firmy. Od brigádnikov nikdy nebudeme pýtať žiadnu platbu. Ak by sa pre firmy zaviedla platená služba, oznámime to vopred, jasne a s možnosťou účet nepoužívať ďalej — nič sa nezapne bez vášho výslovného súhlasu.</p>
+
+<h2 id="sek-10">10. Za čo Robiq (ne)zodpovedá</h2>
+<ul>
+<li>Robiq je v <strong>testovacej prevádzke</strong>. Snažíme sa, aby fungoval spoľahlivo, ale môže mať chyby a výpadky. Nesľubujeme nepretržitú dostupnosť.</li>
+<li>Nezodpovedáme za to, ako sa strany správajú mimo aplikácie — či brigádnik príde, či firma zaplatí, aké sú podmienky práce. Za obsah inzerátu zodpovedá firma, za obsah profilu brigádnik.</li>
+<li>Nezodpovedáme za škodu, ktorá vznikne z toho, že niekto uviedol nepravdivé údaje, alebo z dohody, ktorú ste uzavreli medzi sebou.</li>
+<li>Nič v týchto podmienkach neobmedzuje práva, ktoré ti dáva zákon a ktoré sa obmedziť nedajú (najmä práva spotrebiteľa a zodpovednosť za úmyselnú škodu).</li>
+</ul>
+
+<h2 id="sek-11">11. Obsah a autorské práva</h2>
+<ul>
+<li>Čo do Robiqu vložíš (profil, bio, fotka, inzerát, logo, správy), zostáva tvoje. Dávaš nám k tomu len právo <strong>zobrazovať to v aplikácii</strong> tak, ako je to opísané v dokumente o ochrane údajov — nič viac.</li>
+<li>Vkladaj len to, na čo máš právo (najmä logo a fotky).</li>
+<li>Názov Robiq, logo a dizajn aplikácie sú naše. Nekopíruj ich a nevydávaj sa za Robiq.</li>
+</ul>
+
+<h2 id="sek-12">12. Ukončenie účtu</h2>
+<ul>
+<li><strong>Ty</strong> môžeš účet zmazať kedykoľvek, bez udania dôvodu, v menu účtu.</li>
+<li><strong>My</strong> môžeme účet pozastaviť alebo zrušiť, ak porušíš tieto podmienky, ak sa ukáže, že údaje sú nepravdivé (napr. vek, oprávnenie konať za firmu), alebo ak to vyžaduje zákon. Pri menej závažných porušeniach najprv upozorníme; pri podvodoch a závažných veciach konáme hneď.</li>
+<li>Robiq môžeme ako službu ukončiť — v takom prípade dáme vedieť aspoň <strong>30 dní vopred</strong> a údaje zmažeme podľa dokumentu o ochrane údajov.</li>
+</ul>
+
+<h2 id="sek-13">13. Zmeny podmienok</h2>
+<p>Robiq sa vyvíja, podmienky sa budú meniť. Pri podstatných zmenách (nové pravidlá, platená služba, zmena toho, čo Robiq je) ťa upozorníme v aplikácii alebo e-mailom <strong>skôr, než zmena začne platiť</strong>. Ak s novými podmienkami nesúhlasíš, môžeš účet zmazať. Ak Robiq používaš ďalej, znamená to, že s nimi súhlasíš. Aktuálna verzia je vždy na tejto adrese, s číslom verzie a dátumom.</p>
+
+<h2 id="sek-14">14. Právo a riešenie sporov</h2>
+<ul>
+<li>Tieto podmienky sa riadia <strong>právom Slovenskej republiky</strong>.</li>
+<li>Ak máš problém, najprv nám napíš na <strong>support@robiq.sk</strong> — väčšinu vecí vyriešime dohodou.</li>
+<li>Ak si brigádnik (spotrebiteľ) a nedohodneme sa, môžeš sa obrátiť na subjekt alternatívneho riešenia sporov, napríklad <a href="https://www.soi.sk" rel="noopener" target="_blank">Slovenskú obchodnú inšpekciu</a>, alebo na súd. Firmy a Robiq riešia spory pred súdmi Slovenskej republiky.</li>
+</ul>
+
+<h2 id="sek-15">15. Kontakt</h2>
+<p><strong>info@robiq.sk</strong> · žiadosti a problémy: <strong>support@robiq.sk</strong></p>
+<p>Matej Majtán, Robiq<br>[DOPLNIŤ — adresa]</p>
+<p>Ochrana osobných údajov: <a href="ochrana-osobnych-udajov.html">ochrana-osobnych-udajov.html</a></p>
+</main>
+</div>
+
+<footer class="bot">
+  <span class="brand">Robiq<b>.</b> <span style="font-family:'Satoshi',sans-serif;font-weight:400;color:#6E688C">© 2026</span></span>
+  <span>info@robiq.sk · <a href="ochrana-osobnych-udajov.html">Ochrana osobných údajov</a></span>
+</footer>
+</body>
+</html>

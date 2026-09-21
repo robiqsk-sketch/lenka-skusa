@@ -15,7 +15,7 @@ const initialState = () => ({
   postings: [], likedIds: [], skippedIds: [], blockedFirms: [],
   // student
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
-  profEdit: false, birth: '', bio: '',
+  profEdit: false, birth: '', bio: '', obTerms: false,
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
   matches: [], activeChat: 0, draft: '', myInterests: [],
   // company
@@ -383,6 +383,8 @@ const go = {
   menuToggle:  el => { if (el && el.classList.contains('a-menu')) { state.accMenu = true; return; } state.accMenu = !state.accMenu; },
   menuProfile: () => { if (isStudent()) state.tab = 2; else state.ftab = 3; state.accMenu = false; },
   menuClose:   () => { state.accMenu = false; },
+  menuHelp:    () => { state.accMenu = false; location.href = 'mailto:support@robiq.sk?subject=Robiq%20%E2%80%93%20pomoc'; },
+  menuTerms:   () => { state.accMenu = false; window.open('podmienky.html', '_blank', 'noopener'); },
   menuStats:   () => { state.accMenu = false; location.href = 'admin.html'; },   // admin only — the session is shared, no second sign-in
   menuNotif:   () => { state.notifOn = !state.notifOn; state.accMenu = true; },
   logout: async () => {                                    // l.1506–1514: clean guest view
@@ -591,10 +593,10 @@ function renderHeader() {                                  // l.342–372
     <div class="a-menu" data-go="menuToggle">
       <div class="name">${esc(menuName())}</div><hr>
       <button data-go="menuProfile"><span class="ic">◔</span>Môj profil</button>
-      <button data-go="menuClose"><span class="ic">⚙</span>Nastavenia</button>
       <button class="notif" data-go="menuNotif"><span style="display:flex;align-items:center;gap:10px"><span class="ic">◇</span>Notifikácie</span>
         <span class="st" style="color:${state.notifOn ? '#15803D' : '#6E688C'}">${state.notifOn ? 'Zap.' : 'Vyp.'}</span></button>
-      <button data-go="menuClose"><span class="ic">?</span>Pomoc a podpora</button>
+      <button data-go="menuHelp"><span class="ic">?</span>Pomoc a podpora</button>
+      <button data-go="menuTerms"><span class="ic">§</span>Podmienky a ochrana údajov</button>
       ${state.isAdmin ? `<hr><button data-go="menuStats"><span class="ic">▤</span>Štatistika Robiq</button>` : ''}<hr>
       <button class="out" data-go="logout"><span class="ic">→</span>Odhlásiť sa</button>
       <button class="del" data-go="askDeleteAccount"><span class="ic">✕</span>Zmazať účet</button>
@@ -1141,8 +1143,11 @@ const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLoc
 function obCanContinue() {
   if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && isOldEnough();
   if (state.obStep === 2) return state.obSkills.length > 0;
-  return true;
+  return state.obTerms;                                    // step 3: terms + privacy consent (also for Google sign-ups)
 }
+// Consent line for the last registration step (student and company). Links open in a new tab so the form is not lost.
+const TERMS_HTML = (who) => `<button type="button" class="terms ${state[who] ? 'on' : ''}" id="terms"><span class="box">${state[who] ? '✓' : ''}</span>
+  <span class="txt">Mám 16 rokov alebo viac, súhlasím s <a href="podmienky.html" target="_blank" rel="noopener">Podmienkami používania</a> a beriem na vedomie <a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">Ochranu osobných údajov</a>.</span></button>`;
 function obStep1Problem() {                                // why step 1 cannot continue — shown when the button is pressed anyway
   if (!state.obName.trim()) return 'Napíš svoje meno.';
   if (!state.oauth && !state.obEmail.trim()) return 'Zadaj e-mail.';
@@ -1270,8 +1275,13 @@ function obStep3() {                                       // l.166–188
     <h2>Koľko hodín <b>máš?</b></h2>
     <p class="desc" style="margin-bottom:30px">Ponuky uvidíš len podľa svojej reálnej dostupnosti.</p>
     <div class="hours-label" id="hours-label">${HOURS[state.obHours]}</div>
-    ${availabilityEditor()}`;
-  obEl.onclick = e => { const el = e.target.closest('button'); if (el) editorClick(el); };
+    ${availabilityEditor()}
+    <div style="margin-top:22px">${TERMS_HTML('obTerms')}</div>`;
+  obEl.onclick = e => {
+    const el = e.target.closest('button'); if (!el) return;
+    if (el.id === 'terms') { if (e.target.closest('a')) return; state.obTerms = !state.obTerms; render(); return; }   // the link opens the terms; it must not toggle
+    editorClick(el);
+  };
   bindEditors();
 }
 
@@ -1498,7 +1508,7 @@ function fobStep3() {                                      // l.272–282
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
       <input class="input" id="fob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.fobPass)}" autocomplete="new-password">`}</div>
     <button type="button" class="terms ${state.fobTerms ? 'on' : ''}" id="terms"><span class="box">${state.fobTerms ? '✓' : ''}</span>
-      <span class="txt">Súhlasím s <a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">podmienkami Robiq</a> a potvrdzujem, že som oprávnený zastupovať túto firmu.</span></button>`;
+      <span class="txt">Súhlasím s <a href="podmienky.html" target="_blank" rel="noopener">Podmienkami používania</a>, beriem na vedomie <a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">Ochranu osobných údajov</a> a potvrdzujem, že som oprávnený/á konať za túto firmu.</span></button>`;
   const upd = () => { setErr('fob-err', ''); document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
   bindInput('fob-contact', 'fobContact');
   if (!state.oauth) { bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd); }
