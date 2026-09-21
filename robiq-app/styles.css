@@ -6,7 +6,7 @@
   --ok: #15803D; --bad: #DC2626; --ink3-bg: #17122E;
 }
 html.theme-dark {
-  --bg: #110D24; --card: #1B1636; --ink: #F3F1FA; --ink2: #C6C0DE; --ink3: #EDEBF7; --muted: #9B95B8;
+  --bg: #110D24; --card: #1B1636; --ink: #FFFFFF; --ink2: #ECE9F8; --ink3: #F3F1FA; --muted: #B9B3D4;
   --line: #2F2852; --line2: #3B3364; --accent: #7B6BEE; --accent-ink: #CBC0FF; --accent-hi: #9385FF;
   --fill: rgba(255,255,255,.08); --fill2: rgba(255,255,255,.06); --fill3: rgba(255,255,255,.05); --shadow: rgba(0,0,0,.55);
   --ok: #4ADE80; --bad: #F87171; --ink3-bg: #2A2350;
