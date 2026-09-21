@@ -120,10 +120,50 @@
       return `<div><h3>${title}</h3>${steps.map(([l, v], i) => `<div class="row"><span class="lbl">${l}</span><span class="bar"><i style="width:${v / max * 100}%"></i></span><span class="val">${v}${i ? ' <span class="muted">' + pct(v, steps[0][1]) + '</span>' : ''}</span></div>`).join('')}</div>`;
     }
 
+    // Denná afirmácia pre admin tím — vyberá sa podľa dňa v roku, takže celý deň je rovnaká.
+    const AFFIRMATIONS = [
+      'Dnes si presne tam, kde máš byť. Teda pri notebooku. S kávou. Ako vždy.',
+      'Každý bug je len feature, ktorú ešte nikto nepochopil.',
+      'Si dosť dobrá. Si dosť dobrý. Robiq je dosť dobrý. Supabase… uvidíme.',
+      'Rím nepostavili za deň. Ale ani nemali Claude.',
+      'Dnes odpovieš na e-mail do 24 hodín. Alebo aspoň do 24 dní.',
+      'Dýchaj. Deploy prebehol. Pravdepodobne.',
+      'Tvoj startup je ako sourdough: potrebuje čas, trpezlivosť a občas smrdí.',
+      'Každá zhoda v Robiqu je malý zázrak. Každá chyba tiež, len iný druh.',
+      'Nie si podvodník. Podvodník by mal lepší pitch deck.',
+      'Dnes je dobrý deň na to, aby si nič nerozbil/a. Zajtra tiež.',
+      'Pamätaj: brigádnici ťa potrebujú. Firmy ťa potrebujú. Kaviareň v Trenčíne ťa potrebuje najviac.',
+      'Investor sa ozve. Možno. Zatiaľ si daj obed.',
+      'Si CEO. Chief Everything Officer. Aj upratovania.',
+      'Tvoj kód je krásny. Nikto to nevidí, ale je.',
+      'Dnes neotváraj Google Analytics. Máš vlastné. Sú lepšie.',
+      'Trpezlivosť je cnosť. Rýchly internet je lepšia cnosť.',
+      'Každý „nie“ od firmy je o krok bližšie k „áno“. Alebo k ďalšiemu „nie“. Štatistika je krutá.',
+      'Vstal/a si. To je viac, než 40 % startupov.',
+      'Verzia 1.0 nemusí byť dokonalá. Musí len existovať. Tvoja existuje. Gratulujeme.',
+      'Keď to nejde, reštartuj. Notebook, kávovar, seba.',
+      'Ideš dobre. Ak čítaš tento admin, ideš lepšie ako väčšina.',
+      'Buď ako Supabase: väčšinu času funguj.',
+      'Dnes si zaslúžiš pochvalu. Tu je: 👏. Viac nemáme, sme bootstrapped.',
+      'Zhody dnes: nevieme dopredu. Ale bude ich viac ako včera. Alebo menej. Ale bude!',
+      'Ak dnes nič nefunguje, je to cache. Vždy je to cache.',
+      'Práca z domu je tiež práca. Práca z postele je diskutabilná.',
+      'Nikto nevie, čo robí. Ty to aspoň loguješ.',
+      'Tvoj najlepší inzerát ešte nebol napísaný. Tvoj najhorší už áno („otrok“, 19. 9.).',
+      'Pripomienka: nezabudni na adresu prevádzkovateľa v zásadách. Aj právnici potrebujú vedieť, kde bývaš.',
+      'Dnes ťa nič nezastaví. Okrem CORS.',
+      'Milión používateľov začína jedným. A tým prvým si bol/a ty, keď si to testoval/a.',
+    ];
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
+    const affirmation = AFFIRMATIONS[dayOfYear % AFFIRMATIONS.length];
+
     function render(d) {
       const ev = d.events || {}, p = d.period || {}, t = d.totals || {}, daily = d.daily || [];
       const maxV = Math.max(1, ...daily.map(x => x.visits + x.interests));
       $('dash').innerHTML = `
+        <div class="card" style="background:linear-gradient(135deg,#40319F,#7C6CE0);color:#fff;border:none">
+          <p class="sec" style="color:rgba(255,255,255,.7)">Denná afirmácia</p>
+          <p style="margin:0;font-size:17px;font-weight:700;line-height:1.4">„${esc(affirmation)}“</p></div>
         <div class="card"><p class="sec">Za obdobie (${d.days} dní)</p>
           <div class="tiles">
             <div class="tile"><div class="n">${ev.visit || 0}</div><div class="l">otvorení appky</div></div>
