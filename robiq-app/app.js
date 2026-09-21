@@ -14,13 +14,13 @@ const initialState = () => ({
   // feed (guest + student)
   postings: [], likedIds: [], skippedIds: [], blockedFirms: [],
   // student
-  obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
+  obStep: 1, obName: '', obEmail: '', obPass: '', obPass2: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   profEdit: false, birth: '', bio: '', obTerms: false,
   cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
   matches: [], activeChat: 0, draft: '', myInterests: [],
   // company
-  fobStep: 1, fobName: '', fobIco: '', fobLogo: '', fobLogoFile: null, fobFields: [], fobContact: '', fobEmail: '', fobPass: '', fobTerms: false,
+  fobStep: 1, fobName: '', fobIco: '', fobLogo: '', fobLogoFile: null, fobFields: [], fobContact: '', fobEmail: '', fobPass: '', fobPass2: '', fobTerms: false,
   fobRpo: null,                                            // result of the IČO lookup for state.fobIco (see rpoLookup)
   fpName: '', fpDesc: '', fpLogo: '', fpIco: '', fpVerified: false, fpRpo: null,
   offers: [], candidates: [], suggestions: {}, contacted: [], blocked: [], fchats: [], activeFChat: 0, fdraft: '',
@@ -374,6 +374,7 @@ async function act(job, dir) {                             // l.1219–1235
 }
 
 async function enterApp(extra) {                           // after sign-in / registration
+  hidePasswords();                                         // nenechávame odkryté heslo v poli po prihlásení
   const pj = state.pendingJob;
   Object.assign(state, { screen: 'app', pendingJob: null, gate: false }, extra);
   state.loading = true; render();
@@ -629,6 +630,19 @@ document.body.addEventListener('click', async e => {
   e.stopPropagation();
   await go[el.dataset.go](el);
   render();
+});
+// „Očko“ pri hesle: prepne <input type> medzi password a text. Funguje pre polia v index.html aj pre tie,
+// ktoré sa kreslia pri registrácii (passField) — preto delegovane a preto si viditeľnosť pamätáme v shownPass.
+document.body.addEventListener('click', e => {
+  const btn = e.target.closest('.pass-eye');
+  if (!btn) return;
+  const inp = document.getElementById(btn.dataset.eye);
+  if (!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  if (show) shownPass.add(inp.id); else shownPass.delete(inp.id);
+  setEye(btn, show);
+  inp.focus();
 });
 // Close the account menu on any click elsewhere (l.1171–1172); close ⋯ menus on pointerdown outside (l.1155–1161).
 document.addEventListener('click', () => { if (state.accMenu) { state.accMenu = false; render(); } });
@@ -1331,7 +1345,7 @@ const isOldEnough = () => (ageOf(state.birth) ?? -1) >= MIN_AGE;
 function maxBirth() { const d = new Date(); d.setFullYear(d.getFullYear() - MIN_AGE); return d.toISOString().slice(0, 10); }
 const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('sk-SK'); };
 function obCanContinue() {
-  if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && isOldEnough();
+  if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6 && state.obPass2 === state.obPass)) && isOldEnough();
   if (state.obStep === 2) return state.obSkills.length > 0;
   return state.obTerms && !!state.cityId;                  // step 3: city (required) + terms/privacy consent (also for Google sign-ups)
 }
@@ -1342,6 +1356,7 @@ function obStep1Problem() {                                // why step 1 cannot 
   if (!state.obName.trim()) return 'Napíš svoje meno.';
   if (!state.oauth && !state.obEmail.trim()) return 'Zadaj e-mail.';
   if (!state.oauth && state.obPass.length < 6) return 'Heslo musí mať aspoň 6 znakov.';
+  if (!state.oauth && state.obPass2 !== state.obPass) return 'Heslá sa nezhodujú.';
   if (!state.birth) return 'Zadaj dátum narodenia.';
   if (!isOldEnough()) return `Robiq je pre ľudí od ${MIN_AGE} rokov — registrácia zatiaľ nie je možná.`;
   return '';
@@ -1422,7 +1437,8 @@ function obStep1() {                                       // l.111–119 + e-ma
       <div class="col"><input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
         ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
         <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
-        <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
+        ${passField('ob-pass', 'Heslo (aspoň 6 znakov)', state.obPass)}
+        ${passField('ob-pass2', 'Heslo ešte raz', state.obPass2)}`}
         <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" max="${maxBirth()}" autocomplete="bday"></label>
         <div class="ob-age-note" id="ob-age-note">Robiq je pre ľudí od ${MIN_AGE} rokov. Dátum sa neskôr nedá zmeniť.</div>
         <label class="photo-btn">${state.obPhotoFile ? 'Zmeniť fotku' : 'Nahrať fotku (voliteľné)'}<input type="file" accept="image/*" id="ob-photo" hidden></label>
@@ -1438,6 +1454,7 @@ function obStep1() {                                       // l.111–119 + e-ma
   nameEl.addEventListener('input', () => { state.obName = nameEl.value; document.getElementById('avatar').textContent = initials(); upd(); });
   const emailEl = document.getElementById('ob-email'); if (emailEl) emailEl.addEventListener('input', () => { state.obEmail = emailEl.value; setErr('ob-err', ''); upd(); });
   const passEl = document.getElementById('ob-pass');    if (passEl) passEl.addEventListener('input', () => { state.obPass = passEl.value; upd(); });
+  const pass2El = document.getElementById('ob-pass2');  if (pass2El) pass2El.addEventListener('input', () => { state.obPass2 = pass2El.value; upd(); });
   const birthEl = document.getElementById('ob-birth');  birthEl.addEventListener('input', () => { state.birth = birthEl.value; upd(); });
   document.getElementById('ob-photo').addEventListener('change', e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
@@ -1577,7 +1594,13 @@ const ICO_RE = /^[0-9]{8}$/;                               // Slovak IČO: 8 dig
 function fobCanContinue() {
   if (state.fobStep === 1) return state.fobName.trim() !== '' && ICO_RE.test(state.fobIco);
   if (state.fobStep === 2) return state.fobFields.length > 0;
-  return state.fobTerms && (state.oauth || (state.fobEmail.trim() && state.fobPass.length >= 6));
+  return state.fobTerms && (state.oauth || (state.fobEmail.trim() && state.fobPass.length >= 6 && state.fobPass2 === state.fobPass));
+}
+function fobStep3Problem() {                               // why the last company step cannot continue
+  if (!state.oauth && !state.fobEmail.trim()) return 'Zadajte pracovný e-mail.';
+  if (!state.oauth && state.fobPass.length < 6) return 'Heslo musí mať aspoň 6 znakov.';
+  if (!state.oauth && state.fobPass2 !== state.fobPass) return 'Heslá sa nezhodujú.';
+  return 'Potvrďte podmienky a oprávnenie konať za firmu.';
 }
 // ─── IČO ↔ Register právnických osôb (rpo_lookup / verify_my_company in schema.sql) ───
 // The register answers { found, name, city, terminated } or { found: false, reason }.
@@ -1610,7 +1633,11 @@ async function verifyCompany() {                           // signed-in company:
 }
 document.getElementById('fob-back').addEventListener('click', () => { if (state.fobStep > 1) state.fobStep--; else state.screen = 'pick'; render(); });
 document.getElementById('fob-next').addEventListener('click', async () => {          // l.1480–1490
-  if (!fobCanContinue()) { if (state.fobStep === 1) setErr('fob-err', !state.fobName.trim() ? 'Zadajte názov firmy.' : 'IČO má 8 číslic.'); return; }
+  if (!fobCanContinue()) {
+    if (state.fobStep === 1) setErr('fob-err', !state.fobName.trim() ? 'Zadajte názov firmy.' : 'IČO má 8 číslic.');
+    if (state.fobStep === 3) setErr('fob-err', fobStep3Problem());
+    return;
+  }
   if (state.fobStep === 1) {                               // the IČO must be a live company in the register
     const btn = document.getElementById('fob-next'); btn.disabled = true; setErr('fob-err', '');
     const r = state.fobRpo?.ico === state.fobIco ? state.fobRpo : await rpoLookup(state.fobIco);
@@ -1715,12 +1742,13 @@ function fobStep3() {                                      // l.272–282
     <div class="f3-col"><input class="input" id="fob-contact" placeholder="Meno a priezvisko" value="${esc(state.fobContact)}" autocomplete="name">
       ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
-      <input class="input" id="fob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.fobPass)}" autocomplete="new-password">`}</div>
+      ${passField('fob-pass', 'Heslo (aspoň 6 znakov)', state.fobPass)}
+      ${passField('fob-pass2', 'Heslo ešte raz', state.fobPass2)}`}</div>
     <button type="button" class="terms ${state.fobTerms ? 'on' : ''}" id="terms"><span class="box">${state.fobTerms ? '✓' : ''}</span>
       <span class="txt">Súhlasím s <a href="podmienky.html" target="_blank" rel="noopener">Podmienkami používania</a>, beriem na vedomie <a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">Ochranu osobných údajov</a> a potvrdzujem, že som oprávnený/á konať za túto firmu.</span></button>`;
   const upd = () => { setErr('fob-err', ''); document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
   bindInput('fob-contact', 'fobContact');
-  if (!state.oauth) { bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd); }
+  if (!state.oauth) { bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd); bindInput('fob-pass2', 'fobPass2', upd); }
   document.getElementById('terms').addEventListener('click', e => {
     if (e.target.closest('a')) return;                     // the link opens the terms; it must not toggle the checkbox
     state.fobTerms = !state.fobTerms; render();
@@ -1729,6 +1757,30 @@ function fobStep3() {                                      // l.272–282
 }
 
 // ═══════════ Helpers ═══════════
+// Heslo s „očkom“ na zobrazenie. Statické polia (prihlásenie, nové heslo) sú rovnako postavené v index.html.
+const EYE_ON  = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.9 17.9A10 10 0 0 1 12 20C5 20 1 12 1 12a18.4 18.4 0 0 1 5.1-5.9M9.9 4.2A9.1 9.1 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.2 3.2m-6.7-1.1a3 3 0 1 1-4.2-4.2"/><path d="M1 1l22 22"/></svg>';
+const shownPass = new Set();                               // ids polí, ktoré sú práve viditeľné — prežije prekreslenie
+function setEye(btn, on) {
+  btn.innerHTML = on ? EYE_OFF : EYE_ON;
+  btn.setAttribute('aria-label', on ? 'Skryť heslo' : 'Zobraziť heslo');
+  btn.setAttribute('aria-pressed', String(on));
+}
+function hidePasswords() {                                 // späť na bodky vo všetkých poliach s „očkom“
+  shownPass.clear();
+  document.querySelectorAll('.pass-eye').forEach(btn => {
+    const inp = document.getElementById(btn.dataset.eye);
+    if (inp) inp.type = 'password';
+    setEye(btn, false);
+  });
+}
+function passField(id, placeholder, value) {
+  const on = shownPass.has(id);
+  return `<div class="pass-wrap">
+      <input class="input" id="${id}" type="${on ? 'text' : 'password'}" placeholder="${esc(placeholder)}" value="${esc(value)}" autocomplete="new-password">
+      <button type="button" class="pass-eye" data-eye="${id}" aria-label="${on ? 'Skryť heslo' : 'Zobraziť heslo'}" aria-pressed="${on}">${on ? EYE_OFF : EYE_ON}</button>
+    </div>`;
+}
 function bindInput(id, key, after) { const el = document.getElementById(id); el.addEventListener('input', () => { state[key] = el.value; if (after) after(); }); }
 function toggleInList(list, item) { const i = list.indexOf(item); if (i === -1) list.push(item); else list.splice(i, 1); }
 function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }

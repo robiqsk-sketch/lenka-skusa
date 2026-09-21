@@ -103,7 +103,10 @@
       <div class="tagline">Nehľadaj brigádu. Nechaj ju nájsť teba.</div>
       <form class="fields" id="login-form">
         <input class="input" type="email" id="login-email" placeholder="E-mail" autocomplete="email">
-        <input class="input" type="password" id="login-pass" placeholder="Heslo" autocomplete="current-password">
+        <div class="pass-wrap">
+          <input class="input" type="password" id="login-pass" placeholder="Heslo" autocomplete="current-password">
+          <button type="button" class="pass-eye" data-eye="login-pass" aria-label="Zobraziť heslo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
       </form>
       <div class="form-err" id="login-err"></div>
       <button class="primary" data-go="doLogin" id="login-btn">Prihlásiť sa</button>
@@ -121,8 +124,14 @@
       <div class="logo"><span>Robiq<b>.</b></span></div>
       <div class="tagline">Nastav si nové heslo</div>
       <form class="fields" id="reset-form" style="margin-top:22px">
-        <input class="input" type="password" id="reset-pass" placeholder="Nové heslo (aspoň 6 znakov)" autocomplete="new-password">
-        <input class="input" type="password" id="reset-pass2" placeholder="Nové heslo ešte raz" autocomplete="new-password">
+        <div class="pass-wrap">
+          <input class="input" type="password" id="reset-pass" placeholder="Nové heslo (aspoň 6 znakov)" autocomplete="new-password">
+          <button type="button" class="pass-eye" data-eye="reset-pass" aria-label="Zobraziť heslo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="pass-wrap">
+          <input class="input" type="password" id="reset-pass2" placeholder="Nové heslo ešte raz" autocomplete="new-password">
+          <button type="button" class="pass-eye" data-eye="reset-pass2" aria-label="Zobraziť heslo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
       </form>
       <div class="form-err" id="reset-err"></div>
       <button class="primary" data-go="doReset" id="reset-btn" style="width:100%">Uložiť heslo</button>
