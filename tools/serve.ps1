@@ -1,11 +1,12 @@
-# Minimal static file server for local development (no Node/Python needed).
-# Run:  powershell -ExecutionPolicy Bypass -File serve.ps1
+# Minimal static file server for local development (no Node/Python needed). Serves ../robiq-app.
+# Run:  powershell -ExecutionPolicy Bypass -File tools/serve.ps1
 # Then open http://localhost:8765
 param([int]$Port = 8765)
 
-$root = $PSScriptRoot
+$root = Join-Path $PSScriptRoot '..\robiq-app'
 $types = @{ '.html'='text/html; charset=utf-8'; '.css'='text/css; charset=utf-8'; '.js'='text/javascript; charset=utf-8';
-            '.json'='application/json'; '.svg'='image/svg+xml'; '.png'='image/png'; '.jpg'='image/jpeg'; '.ico'='image/x-icon' }
+            '.json'='application/json'; '.svg'='image/svg+xml'; '.png'='image/png'; '.jpg'='image/jpeg'; '.ico'='image/x-icon';
+            '.webmanifest'='application/manifest+json' }
 
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$Port/")

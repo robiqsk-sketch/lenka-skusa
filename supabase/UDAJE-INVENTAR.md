@@ -107,7 +107,7 @@ Vidia len obe strany danej zhody. Prevádzkovateľ má k správam technický pr�
 |---|---|---|---|---|
 | inzeráty (aktívne) + názov, popis a logo firmy | **áno** | áno | áno | áno |
 | profil študenta (meno, zručnosti, hodiny, dostupnosť) | nie | len svoj | **len študentov, ktorí dali záujem o jej inzerát** | áno |
-| dátum narodenia, bio študenta | nie | len svoj | **nie** (pohľad `candidate_profiles` ich neobsahuje) | áno |
+| dátum narodenia, bio študenta | nie | len svoj | **nie** (funkcia `candidate_profiles` ich nevracia) | áno |
 | IČO, kontaktná osoba firmy | nie | nie | len svoja | áno |
 | záujmy študenta | nie | svoje | len na svoje inzeráty | áno |
 | správy | nie | len vo svojich zhodách | len vo svojich zhodách | áno (technicky) |
@@ -129,7 +129,7 @@ Zatiaľ **nie**: marketing, newsletter (ten rieši waitlist), profilovanie, auto
 - **Voľné texty** (`bio`, `skills` vlastné položky, `ai_note`, `messages.body`) môžu obsahovať citlivé údaje, ak ich tam človek sám napíše. Dokument by mal používateľov upozorniť, aby do nich nepísali citlivé informácie, a určiť, ako sa s nimi zaobchádza.
 - **Verejné údaje firmy:** názov, popis a logo firmy sú verejné bez prihlásenia. Meno kontaktnej osoby verejné nie je.
 - **Prístup firmy k profilu študenta** je podmienený tým, že študent sám klikol „Mám záujem" na jej inzerát — to je vhodný právny základ (plnenie zmluvy / oprávnený záujem) a dá sa to v dokumente jasne opísať.
-- **Bio a dátum narodenia firma nevidí** — technicky zaručené: firma číta kandidátov len cez pohľad `candidate_profiles` (meno, zručnosti, hodiny), priamo k tabuľke `students` prístup nemá.
+- **Bio a dátum narodenia firma nevidí** — technicky zaručené: firma číta kandidátov len cez funkciu `candidate_profiles` (meno, zručnosti, hodiny, fotka), priamo k tabuľke `students` prístup nemá.
 - **Uchovávanie a zmazanie účtu:** schéma nemá automatické mazanie podľa času. Používateľ si **môže účet zmazať sám** (menu účtu → Zmazať účet, s potvrdením) — zmaže sa účet, profil, inzeráty, záujmy, zhody, správy aj logo firmy. Nič sa neuchováva po zmazaní okrem systémových logov poskytovateľa.
 - **Export údajov (prenosnosť):** nie je v aplikácii; riešiť na žiadosť.
 - **Tretie strany mimo EÚ:** jsDelivr a cdnfonts sú globálne CDN — pri načítaní stránky im prehliadač odošle IP adresu. Ak to má byť čisto EÚ, dá sa knižnica aj písma hostovať priamo v aplikácii (jednoduchá úprava).

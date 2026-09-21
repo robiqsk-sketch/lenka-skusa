@@ -261,6 +261,8 @@ h2 b { font-weight: 700; color: #40319F; }
 .p-skill b { font-size: 10px; letter-spacing: .14em; font-weight: 500; opacity: .8; }
 .p-birth { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; border: 1px solid #DEDBEC; border-radius: 13px; padding: 12px 16px; }
 .p-birth .l { flex: 1; font-size: 13px; font-weight: 700; color: #000000; }
+.p-birth .l small { display: block; font-size: 11px; font-weight: 500; color: #6E688C; margin-top: 2px; }
+.p-birth .v { font-size: 13.5px; font-weight: 700; color: #6E688C; }   /* read-only once set */
 .p-birth input { background: rgba(36,27,69,.05); border: 1px solid #DEDBEC; border-radius: 10px; padding: 10px 12px; font-size: 13.5px; font-weight: 700; color: #000000; font-family: 'Satoshi', sans-serif; }
 .p-bio-edit { margin-bottom: 22px; }
 .p-bio-edit textarea { width: 100%; background: rgba(36,27,69,.05); border: 1px solid #DEDBEC; border-radius: 12px; padding: 12px 15px; font-size: 13.5px; line-height: 1.55; color: #000000; font-family: 'Satoshi', sans-serif; resize: vertical; }
@@ -633,6 +635,14 @@ html.dark, html.dark body { background: #120d2b; }
 .ob-birth .input { padding: 11px 14px; font-size: 13.5px; font-weight: 700; }
 .ob-age-note { font-size: 11.5px; color: #6E688C; }
 .ob-age-note.err { color: #DC2626; font-weight: 700; }
+/* IČO lookup result (company registration step 1 + company profile) */
+.ico-note { font-size: 11.5px; color: #6E688C; min-height: 14px; }
+.ico-note.ok { color: #15803D; font-weight: 700; }
+.ico-note.warn { color: #B45309; font-weight: 700; }
+.ico-note.err { color: #DC2626; font-weight: 700; }
+.fp-ico-row { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+.fp-ico-row .input { flex: 1; min-width: 0; }
+.fp-ico-row .p-edit { white-space: nowrap; }
 .sel-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
 .sel-row { display: flex; align-items: center; gap: 12px; border: 1px solid rgba(85,70,196,.35); background: rgba(85,70,196,.06); border-radius: 13px; padding: 9px 10px 9px 16px; }
 .sel-name { flex: 1; font-size: 13.5px; font-weight: 700; color: #000000; }
@@ -643,6 +653,17 @@ html.dark, html.dark body { background: #120d2b; }
 .lvls button.on { background: #40319F; color: #fff; }
 .remove { background: none; border: none; color: #3F3A55; font-size: 13px; cursor: pointer; padding: 4px 6px; }
 .remove:hover { color: #DC2626; }
+.speak, .lvls button { white-space: nowrap; }
+/* Phones: a language row (name · Rozprávam · 3 levels · ✕) does not fit in one line —
+   name + ✕ stay on the first line, the controls move to a second, full-width line. */
+@media (max-width: 480px) {
+  .sel-row { flex-wrap: wrap; gap: 8px 10px; padding-right: 10px; }
+  .sel-name { flex: 1 1 calc(100% - 44px); }
+  .remove { order: 1; }
+  .speak { order: 2; }
+  .lvls { order: 3; flex: 1 1 auto; }                     /* fills the line; wraps to its own line when too narrow */
+  .lvls button { flex: 1 0 auto; padding-left: 6px; padding-right: 6px; }
+}
 .groups { display: flex; flex-direction: column; gap: 32px; margin-bottom: 30px; }
 .group-title { font-size: 15px; font-weight: 700; color: #000000; margin-bottom: 12px; }
 .chips { display: flex; flex-wrap: wrap; gap: 10px; }

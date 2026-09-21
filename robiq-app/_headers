@@ -1,0 +1,10 @@
+# Cloudflare Pages: security headers for the whole site (same as netlify.toml had).
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# The stats page is for admins only — keep it out of search engines.
+/admin.html
+  X-Robots-Tag: noindex

@@ -7,8 +7,8 @@ const sb = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
 // ═══════════ State ═══════════
 // `screen` decides which <section> is visible: app · login · pick · ob · fob
 const initialState = () => ({
-  screen: 'app', authed: false, role: 'student', uid: null, pendingJob: null, gate: false,
-  oauth: false, oauthEmail: '',                            // signed in with Google but no profile yet → finish registration in-app
+  screen: 'app', authed: false, role: 'student', uid: null, pendingJob: null, gate: false, isAdmin: false,
+  oauth: false, oauthEmail: '', oauthRole: null,           // signed in (Google) but registration unfinished → finish it in-app; oauthRole = role already chosen, if any
   tab: 0, ftab: 0, loading: false, accMenu: false, notifOn: true, rowMenu: null,
   detail: null, toast: '', banner: false, bannerName: '', delIdx: null, delAccount: false,
   // feed (guest + student)
@@ -20,7 +20,8 @@ const initialState = () => ({
   matches: [], activeChat: 0, draft: '', myInterests: [],
   // company
   fobStep: 1, fobName: '', fobIco: '', fobLogo: '', fobLogoFile: null, fobFields: [], fobContact: '', fobEmail: '', fobPass: '', fobTerms: false,
-  fpName: '', fpDesc: '', fpLogo: '', fpVerified: false,
+  fobRpo: null,                                            // result of the IČO lookup for state.fobIco (see rpoLookup)
+  fpName: '', fpDesc: '', fpLogo: '', fpIco: '', fpVerified: false, fpRpo: null,
   offers: [], candidates: [], suggestions: {}, contacted: [], blocked: [], fchats: [], activeFChat: 0, fdraft: '',
   invitedPostingIds: [],                                   // student: postings whose company reached out first
   fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false,
@@ -65,6 +66,14 @@ function avatarHtml(cls, url, initialsText, extra = '') {
 }
 const isStudent = () => state.role === 'student';
 
+// ═══════════ Usage statistics (table `events`, read only by admin.html) ═══════════
+// Deliberately anonymous: event name + role + time. No user id, no session id, no cookies —
+// the privacy policy (§3.3, §7) promises visitors are not tracked. Fire-and-forget.
+function track(name, props) {
+  const role = state.authed ? state.role : 'guest';
+  sb.from('events').insert({ name, role, props: props || {} }).then(({ error }) => { if (error) console.warn('track', name, error.message); });
+}
+
 // ═══════════ Data: reading ═══════════
 function colorFor(name) {                                  // deterministic logo colour from the palette
   let h = 0; for (const ch of name || '') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -101,16 +110,38 @@ async function loadMe() {                                  // who is signed in, 
   if (!session) { state.authed = false; state.uid = null; return; }
   state.uid = session.user.id;
   const { data: prof } = await sb.from('profiles').select('role').eq('id', state.uid).maybeSingle();
-  if (!prof) {                                             // Google sign-in without a profile yet → finish registration
+  // The account exists but the registration is not finished — Google sign-in without a profile, or a profile
+  // whose onboarding was interrupted (no student/company row, student without skills). The app stays locked
+  // and the user finishes the steps (name, skills, time) first.
+  if (!prof || await profileUnfinished(prof.role)) {
     const u = session.user, meta = u.user_metadata || {};
-    state.authed = false; state.oauth = true; state.oauthEmail = u.email || '';
+    state.authed = false; state.oauth = true; state.oauthEmail = u.email || ''; state.oauthRole = prof ? prof.role : null;
     if (!state.obName)  state.obName  = meta.full_name || meta.name || '';
     if (!state.fobContact) state.fobContact = meta.full_name || meta.name || '';
     return;
   }
-  state.oauth = false;
+  state.oauth = false; state.oauthRole = null;
   state.authed = true; state.role = prof.role;
   if (prof.role === 'student') await loadStudent(); else await loadCompany();
+  const { data: admin } = await sb.rpc('is_admin');       // admins get a „Štatistika" item in the account menu (admin.html)
+  state.isAdmin = admin === true;
+}
+async function profileUnfinished(role) {                   // true → the role row is missing or has no skills yet
+  if (role === 'student') {
+    const { data: s } = await sb.from('students').select('name, birth, skills').eq('id', state.uid).maybeSingle();
+    if (s && (s.skills || []).length) return false;
+    if (s) { state.obName = state.obName || s.name || ''; state.birth = state.birth || s.birth || ''; }   // keep what step 1 already saved
+    return true;
+  }
+  const { data: c } = await sb.from('companies').select('id').eq('id', state.uid).maybeSingle();
+  return !c;
+}
+// Account exists, registration unfinished → continue where it stopped (role already chosen → skip the pick screen).
+function resumeOnboarding() {
+  state.pickFrom = 'app';
+  state.screen = state.oauthRole === 'firm' ? 'fob' : state.oauthRole === 'student' ? 'ob' : 'pick';
+  state.obStep = 1; state.fobStep = 1;
+  if (state.screen === 'ob' && obCanContinue()) state.obStep = 2;   // name + birth already known → straight to skills
 }
 
 async function loadStudent() {
@@ -138,7 +169,8 @@ async function loadCompany() {
     sb.from('postings').select('*, interests(count), matches(count)').eq('company_id', state.uid).order('created_at', { ascending: false }),
     sb.from('company_interests').select('student_id, posting_id').eq('company_id', state.uid),
   ]);
-  if (c) Object.assign(state, { fpName: c.name, fpDesc: c.description || '', fpLogo: c.logo_url || '', fpVerified: c.verified });
+  if (c) Object.assign(state, { fpName: c.name, fpDesc: c.description || '', fpLogo: c.logo_url || '', fpIco: c.ico || '', fpVerified: c.verified });
+  if (c && !c.verified && ICO_RE.test(c.ico)) await verifyCompany();   // not verified yet (e-mail confirmation, register was down…) → try again
   state.offers = (posts || []).map(p => ({ id: p.id, t: p.title, pay: p.pay + ' € / hod', views: p.views,
     likes: p.interests?.[0]?.count || 0, m: p.matches?.[0]?.count || 0, need: p.need, on: p.active }));
   state.contacted = (cints || []).map(x => x.student_id + ':' + x.posting_id);
@@ -156,10 +188,11 @@ async function loadSuggestions() {
   }));
 }
 
-// Firma vidí o kandidátovi len to, čo je v pohľade candidate_profiles (meno, zručnosti, hodiny) — nie dátum narodenia ani bio.
+// Firma vidí o kandidátovi len to, čo vracia funkcia candidate_profiles (meno, zručnosti, hodiny, fotka) — nie dátum narodenia ani bio.
 async function loadCandidateProfiles(ids) {
   if (!ids.length) return {};
-  const { data } = await sb.from('candidate_profiles').select('id, name, skills, hours, avatar_path').in('id', ids);
+  const { data, error } = await sb.rpc('candidate_profiles', { p_ids: ids });
+  if (error) console.warn('candidate_profiles', error.message);
   await resolveAvatars((data || []).map(s => s.avatar_path));
   return Object.fromEntries((data || []).map(s => [s.id, s]));
 }
@@ -249,7 +282,7 @@ function showToast(msg) {                                  // l.1148–1152
 function fail(e) { console.error(e); showToast(e.message || 'Niečo sa nepodarilo.'); }
 
 async function act(job, dir) {                             // l.1219–1235
-  if (!state.authed && dir === 'like') { state.gate = true; state.pendingJob = job; state.detail = null; render(); return; }
+  if (!state.authed && dir === 'like') { state.gate = true; state.pendingJob = job; state.detail = null; render(); track('gate_shown'); return; }
   if (state.likedIds.includes(job.id) || state.skippedIds.includes(job.id)) return;
   try {
     if (dir === 'like') {
@@ -276,6 +309,7 @@ async function enterApp(extra) {                           // after sign-in / re
   try { await loadMe(); await loadPostings(); } catch (e) { fail(e); }
   state.loading = false;
   if (state.authed && !isStudent()) state.ftab = 0;
+  if (state.oauth) resumeOnboarding();                     // signed in, but the registration steps are not done yet
   subscribe();
   render();
   if (pj && state.authed && isStudent()) setTimeout(() => act(pj, 'like'), 40);   // l.1498–1503
@@ -295,18 +329,20 @@ const go = {
     if (error) { setErr('login-err', error.message === 'Invalid login credentials' ? 'Nesprávny e-mail alebo heslo.' : error.message); return; }
     document.getElementById('login-pass').value = '';
     await enterApp();
+    track('login', { via: 'email' });
   },
   goRegister:  () => { state.pickFrom = 'login'; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },   // from the login card
   goSignup:    () => { state.pickFrom = 'app';   state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },   // from the feed header
-  goFirmReg:   () => { state.screen = 'fob'; state.fobStep = 1; },
-  pickStudent: () => { state.screen = 'ob';  state.obStep = 1; },
-  pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; },
+  goFirmReg:   () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },
+  pickStudent: () => { state.screen = 'ob';  state.obStep = 1; track('reg_start', { role: 'student' }); },
+  pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },
   goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
   // "← Späť" on login and account-type screens: login → feed; pick → wherever it was opened from
   back:        () => { state.screen = state.screen === 'pick' ? (state.pickFrom || 'app') : 'app'; },
   // Google sign-in: Supabase redirects to Google and back to this page; loadMe() then decides
   // whether the user already has a profile (→ app) or has to pick an account type (→ pick).
   google: async () => {
+    track('login_google_click');
     const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
     if (error) fail(error);
   },
@@ -319,6 +355,7 @@ const go = {
   menuToggle:  el => { if (el && el.classList.contains('a-menu')) { state.accMenu = true; return; } state.accMenu = !state.accMenu; },
   menuProfile: () => { if (isStudent()) state.tab = 2; else state.ftab = 3; state.accMenu = false; },
   menuClose:   () => { state.accMenu = false; },
+  menuStats:   () => { state.accMenu = false; location.href = 'admin.html'; },   // admin only — the session is shared, no second sign-in
   menuNotif:   () => { state.notifOn = !state.notifOn; state.accMenu = true; },
   logout: async () => {                                    // l.1506–1514: clean guest view
     clearTimeout(bannerT);
@@ -341,7 +378,16 @@ const go = {
   bannerGo:    () => { state.banner = false; state.tab = 1; state.activeChat = state.matches.length - 1; },
   noop:        () => {},
   // profile — l.1616; saving happens on "✓ Hotovo"
+  fpVerify: async () => {                                  // company profile: "Overiť znova"
+    const r = await verifyCompany();
+    if (!r) { showToast('Overenie sa nepodarilo. Skúste to neskôr.'); return; }
+    showToast(r.verified ? 'Firma je overená. ✓' : rpoText(r));
+    await loadPostings();                                  // the badge on the cards follows `verified`
+  },
   profEditToggle: async () => {
+    if (state.profEdit && state.birth && !isOldEnough()) {   // birth set for the first time in the profile — same age rule as step 1
+      showToast(`Robiq je pre ľudí od ${MIN_AGE} rokov.`); return;
+    }
     state.profEdit = !state.profEdit;
     if (!state.profEdit) await saveStudent();
   },
@@ -496,7 +542,8 @@ function renderHeader() {                                  // l.342–372
       <button data-go="menuClose"><span class="ic">⚙</span>Nastavenia</button>
       <button class="notif" data-go="menuNotif"><span style="display:flex;align-items:center;gap:10px"><span class="ic">◇</span>Notifikácie</span>
         <span class="st" style="color:${state.notifOn ? '#15803D' : '#6E688C'}">${state.notifOn ? 'Zap.' : 'Vyp.'}</span></button>
-      <button data-go="menuClose"><span class="ic">?</span>Pomoc a podpora</button><hr>
+      <button data-go="menuClose"><span class="ic">?</span>Pomoc a podpora</button>
+      ${state.isAdmin ? `<hr><button data-go="menuStats"><span class="ic">▤</span>Štatistika Robiq</button>` : ''}<hr>
       <button class="out" data-go="logout"><span class="ic">→</span>Odhlásiť sa</button>
       <button class="del" data-go="askDeleteAccount"><span class="ic">✕</span>Zmazať účet</button>
     </div>`;
@@ -613,7 +660,9 @@ function profile() {                                       // l.515–635
       <label class="photo-btn sm">${s.avatarPath ? 'Zmeniť fotku' : 'Nahrať fotku'}<input type="file" accept="image/*" id="p-photo" hidden></label>
       ${s.avatarPath ? '<button type="button" class="photo-remove" id="p-photo-remove">Odstrániť</button>' : ''}
     </div>
-    <div class="p-birth"><div class="l">Dátum narodenia</div><input type="date" id="p-birth" value="${esc(s.birth)}"></div>
+    ${s.birth
+      ? `<div class="p-birth"><div class="l">Dátum narodenia<small>nedá sa zmeniť</small></div><div class="v">${esc(fmtDate(s.birth))}</div></div>`
+      : `<div class="p-birth"><div class="l">Dátum narodenia<small>nastavíš len raz</small></div><input type="date" id="p-birth" value="" max="${maxBirth()}"></div>`}
     <div class="p-bio-edit"><div class="label" style="margin-bottom:8px">Bio</div>
       <textarea id="p-bio" rows="3" maxlength="240" placeholder="Napíš pár viet o sebe — čo študuješ, čo ťa baví, kedy máš čas…">${esc(s.bio)}</textarea></div>
     <div class="p-sec">Tvoje zručnosti — nastav úroveň</div>
@@ -828,10 +877,14 @@ function fprofil() {
         <label class="fp-logo" id="fp-logo" title="Zmeniť logo" style="background-image:${s.fpLogo ? `url('${s.fpLogo}')` : 'none'}">
           <span style="display:${s.fpLogo ? 'none' : 'block'}">${avaInit()}</span><input type="file" accept="image/*" id="fp-file"></label>
         <div style="flex:1;min-width:0"><div class="p-name">${esc(s.fpName)}</div>
-          <div class="fp-badges">${s.fpVerified ? '<span class="badge-ok">✓ Overená firma</span>' : '<span class="badge-pending">◷ Overenie prebieha</span>'}</div></div>
+          <div class="fp-badges">${s.fpVerified ? '<span class="badge-ok">✓ Overená firma</span>' : '<span class="badge-pending">◷ Neoverená firma</span>'}</div></div>
       </div>
       <div class="fp-fields">
         <div><div class="label">Názov firmy</div><input class="input" id="fp-name" value="${esc(s.fpName)}"></div>
+        <div><div class="label">IČO — overujeme v Registri právnických osôb</div>
+          <div class="fp-ico-row"><input class="input" id="fp-ico" value="${esc(s.fpIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
+            ${s.fpVerified ? '' : '<button class="p-edit" data-go="fpVerify">Overiť znova</button>'}</div>
+          <div class="ico-note ${s.fpVerified ? 'ok' : rpoClass(s.fpRpo)}">${esc(s.fpVerified ? (rpoOk(s.fpRpo) ? rpoText(s.fpRpo) : '✓ Overená v Registri právnických osôb') : (rpoText(s.fpRpo) || 'Zatiaľ neoverené.'))}</div></div>
         <div><div class="label">O firme — uvidia to študenti na karte</div><textarea id="fp-desc" rows="3">${esc(s.fpDesc)}</textarea></div>
       </div>
       <div class="p-stats">
@@ -861,6 +914,10 @@ function bindAppInputs() {
                         el.addEventListener('change', async () => { await saveCompany({ name: state.fpName.trim() }); render(); }); });
   on('fp-desc', el => { el.addEventListener('input', () => { state.fpDesc = el.value; });
                         el.addEventListener('change', () => saveCompany({ description: state.fpDesc })); });
+  on('fp-ico', el => { el.addEventListener('input', () => { el.value = el.value.replace(/\D/g, '').slice(0, 8); state.fpIco = el.value; });
+                       el.addEventListener('change', async () => {          // new IČO: the DB drops `verified`, we check the register again
+                         if (!ICO_RE.test(state.fpIco)) { showToast('IČO má 8 číslic.'); return; }
+                         await saveCompany({ ico: state.fpIco }); await go.fpVerify(); render(); }); });
   on('fp-file', el => el.addEventListener('change', async e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
     try { state.fpLogo = await uploadLogo(f); await saveCompany({ logo_url: state.fpLogo }); render(); } catch (err) { fail(err); }
@@ -881,7 +938,7 @@ document.getElementById('a-main').addEventListener('click', async e => {
 
   if (d.job) {
     const j = state.postings.find(x => x.id === +d.job);
-    if (a === 'open')   { state.detail = j; render(); }
+    if (a === 'open')   { state.detail = j; render(); track('detail_open'); }
     if (a === 'like')   act(j, 'like');
     if (a === 'skip')   act(j, 'skip');
     if (a === 'menu')   { state.rowMenu = state.rowMenu === 'j' + j.id ? null : 'j' + j.id; render(); }
@@ -1012,33 +1069,67 @@ function layers() {                                        // banner l.946, toas
 // ─── OB — student onboarding — l.97–194 ───
 // Privacy policy §10: Robiq is for people aged 16+, younger cannot register.
 const MIN_AGE = 16;
+const isOldEnough = () => (ageOf(state.birth) ?? -1) >= MIN_AGE;
+// Latest birth date that makes someone MIN_AGE today — the date picker's upper bound.
+function maxBirth() { const d = new Date(); d.setFullYear(d.getFullYear() - MIN_AGE); return d.toISOString().slice(0, 10); }
+const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('sk-SK'); };
 function obCanContinue() {
-  if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && (ageOf(state.birth) ?? -1) >= MIN_AGE;
+  if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && isOldEnough();
   if (state.obStep === 2) return state.obSkills.length > 0;
   return true;
 }
+function obStep1Problem() {                                // why step 1 cannot continue — shown when the button is pressed anyway
+  if (!state.obName.trim()) return 'Napíš svoje meno.';
+  if (!state.oauth && !state.obEmail.trim()) return 'Zadaj e-mail.';
+  if (!state.oauth && state.obPass.length < 6) return 'Heslo musí mať aspoň 6 znakov.';
+  if (!state.birth) return 'Zadaj dátum narodenia.';
+  if (!isOldEnough()) return `Robiq je pre ľudí od ${MIN_AGE} rokov — registrácia zatiaľ nie je možná.`;
+  return '';
+}
 document.getElementById('ob-back').addEventListener('click', () => { if (state.obStep > 1) state.obStep--; else state.screen = 'pick'; render(); });
 document.getElementById('ob-next').addEventListener('click', async () => {           // l.1566–1570
-  if (!obCanContinue()) return;
-  if (state.obStep < 3) { state.obStep++; render(); return; }
+  if (!obCanContinue()) {
+    if (state.obStep === 1) { setErr('ob-err', obStep1Problem()); if (state.birth && !isOldEnough()) track('reg_blocked', { reason: 'age' }); }
+    return;
+  }
+  if (state.obStep === 1 && !state.oauth && await emailTaken(state.obEmail, 'ob-err', 'ob-next', EMAIL_TAKEN_S)) { track('reg_blocked', { reason: 'email_taken' }); return; }
+  if (state.obStep < 3) { state.obStep++; render(); track('reg_step', { role: 'student', step: state.obStep }); return; }
   await registerStudent();
 });
+// A used e-mail stops the registration right where it is typed. Supabase signUp itself does not complain when
+// e-mail confirmation is on (it hides whether an account exists) — so we ask email_taken() first (schema.sql),
+// and on signUp still check `identities` (empty = the e-mail already has an account).
+const EMAIL_TAKEN_S = 'Tento e-mail už má účet. Prihlás sa, alebo použi iný e-mail.';
+const EMAIL_TAKEN_F = 'Tento e-mail už má účet. Prihláste sa, alebo použite iný e-mail.';
+async function emailTaken(email, errId, btnId, msg) {
+  const btn = document.getElementById(btnId); btn.disabled = true; setErr(errId, '');
+  const { data, error } = await sb.rpc('email_taken', { p_email: email.trim() });
+  btn.disabled = false;
+  if (error) { console.warn('email_taken', error); return false; }   // check unavailable → signUp decides
+  if (data) setErr(errId, msg);
+  return !!data;
+}
+const signUpTaken = (data, error) => (error && /already registered/i.test(error.message)) || (!error && data?.user?.identities?.length === 0);
 async function registerStudent() {
   const btn = document.getElementById('ob-next'); btn.disabled = true; setErr('ob-err', '');
   if (state.oauth) {                                       // account exists (Google) — create the profile rows directly
-    const p = await sb.from('profiles').insert({ id: state.uid, role: 'student' });
-    const s = p.error ? p : await sb.from('students').insert({ id: state.uid, name: state.obName.trim(), birth: state.birth || null,
+    // upsert: a profile row left behind by an interrupted registration must not block finishing it
+    const p = await sb.from('profiles').upsert({ id: state.uid, role: 'student' }, { onConflict: 'id', ignoreDuplicates: true });
+    const s = p.error ? p : await sb.from('students').upsert({ id: state.uid, name: state.obName.trim(), birth: state.birth || null,
       skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes });
     btn.disabled = false;
     if (s.error) { setErr('ob-err', s.error.message); return; }
     if (state.obPhotoFile) { try { await uploadAvatar(state.obPhotoFile); } catch (e) { console.warn('avatar upload failed', e); } state.obPhotoFile = null; state.obPhotoPreview = ''; }
     await enterApp({ tab: 0 });
+    track('reg_done', { role: 'student', via: 'google' });
     return;
   }
   const { data, error } = await sb.auth.signUp({ email: state.obEmail.trim(), password: state.obPass,
     options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes } } });
   btn.disabled = false;
+  if (signUpTaken(data, error)) { state.obStep = 1; render(); setErr('ob-err', EMAIL_TAKEN_S); return; }   // back to the e-mail field
   if (error) { setErr('ob-err', error.message); return; }
+  track('reg_done', { role: 'student', via: 'email' });
   if (!data.session) {                                    // e-mail confirmation is on
     state.screen = 'login'; render();
     setErr('login-err', 'Poslali sme ti potvrdzovací e-mail. Po potvrdení sa prihlás.');
@@ -1071,19 +1162,20 @@ function obStep1() {                                       // l.111–119 + e-ma
         ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
         <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
         <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
-        <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" autocomplete="bday"></label>
-        <div class="ob-age-note" id="ob-age-note">Robiq je pre ľudí od ${MIN_AGE} rokov.</div>
+        <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" max="${maxBirth()}" autocomplete="bday"></label>
+        <div class="ob-age-note" id="ob-age-note">Robiq je pre ľudí od ${MIN_AGE} rokov. Dátum sa neskôr nedá zmeniť.</div>
         <label class="photo-btn">${state.obPhotoFile ? 'Zmeniť fotku' : 'Nahrať fotku (voliteľné)'}<input type="file" accept="image/*" id="ob-photo" hidden></label>
         ${state.obPhotoFile ? '<button type="button" class="photo-remove" id="ob-photo-remove">Odstrániť fotku</button>' : ''}</div></div>`;
   const upd = () => {
     document.getElementById('ob-next').style.opacity = obCanContinue() ? 1 : .45;
     const a = ageOf(state.birth), note = document.getElementById('ob-age-note');
-    note.textContent = a !== null && a < MIN_AGE ? `Robiq je pre ľudí od ${MIN_AGE} rokov — registrácia zatiaľ nie je možná.` : `Robiq je pre ľudí od ${MIN_AGE} rokov.`;
+    note.textContent = a !== null && a < MIN_AGE ? `Robiq je pre ľudí od ${MIN_AGE} rokov — registrácia zatiaľ nie je možná.` : `Robiq je pre ľudí od ${MIN_AGE} rokov. Dátum sa neskôr nedá zmeniť.`;
     note.classList.toggle('err', a !== null && a < MIN_AGE);
+    setErr('ob-err', '');
   };
   const nameEl = document.getElementById('ob-name');
   nameEl.addEventListener('input', () => { state.obName = nameEl.value; document.getElementById('avatar').textContent = initials(); upd(); });
-  const emailEl = document.getElementById('ob-email'); if (emailEl) emailEl.addEventListener('input', () => { state.obEmail = emailEl.value; upd(); });
+  const emailEl = document.getElementById('ob-email'); if (emailEl) emailEl.addEventListener('input', () => { state.obEmail = emailEl.value; setErr('ob-err', ''); upd(); });
   const passEl = document.getElementById('ob-pass');    if (passEl) passEl.addEventListener('input', () => { state.obPass = passEl.value; upd(); });
   const birthEl = document.getElementById('ob-birth');  birthEl.addEventListener('input', () => { state.birth = birthEl.value; upd(); });
   document.getElementById('ob-photo').addEventListener('change', e => {
@@ -1197,33 +1289,75 @@ function availSummary() {                                  // l.1558–1563
 }
 
 // ─── FOB — company registration — l.230–291 ───
+const ICO_RE = /^[0-9]{8}$/;                               // Slovak IČO: 8 digits
 function fobCanContinue() {
-  if (state.fobStep === 1) return state.fobName.trim() !== '';
+  if (state.fobStep === 1) return state.fobName.trim() !== '' && ICO_RE.test(state.fobIco);
   if (state.fobStep === 2) return state.fobFields.length > 0;
   return state.fobTerms && (state.oauth || (state.fobEmail.trim() && state.fobPass.length >= 6));
 }
+// ─── IČO ↔ Register právnických osôb (rpo_lookup / verify_my_company in schema.sql) ───
+// The register answers { found, name, city, terminated } or { found: false, reason }.
+// A company that is not in the register, or is dissolved, cannot register. If the register is
+// down we let them through unverified — verifyCompany() retries on every later sign-in.
+let rpoSeq = 0;
+async function rpoLookup(ico) {
+  const seq = ++rpoSeq;
+  const { data, error } = await sb.rpc('rpo_lookup', { p_ico: ico });
+  if (seq !== rpoSeq) return null;                         // a newer lookup is running — ignore this one
+  state.fobRpo = error ? { ico, found: false, reason: 'unavailable' } : { ico, ...data };
+  if (error) console.warn('rpo_lookup', error);
+  return state.fobRpo;
+}
+function rpoText(r) {                                      // one line under the IČO field / in the profile
+  if (!r) return '';
+  if (r.found && r.terminated) return `✕ ${r.name} — firma je v registri zrušená.`;
+  if (r.found) return `✓ ${r.name}${r.city ? ', ' + r.city : ''}`;
+  if (r.reason === 'not_found') return '✕ Toto IČO sme v Registri právnických osôb nenašli. Skontrolujte ho.';
+  if (r.reason === 'unavailable') return '◷ Register je teraz nedostupný — firmu overíme neskôr.';
+  return 'IČO má 8 číslic.';
+}
+const rpoOk = r => !!r && r.found && !r.terminated;
+const rpoClass = r => !r ? '' : rpoOk(r) ? 'ok' : r.reason === 'unavailable' ? 'warn' : 'err';
+async function verifyCompany() {                           // signed-in company: RPO check, sets companies.verified in the DB
+  const { data, error } = await sb.rpc('verify_my_company');
+  if (error) { console.warn('verify_my_company', error); return null; }
+  state.fpVerified = !!data.verified; state.fpRpo = data;
+  return data;
+}
 document.getElementById('fob-back').addEventListener('click', () => { if (state.fobStep > 1) state.fobStep--; else state.screen = 'pick'; render(); });
 document.getElementById('fob-next').addEventListener('click', async () => {          // l.1480–1490
-  if (!fobCanContinue()) return;
-  if (state.fobStep < 3) { state.fobStep++; render(); return; }
+  if (!fobCanContinue()) { if (state.fobStep === 1) setErr('fob-err', !state.fobName.trim() ? 'Zadajte názov firmy.' : 'IČO má 8 číslic.'); return; }
+  if (state.fobStep === 1) {                               // the IČO must be a live company in the register
+    const btn = document.getElementById('fob-next'); btn.disabled = true; setErr('fob-err', '');
+    const r = state.fobRpo?.ico === state.fobIco ? state.fobRpo : await rpoLookup(state.fobIco);
+    btn.disabled = false;
+    if (!r) return;
+    if (!rpoOk(r) && r.reason !== 'unavailable') { render(); setErr('fob-err', 'S týmto IČO sa firma zaregistrovať nedá.'); track('reg_blocked', { reason: 'ico_' + (r.terminated ? 'terminated' : r.reason) }); return; }   // the reason is under the field
+  }
+  if (state.fobStep < 3) { state.fobStep++; render(); track('reg_step', { role: 'firm', step: state.fobStep }); return; }
+  if (!state.oauth && await emailTaken(state.fobEmail, 'fob-err', 'fob-next', EMAIL_TAKEN_F)) { track('reg_blocked', { reason: 'email_taken' }); return; }   // e-mail is typed in step 3
   await registerCompany();
 });
 async function registerCompany() {
   const btn = document.getElementById('fob-next'); btn.disabled = true; setErr('fob-err', '');
   if (state.oauth) {                                       // account exists (Google) — create the profile rows directly
-    const p = await sb.from('profiles').insert({ id: state.uid, role: 'firm' });
-    const c = p.error ? p : await sb.from('companies').insert({ id: state.uid, name: state.fobName.trim(), ico: state.fobIco.trim(),
+    const p = await sb.from('profiles').upsert({ id: state.uid, role: 'firm' }, { onConflict: 'id', ignoreDuplicates: true });
+    const c = p.error ? p : await sb.from('companies').upsert({ id: state.uid, name: state.fobName.trim(), ico: state.fobIco.trim(),
       fields: state.fobFields, contact_name: state.fobContact.trim() });
     btn.disabled = false;
     if (c.error) { setErr('fob-err', c.error.message); return; }
     if (state.fobLogoFile) { try { const url = await uploadLogo(state.fobLogoFile); await sb.from('companies').update({ logo_url: url }).eq('id', state.uid); } catch (e) { console.warn(e); } }
+    await verifyCompany();                                 // the company row exists now → RPO check sets `verified`
     await enterApp({ ftab: 0 });
+    track('reg_done', { role: 'firm', via: 'google' });
     return;
   }
   const { data, error } = await sb.auth.signUp({ email: state.fobEmail.trim(), password: state.fobPass,
     options: { data: { role: 'firm', name: state.fobName.trim(), ico: state.fobIco.trim(), fields: state.fobFields, contact_name: state.fobContact.trim() } } });
   btn.disabled = false;
+  if (signUpTaken(data, error)) { setErr('fob-err', EMAIL_TAKEN_F); return; }
   if (error) { setErr('fob-err', error.message); return; }
+  track('reg_done', { role: 'firm', via: 'email' });
   if (!data.session) {
     state.screen = 'login'; render();
     setErr('login-err', 'Poslali sme vám potvrdzovací e-mail. Po potvrdení sa prihláste.');
@@ -1231,6 +1365,7 @@ async function registerCompany() {
   }
   state.uid = data.user.id;
   if (state.fobLogoFile) { try { const url = await uploadLogo(state.fobLogoFile); await sb.from('companies').update({ logo_url: url }).eq('id', state.uid); } catch (e) { console.warn(e); } }
+  await verifyCompany();                                   // (with e-mail confirmation on, loadCompany() does this at first sign-in)
   await enterApp({ ftab: 0 });
 }
 function renderFob() {
@@ -1249,11 +1384,26 @@ function fobStep1() {                                      // l.244–256
     <h2>Kto <b>ste?</b></h2>
     <p class="desc" style="margin-bottom:24px">Overíme firmu podľa IČO — ľudia tak vedia, že píšu reálnemu zamestnávateľovi.</p>
     <div class="f1-row"><label class="flogo" id="flogo" title="Nahrať logo"><span id="flogo-init"></span><span class="tag">LOGO</span><input type="file" accept="image/*" id="flogo-file"></label>
-      <div class="col"><input class="input" id="fob-name" placeholder="Názov firmy" value="${esc(state.fobName)}"><input class="input" id="fob-ico" placeholder="IČO" value="${esc(state.fobIco)}"></div></div>`;
+      <div class="col"><input class="input" id="fob-name" placeholder="Názov firmy" value="${esc(state.fobName)}">
+        <input class="input" id="fob-ico" placeholder="IČO (8 číslic)" value="${esc(state.fobIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
+        <div class="ico-note ${rpoClass(state.fobRpo)}" id="fob-ico-note">${esc(state.fobRpo?.ico === state.fobIco ? rpoText(state.fobRpo) : '')}</div></div></div>`;
   paintLogo();
+  const upd = () => { document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
   const nameEl = document.getElementById('fob-name');
-  nameEl.addEventListener('input', () => { state.fobName = nameEl.value; paintLogo(); document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; });
-  bindInput('fob-ico', 'fobIco');
+  nameEl.addEventListener('input', () => { state.fobName = nameEl.value; paintLogo(); upd(); });
+  // IČO: digits only; as soon as there are 8 of them, ask the register and show the company under the field.
+  const icoEl = document.getElementById('fob-ico'), noteEl = document.getElementById('fob-ico-note');
+  const showRpo = r => { noteEl.textContent = rpoText(r); noteEl.className = 'ico-note ' + rpoClass(r); };
+  icoEl.addEventListener('input', async () => {
+    icoEl.value = icoEl.value.replace(/\D/g, '').slice(0, 8);
+    state.fobIco = icoEl.value; state.fobRpo = null; setErr('fob-err', ''); upd();
+    if (!ICO_RE.test(state.fobIco)) { showRpo(null); return; }
+    noteEl.textContent = 'Hľadám v registri…'; noteEl.className = 'ico-note';
+    const r = await rpoLookup(state.fobIco);
+    if (!r || r.ico !== state.fobIco) return;             // typed on meanwhile
+    showRpo(r);
+    if (rpoOk(r) && !state.fobName.trim()) { state.fobName = r.name; nameEl.value = r.name; paintLogo(); upd(); }   // prefill the official name
+  });
   document.getElementById('flogo-file').addEventListener('change', e => {      // l.1460–1464
     const f = e.target.files && e.target.files[0]; if (!f) return;
     state.fobLogoFile = f; state.fobLogo = URL.createObjectURL(f); paintLogo();
@@ -1284,7 +1434,7 @@ function fobStep3() {                                      // l.272–282
       <input class="input" id="fob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.fobPass)}" autocomplete="new-password">`}</div>
     <button type="button" class="terms ${state.fobTerms ? 'on' : ''}" id="terms"><span class="box">${state.fobTerms ? '✓' : ''}</span>
       <span class="txt">Súhlasím s <a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">podmienkami Robiq</a> a potvrdzujem, že som oprávnený zastupovať túto firmu.</span></button>`;
-  const upd = () => { document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
+  const upd = () => { setErr('fob-err', ''); document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
   bindInput('fob-contact', 'fobContact');
   if (!state.oauth) { bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd); }
   document.getElementById('terms').addEventListener('click', e => {
@@ -1338,7 +1488,9 @@ requestAnimationFrame(loop);
   try { await loadMe(); await loadPostings(); } catch (e) { fail(e); }
   state.loading = false;
   subscribe();
-  if (state.oauth) { state.pickFrom = 'app'; state.screen = 'pick'; }   // back from Google, no profile yet
-  if (location.hash.includes('access_token') || location.search.includes('code=')) history.replaceState(null, '', location.pathname);
+  if (state.oauth) resumeOnboarding();                     // back from Google, or a registration that was not finished
+  const fromGoogle = location.hash.includes('access_token') || location.search.includes('code=');
+  if (fromGoogle) history.replaceState(null, '', location.pathname);
   render();
+  track('visit', fromGoogle ? { via: 'google_return' } : {});
 })();

@@ -242,10 +242,11 @@
 <p><strong>Vzniká pri používaní aplikácie:</strong></p>
 <ul>
 <li>prejavené záujmy o konkrétnych brigádnikov, zhody, správy v chate, technické údaje účtu a technická kópia registračných údajov – rovnako ako pri brigádnikoch</li>
-<li><strong>príznak overenia firmy</strong> – systémový údaj, ktorý zatiaľ nepoužívame (overovanie podľa IČO nie je spustené)</li>
+<li><strong>príznak overenia firmy</strong> – pri registrácii a pri zmene IČO overíme, či firma s týmto IČO existuje v Registri právnických osôb (verejný register Štatistického úradu SR). Do registra sa posiela iba IČO; späť dostaneme názov, obec a to, či firma nie je zrušená. Ak sa IČO v registri nenájde alebo je firma zrušená, účet sa nedá vytvoriť.</li>
 </ul>
 <h3 id="sek-3-3-ak-si-stranku-len-prezeras-bez-uctu">3.3 Ak si stránku len prezeráš bez účtu</h3>
-<p>Bez prihlásenia si môžeš pozrieť zoznam ponúk. <strong>Do našej databázy sa o tebe neuloží nič</strong> – nevytvárame ti žiadny záznam, nesledujeme ťa, nemáme analytiku ani reklamné skripty.</p>
+<p>Bez prihlásenia si môžeš pozrieť zoznam ponúk. <strong>Do našej databázy sa o tebe neuloží nič, čo by sa dalo spojiť s tebou</strong> – nevytvárame ti žiadny záznam, nesledujeme ťa, nemáme reklamné skripty ani analytiku tretích strán.</p>
+<p>Vedieme si len <strong>súhrnné počty používania</strong>: napríklad koľkokrát za deň niekto otvoril aplikáciu, začal registráciu alebo klikol na „Mám záujem“. Pri takomto zázname sa uloží iba názov udalosti, typ účtu (bez účtu / brigádnik / firma) a čas – <strong>žiadne ID používateľa, ID relácie, IP adresa ani cookie</strong>. Z týchto počtov sa nedá zistiť, kto čo urobil; slúžia nám len na to, aby sme videli, či aplikácia funguje a kde ľudia vypadávajú.</p>
 <p>Tvoj prehliadač však pri načítaní stránky sám pošle svoju IP adresu a hlavičky (typ prehliadača, jazyk) serverom, z ktorých sa načítava aplikácia a jej súčasti – pozri kapitolu 6.</p>
 <h3 id="sek-3-4-volne-texty-a-spravy-dolezite-upozornenie">3.4 Voľné texty a správy – dôležité upozornenie</h3>
 <p>Niektoré polia sú voľný text, do ktorého môžeš napísať čokoľvek:</p>
@@ -259,7 +260,7 @@
 <p>Ak ich tam niekto napriek tomu napíše, spracujeme ich len ako súčasť obsahu, ktorý sám zverejnil alebo odoslal druhej strane, a na požiadanie ich vymažeme. Zmazať ich môžeš aj sám – úpravou profilu alebo zmazaním účtu.</p>
 <p><strong>Chat nie je end-to-end šifrovaný.</strong> Správy sú uložené v našej databáze. Vidí ich druhá strana zhody a technicky k nim má prístup prevádzkovateľ ako správca databázy. Do chatu si dohodni stretnutie, ale neposielaj tam napríklad fotky dokladov.</p>
 <h3 id="sek-3-5-co-o-tebe-nezbierame">3.5 Čo o tebe nezbierame</h3>
-<p>Telefónne číslo, adresu bydliska, rodné číslo, číslo dokladu, údaje o polohe, platobné údaje, údaje zo sociálnych sietí, cookies, analytiku správania ani žiadne údaje o zariadení nad rámec bežných serverových protokolov.</p>
+<p>Telefónne číslo, adresu bydliska, rodné číslo, číslo dokladu, údaje o polohe, platobné údaje, údaje zo sociálnych sietí, cookies, analytiku správania viazanú na osobu ani žiadne údaje o zariadení nad rámec bežných serverových protokolov. (Súhrnné počty používania bez identifikátorov – pozri 3.3.)</p>
 <p>Ak niekedy pribudne pole, ktoré tu nie je uvedené (napríklad telefónne číslo), doplníme ho do tohto dokumentu <strong>skôr</strong>, než ho v aplikácii spustíme.</p>
 <hr />
 <h2 id="sek-4-na-co-udaje-pouzivame-a-na-akom-pravnom-zaklade">4. Na čo údaje používame a na akom právnom základe</h2>
@@ -450,6 +451,11 @@
 <td>globálna sieť serverov; pri tomto poskytovateľovi nevieme vylúčiť, že obsah doručí server mimo EÚ</td>
 </tr>
 <tr>
+<td><strong>Štatistický úrad SR</strong> – Register právnických osôb (verejné API)</td>
+<td>IČO firmy pri registrácii firemného účtu a pri zmene IČO</td>
+<td>slúži na overenie, že firma existuje; posiela ho náš server, nie tvoj prehliadač; IČO je verejný údaj o firme</td>
+</tr>
+<tr>
 <td><strong>Orgány verejnej moci</strong> (súd, polícia, Úrad na ochranu osobných údajov)</td>
 <td>len to, čo nám ukladá zákon</td>
 <td>údaje im poskytneme iba na základe zákonnej povinnosti</td>
@@ -459,7 +465,7 @@
 <p><strong>Prenos IP adresy do tretích krajín:</strong> siete CDN doručujú obsah z najbližšieho servera, ktorý nemusí byť v EÚ. Ide o jediný osobný údaj (IP adresa), ktorý sa pritom prenáša, a deje sa to priamo medzi tvojím prehliadačom a daným serverom. Ak chceš tomu zabrániť, môžeš použiť VPN – a my do budúcna plánujeme knižnicu aj písma hostovať priamo v aplikácii, čím tento prenos odpadne úplne.</p>
 <hr />
 <h2 id="sek-7-co-si-ukladame-do-tvojho-zariadenia">7. Čo si ukladáme do tvojho zariadenia</h2>
-<p><strong>Aplikácia Robiq nepoužíva cookies.</strong> Nemáme analytické ani reklamné skripty, nesledujeme, odkiaľ prichádzaš, a nespájame tvoje správanie naprieč webmi.</p>
+<p><strong>Aplikácia Robiq nepoužíva cookies.</strong> Nemáme analytické skripty tretích strán ani reklamné skripty, nesledujeme, odkiaľ prichádzaš, a nespájame tvoje správanie naprieč webmi. Súhrnné počty používania (3.3) sa ukladajú bez akéhokoľvek identifikátora v tvojom zariadení.</p>
 <p>Do pamäte tvojho prehliadača (localStorage) ukladáme jedinú vec: <strong>prihlasovací token</strong>, vďaka ktorému zostaneš prihlásený a nemusíš zadávať heslo pri každom otvorení aplikácie. Je to podľa § 109 ods. 8 zákona č. 452/2021 Z. z. údaj nevyhnutne potrebný na poskytnutie služby, ktorú si výslovne vyžiadal, a preto naň nepotrebujeme tvoj súhlas. Token zmizne, keď sa odhlásiš alebo vymažeš údaje stránky v prehliadači.</p>
 <hr />
 <h2 id="sek-8-ako-dlho-udaje-uchovavame">8. Ako dlho údaje uchovávame</h2>
@@ -602,7 +608,7 @@ web: dataprotection.gov.sk</p>
 
 <footer class="bot">
   <span class="brand">Robiq<b>.</b> <span style="font-family:'Satoshi',sans-serif;font-weight:400;color:#6E688C">© 2026</span></span>
-  <span>ceo@robiq.sk · Táto stránka nepoužíva cookies, analytiku ani sledovacie skripty.</span>
+  <span>ceo@robiq.sk · Táto stránka nepoužíva cookies ani sledovacie skripty.</span>
 </footer>
 </body>
 </html>

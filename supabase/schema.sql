@@ -159,6 +159,32 @@ end $$;
 create trigger on_auth_user_created after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Dátum narodenia študenta: minimálny vek 16 rokov; raz nastavený dátum sa už nedá zmeniť.
+create or replace function public.students_guard_birth() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  if new.birth is not null and new.birth > current_date - interval '16 years' then
+    raise exception 'Robiq je pre ľudí od 16 rokov.';
+  end if;
+  if tg_op = 'UPDATE' and old.birth is not null and new.birth is distinct from old.birth then
+    raise exception 'Dátum narodenia sa nedá meniť.';
+  end if;
+  return new;
+end $$;
+
+create trigger students_guard_birth before insert or update on public.students
+  for each row execute function public.students_guard_birth();
+
+-- Registrácia: je e-mail už obsadený? Appka sa pýta v kroku 1 (študent) / 3 (firma) a obsadený e-mail nepustí ďalej.
+-- (signUp pri zapnutom potvrdzovaní e-mailu chybu nevráti — kvôli ochrane pred zisťovaním účtov.)
+create or replace function public.email_taken(p_email text) returns boolean
+language sql stable security definer set search_path = public, auth as $$
+  select exists (select 1 from auth.users where lower(email) = lower(trim(p_email)))
+$$;
+
+revoke all on function public.email_taken(text) from public;
+grant execute on function public.email_taken(text) to anon, authenticated;
+
 -- ─────────────────────────── Storage: logá firiem ───────────────────────────
 
 insert into storage.buckets (id, name, public) values ('logos', 'logos', true)
@@ -176,7 +202,7 @@ on conflict (id) do nothing;
 create policy "avatars: own all" on storage.objects for all
   using      (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
--- (politika pre firmy je nižšie, pri pohľade candidate_profiles — potrebuje funkciu is_my_candidate)
+-- (politika pre firmy je nižšie, pri funkcii candidate_profiles — potrebuje funkciu is_my_candidate)
 
 -- ─────────────────────────── Pomocné kontroly pre RLS ───────────────────────────
 -- security definer = bežia mimo RLS, aby sa politiky neodkazovali navzájom (rekurzia).
@@ -218,7 +244,7 @@ alter table public.messages          enable row level security;
 create policy "profiles: own read"   on public.profiles for select using (auth.uid() = id);
 create policy "profiles: own insert" on public.profiles for insert with check (auth.uid() = id);
 
--- students: len vlastný riadok. Firma kandidátov vidí cez pohľad candidate_profiles (nižšie) — bez dátumu narodenia a bia.
+-- students: len vlastný riadok. Firma kandidátov vidí cez funkciu candidate_profiles (nižšie) — bez dátumu narodenia a bia.
 create policy "students: own"  on public.students for all using (auth.uid() = id) with check (auth.uid() = id);
 
 -- companies: verejne čitateľné (meno firmy na karte ponuky), upravuje len vlastník
@@ -252,15 +278,21 @@ create policy "matches: parties read" on public.matches for select using (studen
 create policy "messages: parties read"  on public.messages for select using (public.is_match_party(match_id));
 create policy "messages: parties write" on public.messages for insert with check (sender_id = auth.uid() and public.is_match_party(match_id));
 
--- ─────────────────────────── Pohľad pre firmy: kandidáti ───────────────────────────
--- Firma vidí o študentovi len meno, zručnosti a hodiny — a len ak študent dal záujem o jej inzerát.
+-- ─────────────────────────── Kandidáti pre firmy ───────────────────────────
+-- Firma vidí o študentovi len meno, zručnosti, hodiny a fotku — a len ak študent dal záujem o jej inzerát.
+-- Funkcia (nie pohľad): security-definer pohľad by Supabase Advisor označil ako riziko; pravidlá sú tu rovnaké.
 
-create or replace view public.candidate_profiles as
+create or replace function public.candidate_profiles(p_ids uuid[])
+returns table (id uuid, name text, skills jsonb, hours smallint, avatar_path text)
+language sql stable security definer set search_path = public as $$
   select s.id, s.name, s.skills, s.hours, s.avatar_path
   from public.students s
-  where s.id = auth.uid() or public.is_my_candidate(s.id);
+  where s.id = any(p_ids)
+    and (s.id = auth.uid() or public.is_my_candidate(s.id))
+$$;
 
-grant select on public.candidate_profiles to anon, authenticated;
+revoke all on function public.candidate_profiles(uuid[]) from public;
+grant execute on function public.candidate_profiles(uuid[]) to authenticated;
 
 -- Fotku kandidáta vidí firma rovnako len po jeho záujme (bucket avatars je neverejný, klient si pýta podpísané URL).
 create policy "avatars: firm sees candidates" on storage.objects for select
@@ -318,6 +350,146 @@ end $$;
 
 revoke all on function public.suggest_candidates(bigint) from public;
 grant execute on function public.suggest_candidates(bigint) to authenticated;
+
+-- ─────────────────────────── Overenie firmy podľa IČO (RPO) ───────────────────────────
+-- Register právnických osôb (Štatistický úrad SR) — verejné API, licencia CC-BY 4.0.
+-- rpo_lookup: krok 1 registrácie (bez prihlásenia) · verify_my_company: nastaví companies.verified
+-- · trigger: `verified` si firma nemôže nastaviť sama, zmena IČO overenie zruší.
+
+create extension if not exists http with schema extensions;
+
+create or replace function public.rpo_lookup(p_ico text) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+declare
+  ico  text := regexp_replace(coalesce(p_ico, ''), '\s', '', 'g');
+  resp extensions.http_response;
+  hit  jsonb;
+begin
+  if ico !~ '^[0-9]{8}$' then return jsonb_build_object('found', false, 'reason', 'format'); end if;
+  begin
+    perform extensions.http_set_curlopt('CURLOPT_TIMEOUT_MS', '6000');
+    resp := extensions.http_get('https://api.statistics.sk/rpo/v1/search?identifier=' || ico);
+  exception when others then
+    return jsonb_build_object('found', false, 'reason', 'unavailable');
+  end;
+  if resp.status <> 200 then return jsonb_build_object('found', false, 'reason', 'unavailable'); end if;
+  select x into hit
+  from jsonb_array_elements(resp.content::jsonb -> 'results') x
+  where exists (select 1 from jsonb_array_elements(x -> 'identifiers') i where i ->> 'value' = ico)
+  order by (x ? 'termination') asc
+  limit 1;
+  if hit is null then return jsonb_build_object('found', false, 'reason', 'not_found'); end if;
+  return jsonb_build_object(
+    'found', true,
+    'name', (select n ->> 'value' from jsonb_array_elements(hit -> 'fullNames') n order by n ->> 'validFrom' desc limit 1),
+    'city', hit -> 'addresses' -> 0 -> 'municipality' ->> 'value',
+    'terminated', hit ? 'termination');
+end $$;
+
+revoke all on function public.rpo_lookup(text) from public;
+grant execute on function public.rpo_lookup(text) to anon, authenticated;
+
+create or replace function public.companies_guard_verified() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  if current_setting('robiq.allow_verified', true) is distinct from 'on' then
+    if tg_op = 'INSERT' then new.verified := false; else new.verified := old.verified; end if;
+  end if;
+  if tg_op = 'UPDATE' and new.ico is distinct from old.ico then new.verified := false; end if;
+  return new;
+end $$;
+
+create trigger companies_guard_verified before insert or update on public.companies
+  for each row execute function public.companies_guard_verified();
+
+create or replace function public.verify_my_company() returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  c  companies%rowtype;
+  r  jsonb;
+  ok boolean;
+begin
+  select * into c from companies where id = auth.uid();
+  if not found then raise exception 'Firma neexistuje.'; end if;
+  r := public.rpo_lookup(c.ico);
+  if r ->> 'reason' = 'unavailable' then return r || jsonb_build_object('verified', c.verified); end if;
+  ok := (r ->> 'found')::boolean and not coalesce((r ->> 'terminated')::boolean, false);
+  perform set_config('robiq.allow_verified', 'on', true);
+  update companies set verified = ok, updated_at = now() where id = c.id;
+  return r || jsonb_build_object('verified', ok);
+end $$;
+
+revoke all on function public.verify_my_company() from public;
+grant execute on function public.verify_my_company() to authenticated;
+
+-- ─────────────────────────── Štatistika používania (bez identifikátorov) ───────────────────────────
+-- Len názov udalosti, rola a čas — žiadne ID používateľa, relácie, IP ani cookies. Číta ju len admin (admin.html).
+
+create table public.events (
+  id          bigint generated always as identity primary key,
+  name        text  not null check (length(name) between 1 and 40),
+  role        text  not null default 'guest' check (role in ('guest', 'student', 'firm')),
+  props       jsonb not null default '{}' check (pg_column_size(props) < 1024),
+  created_at  timestamptz not null default now()
+);
+create index events_created_idx on public.events (created_at desc);
+alter table public.events enable row level security;
+create policy "events: anyone inserts" on public.events for insert to anon, authenticated with check (true);
+
+create table public.admins (email text primary key);
+alter table public.admins enable row level security;
+insert into public.admins (email) values ('lenkamasarikova08@gmail.com');
+
+create or replace function public.is_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from admins where email = auth.jwt() ->> 'email')
+$$;
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated;
+
+create or replace function public.analytics_summary(p_days int default 7) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  since timestamptz := date_trunc('day', now()) - make_interval(days => greatest(p_days, 1) - 1);
+begin
+  if not exists (select 1 from admins where email = auth.jwt() ->> 'email') then
+    raise exception 'Prístup zamietnutý.';
+  end if;
+  return jsonb_build_object(
+    'days', p_days, 'since', since,
+    'events', (select coalesce(jsonb_object_agg(name, n), '{}') from (select name, count(*) n from events where created_at >= since group by name) t),
+    'events_by_role', (select coalesce(jsonb_object_agg(k, n), '{}') from (select name || '/' || role k, count(*) n from events where created_at >= since group by name, role) t),
+    'blocked', (select coalesce(jsonb_object_agg(r, n), '{}') from (select coalesce(props ->> 'reason', '?') r, count(*) n from events where name = 'reg_blocked' and created_at >= since group by 1) t),
+    'reg', (select coalesce(jsonb_object_agg(k, n), '{}') from (
+              select name || ':' || coalesce(props ->> 'role', '?') || coalesce(':' || (props ->> 'step'), '') k, count(*) n
+              from events where name in ('reg_start', 'reg_step', 'reg_done') and created_at >= since group by 1) t),
+    'period', jsonb_build_object(
+      'new_students',      (select count(*) from profiles where role = 'student' and created_at >= since),
+      'new_companies',     (select count(*) from profiles where role = 'firm'    and created_at >= since),
+      'postings_new',      (select count(*) from postings where created_at >= since),
+      'interests',         (select count(*) from interests where created_at >= since),
+      'skips',             (select count(*) from skips where created_at >= since),
+      'company_interests', (select count(*) from company_interests where created_at >= since),
+      'matches',           (select count(*) from matches where created_at >= since),
+      'messages',          (select count(*) from messages where created_at >= since)),
+    'totals', jsonb_build_object(
+      'students',           (select count(*) from students),
+      'companies',          (select count(*) from companies),
+      'companies_verified', (select count(*) from companies where verified),
+      'postings_active',    (select count(*) from postings where active),
+      'matches',            (select count(*) from matches)),
+    'daily', (select jsonb_agg(jsonb_build_object(
+        'day', d::date,
+        'visits',    (select count(*) from events    where name = 'visit' and created_at >= d and created_at < d + interval '1 day'),
+        'new_users', (select count(*) from profiles  where created_at >= d and created_at < d + interval '1 day'),
+        'interests', (select count(*) from interests where created_at >= d and created_at < d + interval '1 day'),
+        'matches',   (select count(*) from matches   where created_at >= d and created_at < d + interval '1 day')
+      ) order by d) from generate_series(since, date_trunc('day', now()), interval '1 day') d)
+  );
+end $$;
+
+revoke all on function public.analytics_summary(int) from public;
+grant execute on function public.analytics_summary(int) to authenticated;
 
 -- ─────────────────────────── Zmazanie účtu ───────────────────────────
 -- Používateľ zmaže sám seba. Kaskády v tabuľkách zmažú profil, inzeráty, záujmy, zhody a správy.
