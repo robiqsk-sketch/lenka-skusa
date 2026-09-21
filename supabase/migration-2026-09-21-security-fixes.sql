@@ -30,6 +30,7 @@ $$;
 
 -- Supabase dáva novým funkciám automaticky EXECUTE aj pre `anon` (neprihlásených) — „revoke from public" to nezruší.
 -- Funkcie určené len prihláseným preto odoberáme anon výslovne. (Všetky si aj tak vnútri overujú auth.uid(), toto je poistka navyše.)
+revoke all     on function public.is_admin()               from public;
 revoke execute on function public.candidate_profiles(uuid[]) from anon;
 revoke execute on function public.is_admin()               from anon;
 revoke execute on function public.analytics_summary(int)   from anon;
