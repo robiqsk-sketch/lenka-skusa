@@ -32,6 +32,15 @@ const initialState = () => ({
 let state = initialState();
 let order = [];                                            // guest feed order (shuffled)
 
+// ═══════════ Theme (light / dark) ═══════════
+// Per-browser preference in localStorage; without one we follow the system setting. Class `theme-dark` on <html> (styles.css tokens).
+const THEME_KEY = 'robiq_theme';
+const themePref = () => { try { return localStorage.getItem(THEME_KEY); } catch { return null; } };
+const isDarkTheme = () => { const p = themePref(); return p ? p === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
+function applyTheme() { document.documentElement.classList.toggle('theme-dark', isDarkTheme()); }
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (!themePref()) { applyTheme(); render(); } });
+
 // ═══════════ Cities (table `cities`, loaded once) ═══════════
 let CITIES = [];                                           // [{ id, name, district, lat, lng }]
 const cityById = id => CITIES.find(c => c.id === id) || null;
@@ -447,6 +456,7 @@ const go = {
   menuTerms:   () => { state.accMenu = false; window.open('podmienky.html', '_blank', 'noopener'); },
   menuStats:   () => { state.accMenu = false; location.href = 'admin.html'; },   // admin only — the session is shared, no second sign-in
   menuNotif:   () => { state.notifOn = !state.notifOn; state.accMenu = true; },
+  menuTheme:   () => { try { localStorage.setItem(THEME_KEY, isDarkTheme() ? 'light' : 'dark'); } catch {} applyTheme(); state.accMenu = true; track('theme', { dark: isDarkTheme() }); },
   logout: async () => {                                    // l.1506–1514: clean guest view
     clearTimeout(bannerT);
     await sb.auth.signOut();
@@ -638,7 +648,7 @@ function render() {
   // Login screen is dark on phones: page background + Safari bar colour follow it
   const dark = state.screen === 'login' && matchMedia('(max-width: 640px)').matches;
   document.documentElement.classList.toggle('dark', dark);
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#120d2b' : '#EEEBF7');
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#120d2b' : isDarkTheme() ? '#110D24' : '#EEEBF7');
   if (state.screen === 'pick') {
     const note = document.getElementById('pick-note');
     note.hidden = !state.oauth;
@@ -681,6 +691,7 @@ function renderHeader() {                                  // l.342–372
   const r = document.getElementById('a-hdr-right');
   if (!state.authed) {
     r.innerHTML = `<div class="a-guest">
+      <button class="a-pill-ghost theme-btn" data-go="menuTheme" aria-label="Tmavý režim" title="Tmavý režim">◐</button>
       <button class="a-pill-ghost" data-go="goLogin">Prihlásiť sa</button>
       <button class="a-pill" data-go="goSignup">Vytvoriť účet</button></div>`;
     return;
@@ -691,7 +702,9 @@ function renderHeader() {                                  // l.342–372
       <div class="name">${esc(menuName())}</div><hr>
       <button data-go="menuProfile"><span class="ic">◔</span>Môj profil</button>
       <button class="notif" data-go="menuNotif"><span style="display:flex;align-items:center;gap:10px"><span class="ic">◇</span>Notifikácie</span>
-        <span class="st" style="color:${state.notifOn ? '#15803D' : '#6E688C'}">${state.notifOn ? 'Zap.' : 'Vyp.'}</span></button>
+        <span class="st" style="color:${state.notifOn ? 'var(--ok)' : 'var(--muted)'}">${state.notifOn ? 'Zap.' : 'Vyp.'}</span></button>
+      <button class="notif" data-go="menuTheme"><span style="display:flex;align-items:center;gap:10px"><span class="ic">◐</span>Tmavý režim</span>
+        <span class="st" style="color:${isDarkTheme() ? 'var(--ok)' : 'var(--muted)'}">${isDarkTheme() ? 'Zap.' : 'Vyp.'}</span></button>
       <button data-go="menuHelp"><span class="ic">?</span>Pomoc a podpora</button>
       <button data-go="menuTerms"><span class="ic">§</span>Podmienky a ochrana údajov</button>
       ${state.isAdmin ? `<hr><button data-go="menuStats"><span class="ic">▤</span>Štatistika Robiq</button>` : ''}<hr>
@@ -711,7 +724,7 @@ function skeleton() {                                      // l.377–403
     <div style="display:flex;align-items:center;gap:14px"><div class="sk" style="width:44px;height:44px;border-radius:12px;flex-shrink:0"></div>
       <div style="flex:1;display:flex;flex-direction:column;gap:8px"><div class="sk" style="width:62%;height:16px;border-radius:6px"></div><div class="sk lt" style="width:44%;height:12px;border-radius:99px"></div></div></div>
     <div class="sk" style="width:34%;height:24px;border-radius:8px"></div>
-    <div style="height:7px;border-radius:99px;background:#E9E5F4"></div>
+    <div style="height:7px;border-radius:99px;background:var(--fill)"></div>
     <div style="display:flex;gap:8px">${'<div class="sk xl" style="width:74px;height:26px;border-radius:99px"></div>'.repeat(3)}</div>
     <div class="sk" style="height:44px;border-radius:12px"></div></div>`;
   return `<div class="a-wrap" aria-busy="true">
@@ -809,7 +822,7 @@ function profile() {                                       // l.515–635
     : { n: x.n, dots: '●'.repeat(x.lvl) + '○'.repeat(3 - x.lvl) });
   const interests = s.myInterests.map(it => {
     const matched = s.matches.some(m => m.postingId === it.postingId);
-    return { ...it, status: matched ? '✓ Zhoda' : 'Čaká na odpoveď', stBg: matched ? 'rgba(21,128,61,.12)' : 'rgba(36,27,69,.07)', stFg: matched ? '#15803D' : '#6E688C' };
+    return { ...it, status: matched ? '✓ Zhoda' : 'Čaká na odpoveď', stBg: matched ? 'rgba(21,128,61,.12)' : 'var(--fill)', stFg: matched ? 'var(--ok)' : 'var(--muted)' };
   });
   const view = `
     ${s.bio.trim() ? `<div class="p-sec tight">O mne</div><p class="p-bio">${esc(s.bio)}</p>` : ''}
@@ -908,8 +921,8 @@ function brig() {
   if (!s.authed) body = `<div class="gate-card"><div class="ic">◎</div>
       <div class="h">Profily brigádnikov sú len pre prihlásené firmy</div>
       <div class="p">Chránime súkromie ľudí — ich profily uvidíte po prihlásení firemného účtu.</div>
-      <div class="col"><button data-go="goSignup" style="width:100%;background:#40319F;color:#fff;border:none;border-radius:13px;padding:13px 0;font-size:14px;font-weight:700;cursor:pointer">Vytvoriť firemný účet</button>
-        <button data-go="goLogin" style="width:100%;background:transparent;color:#40319F;border:1px solid rgba(64,49,159,.35);border-radius:13px;padding:12px 0;font-size:14px;font-weight:700;cursor:pointer">Už mám účet — prihlásiť sa</button></div></div>`;
+      <div class="col"><button data-go="goSignup" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:13px;padding:13px 0;font-size:14px;font-weight:700;cursor:pointer">Vytvoriť firemný účet</button>
+        <button data-go="goLogin" style="width:100%;background:transparent;color:var(--accent);border:1px solid var(--line2);border-radius:13px;padding:12px 0;font-size:14px;font-weight:700;cursor:pointer">Už mám účet — prihlásiť sa</button></div></div>`;
   else if (s.offers.length === 0) body = `<div class="empty-card narrow">
       <div class="h">Zatiaľ nie sú koho ukázať</div>
       <div class="p">Pridajte prvý inzerát — kandidátov začneme párovať hneď po zverejnení.</div>

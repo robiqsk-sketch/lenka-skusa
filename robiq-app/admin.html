@@ -71,6 +71,21 @@
     details summary { cursor: pointer; color: #40319F; font-size: 12px; }
     details p { margin: 6px 0 0; font-size: 12.5px; white-space: pre-wrap; }
     .tbl td:first-child { min-width: 220px; }
+    /* Dark theme — follows the app's setting (localStorage robiq_theme) or the system */
+    html.theme-dark { color-scheme: dark; }
+    html.theme-dark body { background: #110D24; color: #F3F1FA; }
+    html.theme-dark .card, html.theme-dark .mini, html.theme-dark .tabs button { background: #1B1636; border-color: #2F2852; color: #F3F1FA; }
+    html.theme-dark .tabs button.on { background: #7B6BEE; border-color: #7B6BEE; color: #fff; }
+    html.theme-dark .tile { background: rgba(255,255,255,.06); }
+    html.theme-dark .tile .n, html.theme-dark .kv b, html.theme-dark details summary, html.theme-dark .chart .col .tip { color: #A093FF; }
+    html.theme-dark .tile .l, html.theme-dark .muted, html.theme-dark .sec, html.theme-dark .tbl th, html.theme-dark .tbl .sub, html.theme-dark .funnel .row .lbl, html.theme-dark .tools label, html.theme-dark .seg button, html.theme-dark .btn.ghost, html.theme-dark .legend { color: #9B95B8; }
+    html.theme-dark .seg { background: rgba(255,255,255,.08); } html.theme-dark .seg button.on { background: #7B6BEE; color: #fff; }
+    html.theme-dark .input { background: #1B1636; border-color: #2F2852; color: #F3F1FA; }
+    html.theme-dark .tbl th, html.theme-dark .tbl td, html.theme-dark .tbl tr { border-color: #2F2852; }
+    html.theme-dark .funnel .row .bar { background: rgba(255,255,255,.08); }
+    html.theme-dark .tag.off { background: rgba(255,255,255,.08); color: #9B95B8; }
+    html.theme-dark .btn { background: #7B6BEE; }
+    html.theme-dark #google { background: #1B1636 !important; color: #F3F1FA !important; border-color: #2F2852 !important; }
     /* Phones: each table row becomes a card — cells stack, numbers go inline with a label */
     @media (max-width: 700px) {
       .tblwrap { overflow: visible; }
@@ -119,6 +134,7 @@
   <script src="config.js"></script>
   <script>
     const sb = supabase.createClient(ROBIQ_CONFIG.supabaseUrl, ROBIQ_CONFIG.supabaseAnonKey);
+    try { const p = localStorage.getItem('robiq_theme'); document.documentElement.classList.toggle('theme-dark', p ? p === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches); } catch {}
     let days = 7;
     const $ = id => document.getElementById(id);
     const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
