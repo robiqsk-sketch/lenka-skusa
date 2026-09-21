@@ -523,7 +523,9 @@ const go = {
         need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote, description: state.fDesc.trim(),
         city_id: state.fRemote ? null : state.fCityId, remote: state.fRemote, address: state.fRemote ? '' : state.fAddress.trim() };
       let { data: row, error } = await sb.from('postings').insert(rec).select('id').single();
-      if (error?.code === '42703') { delete rec.address; ({ data: row, error } = await sb.from('postings').insert(rec).select('id').single()); }   // DB migration (address) not applied yet
+      if (error && (error.code === '42703' || error.code === 'PGRST204')) {   // DB migration (address) not applied yet → publish without it
+        delete rec.address; ({ data: row, error } = await sb.from('postings').insert(rec).select('id').single());
+      }
       if (error) throw error;
       if (state.fPhotos.length) {                          // the row exists now → upload the photos under its id
         const urls = [];
