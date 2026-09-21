@@ -99,6 +99,7 @@
     </div>
 
     <div id="dash" hidden></div>
+    <p class="muted" id="foot" hidden style="text-align:center;margin-top:28px"></p>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -156,6 +157,25 @@
     ];
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
     const affirmation = AFFIRMATIONS[dayOfYear % AFFIRMATIONS.length];
+    // Malé hlášky navyše — náhodné pri každom načítaní (loading, prázdne stavy, pätička).
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    const LOADING = ['Načítavam…', 'Počítam zhody na prstoch…', 'Pýtam sa databázy, ako sa má…', 'Lúštim čísla…', 'Chvíľku, dopíjam kávu…', 'Presviedčam Supabase, aby odpovedal…', 'Rátam brigádnikov, jeden po druhom…', 'Hľadám, kde som to položil/a…', 'Otváram Excel v hlave…', 'Sekundu, aj čísla si musia oddýchnuť…'];
+    const NO_REPORTS = ['Nič nečaká. Internet je dnes slušný. 🎉', 'Žiadne nahlásenia. Buď je všetko v poriadku, alebo nikto nevie, kde je tlačidlo. 🤔', 'Prázdno. Užívaj si to, kým to trvá. ☕', 'Nula problémov. Zapíš si dátum. 📅', 'Nič. Ani jeden „otrok“. Pokrok! 🏆'];
+    const NO_ROWS = ['Zatiaľ nič. Ale bude!', 'Prázdno ako pondelok ráno.', 'Tu ešte nikto nebol. Ty si prvý/á.', 'Nič nenašlo. Skús menej písmen, alebo viac kávy.'];
+    const FOOTERS = [
+      'Tento admin bol vyrobený s láskou, kávou a zhruba 40 volaniami na Supabase.',
+      'Ak niečo nefunguje, je to feature. Ak to funguje, je to náhoda. Ak to funguje dvakrát, je to Robiq.',
+      'Štatistika: 100 % adminov, ktorí toto čítajú, sú admini.',
+      'Pripomienka: brigádnici sú ľudia, firmy sú tiež ľudia, databáza nie je človek (zatiaľ).',
+      'Robiq — lebo scrollovať Facebook skupiny je práca, za ktorú nikto neplatí.',
+      'Dnešný počet chýb v produkcii: neznámy. A to je dobré znamenie. Asi.',
+      'Tip: keď sa čísla nehýbu, obnov stránku. Keď sa hýbu, neobnovuj, nech to nevidia.',
+      'Tento riadok je tu, aby stránka nekončila tak náhle.',
+      'Powered by Postgres, Cloudflare a slovenská tvrdohlavosť.',
+      'Ak si to dočítal/a až sem, zaslúžiš si prestávku. Choď. Ja tu počkám.',
+      '„Otrok“ (19. 9. 2026) — nikdy nezabudneme.',
+      'Dnes je dobrý deň spočítať niečo. Napríklad zhody. Alebo kávy.',
+    ];
 
     function render(d) {
       const ev = d.events || {}, p = d.period || {}, t = d.totals || {}, daily = d.daily || [];
@@ -220,7 +240,7 @@
           <td class="num">${c.interests}</td><td class="num">${c.matches}</td>
           <td class="sub">${fmtDate(c.created_at)}${c.last_posting_at ? '<br>posl. inzerát ' + fmtDate(c.last_posting_at) : ''}</td>
           <td><div class="act"><button class="mini ${c.verified ? 'danger' : ''}" data-verify="${c.id}" data-to="${!c.verified}">${c.verified ? 'Odobrať overenie' : 'Overiť ručne'}</button></div></td>
-        </tr>`).join('') || '<tr><td colspan="8" class="muted">Žiadne firmy.</td></tr>'}</tbody></table></div>
+        </tr>`).join('') || '<tr><td colspan="8" class="muted">' + pick(NO_ROWS) + '</td></tr>'}</tbody></table></div>
         <p class="muted" style="margin:12px 0 0">Ručné overenie prepíše výsledok z Registra právnických osôb. Pri zmene IČO firmou sa overenie zruší a skontroluje znova.</p></div>`;
       $('q').addEventListener('input', e => { q = e.target.value; const pos = e.target.selectionStart; renderCompanies(); const el = $('q'); el.focus(); el.setSelectionRange(pos, pos); });
     }
@@ -248,7 +268,7 @@
           <td><div class="act">${p.blocked
             ? `<button class="mini" data-unblock="${p.id}">Obnoviť</button>`
             : `<button class="mini danger" data-block="${p.id}">Pozastaviť</button>`}</div></td>
-        </tr>`).join('') || '<tr><td colspan="8" class="muted">Žiadne inzeráty.</td></tr>'}</tbody></table></div>
+        </tr>`).join('') || '<tr><td colspan="8" class="muted">' + pick(NO_ROWS) + '</td></tr>'}</tbody></table></div>
         <p class="muted" style="margin:12px 0 0">Pozastavený inzerát zmizne z feedu; firma vidí značku s dôvodom a sama ho zapnúť nevie. Ľudia, ktorí už dali záujem, ho stále vidia vo svojich záujmoch.</p></div>`;
       $('q').addEventListener('input', e => { q = e.target.value; const pos = e.target.selectionStart; renderPostings(); const el = $('q'); el.focus(); el.setSelectionRange(pos, pos); });
       $('onlyProblem').addEventListener('change', e => { onlyProblem = e.target.checked; renderPostings(); });
@@ -276,7 +296,7 @@
         </div></td></tr>`;
       const table = list => `<div class="tblwrap"><table class="tbl"><thead><tr><th>Kedy · kto</th><th>Čo</th><th>Dôvod</th><th></th></tr></thead><tbody>${list.map(row).join('')}</tbody></table></div>`;
       $('dash').innerHTML = `
-        <div class="card"><p class="sec">Otvorené (${open.length})</p>${open.length ? table(open) : '<p class="muted">Nič nečaká. 🎉</p>'}</div>
+        <div class="card"><p class="sec">Otvorené (${open.length})</p>${open.length ? table(open) : '<p class="muted">' + pick(NO_REPORTS) + '</p>'}</div>
         ${done.length ? `<div class="card"><p class="sec">Vybavené (${done.length})</p>${table(done)}</div>` : ''}
         <p class="muted">Nahlásiť môže ktokoľvek (aj bez účtu) z detailu inzerátu alebo z chatu. Lehota na vybavenie nie je zákonom daná, ale DSA očakáva „bez zbytočného odkladu“ — ideálne do pár dní.</p>`;
     }
@@ -321,7 +341,7 @@
     // ─── tabs ───
     let tab = 'stats';
     async function load() {
-      $('dash').innerHTML = '<p class="muted">Načítavam…</p>';
+      $('dash').innerHTML = '<p class="muted">' + pick(LOADING) + '</p>';
       $('seg').style.visibility = tab === 'stats' ? 'visible' : 'hidden';
       try {
         if (tab === 'stats') {
@@ -340,8 +360,8 @@
     });
     async function show() {
       const { data: { session } } = await sb.auth.getSession();
-      $('login').hidden = !!session; $('controls').hidden = !session; $('tabs').hidden = !session; $('dash').hidden = !session;
-      if (session) load();
+      $('login').hidden = !!session; $('controls').hidden = !session; $('tabs').hidden = !session; $('dash').hidden = !session; $('foot').hidden = !session;
+      if (session) { $('foot').textContent = pick(FOOTERS); load(); }
     }
     $('form').addEventListener('submit', async e => {
       e.preventDefault(); $('login-err').textContent = '';

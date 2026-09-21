@@ -415,6 +415,7 @@ const go = {
     state.report = { type: isStudent() ? 'company' : 'student', id: cur.otherId, label: cur.name, reason: 'inappropriate', note: '' };
   },
   reportCancel: () => { state.report = null; },
+  chatWarnOk:  () => { try { localStorage.setItem('robiq_chat_warn', '1'); } catch {} },
   reportSend: async () => {
     const r = state.report; if (!r) return;
     r.note = document.getElementById('report-note').value.trim();
@@ -718,7 +719,8 @@ function profile() {                                       // l.515–635
       ? `<div class="p-birth"><div class="l">Dátum narodenia<small>nedá sa zmeniť</small></div><div class="v">${esc(fmtDate(s.birth))}</div></div>`
       : `<div class="p-birth"><div class="l">Dátum narodenia<small>nastavíš len raz</small></div><input type="date" id="p-birth" value="" max="${maxBirth()}"></div>`}
     <div class="p-bio-edit"><div class="label" style="margin-bottom:8px">Bio</div>
-      <textarea id="p-bio" rows="3" maxlength="240" placeholder="Napíš pár viet o sebe — čo študuješ, čo ťa baví, kedy máš čas…">${esc(s.bio)}</textarea></div>
+      <textarea id="p-bio" rows="3" maxlength="240" placeholder="Napíš pár viet o sebe — čo študuješ, čo ťa baví, kedy máš čas…">${esc(s.bio)}</textarea>
+      <div class="hint" style="margin-top:6px">Nepíš sem citlivé údaje — zdravie, náboženstvo, politické názory, rodné číslo.</div></div>
     <div class="p-sec">Tvoje zručnosti — nastav úroveň</div>
     ${skillsEditor()}
     <div class="p-sec" style="margin-bottom:10px">Dostupnosť</div>
@@ -769,9 +771,13 @@ function chatUI(list, active, isFirm) {
   if (!list.length) return `<div class="p-empty">${isFirm
     ? 'Zatiaľ žiadne konverzácie. Chat vznikne, keď o kandidáta prejavíte záujem a on oň prejavil záujem tiež.'
     : 'Zatiaľ žiadne zhody. Chat vznikne, keď o teba prejaví záujem firma, ktorej si dal „Mám záujem".'}</div>`;
+  // One-time notice (per browser): the chat is not end-to-end encrypted — privacy policy §3.4, terms §8.
+  let warn = '';
+  try { if (!localStorage.getItem('robiq_chat_warn')) warn = `<div class="chat-warn">🔒 Chat nie je šifrovaný medzi zariadeniami — neposielaj sem fotky dokladov, rodné číslo ani platobné údaje. Správy vidí druhá strana a technicky aj Robiq.
+      <button data-go="chatWarnOk">Rozumiem</button></div>`; } catch {}
   return `<div class="chat">
     <div class="chat-list">${items}</div>
-    <div class="chat-box">${head}
+    <div class="chat-box">${head}${warn}
       <div class="chat-msgs" id="chat-msgs">${msgs}</div>
       <div class="chat-input"><input id="chat-draft" placeholder="Napíš správu…" value="${esc(isFirm ? state.fdraft : state.draft)}">
         <button data-go="${isFirm ? 'fSendMsg' : 'sendMsg'}">Odoslať</button></div>
@@ -918,7 +924,8 @@ function nova() {
         <div class="tchips">${TYPES.map(t => `<button class="tchip ${s.fTypes.includes(t) ? 'on' : ''}" data-type="${t}" data-act="type">${t}</button>`).join('')}</div></div>
       <div><div class="label" style="margin-bottom:4px">✦ Povedzte AI, koho hľadáte</div>
         <div class="ai-sub">Vlastnými slovami — AI podľa toho vyberie a zoradí kandidátov pre tento inzerát.</div>
-        <textarea id="f-ai" rows="3" placeholder="napr. Potrebujem niekoho komunikatívneho na ranné zmeny, ideálne so skúsenosťou z gastra. Výhodou angličtina kvôli turistom…">${esc(s.aiNote)}</textarea></div>
+        <textarea id="f-ai" rows="3" placeholder="napr. Potrebujem niekoho komunikatívneho na ranné zmeny, ideálne so skúsenosťou z gastra. Výhodou angličtina kvôli turistom…">${esc(s.aiNote)}</textarea>
+        <div class="hint" style="margin-top:6px">Opíšte prácu a zručnosti — nie požiadavky na vek, pohlavie, pôvod či zdravie (zákaz diskriminácie).</div></div>
       <div class="tip"><b>Tip:</b> pridajte 3 fotky „deň v práci" — reálne zábery z prevádzky zvyšujú záujem pracovníkov.</div>
       <button class="publish" id="f-publish" data-go="publish" style="opacity:${s.fT.trim() ? 1 : .45}">Zverejniť ponuku</button>
     </div></div>`;
@@ -1307,7 +1314,7 @@ function skillsEditor() {                                  // l.126–162, logic
     <div class="groups">${groups}
       <div><div class="group-title">Niečo iné?</div>
         <div class="custom-row"><input class="input" id="custom" placeholder="Napíš vlastnú zručnosť a stlač Enter…" value="${esc(state.customSkill)}"><button type="button" class="add-btn" id="add-custom">Pridať</button></div>
-        <div class="hint">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami.</div></div></div>`;
+        <div class="hint">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami. Nepíš sem citlivé údaje (zdravie, náboženstvo, politické názory).</div></div></div>`;
 }
 function availabilityEditor() {                            // l.169–188, logic l.1542–1563
   return `<input type="range" id="hours" min="0" max="3" step="1" value="${state.obHours}">
