@@ -237,7 +237,7 @@ h2 b { font-weight: 700; color: var(--accent); }
 .job .pay small { font-size: 13px; color: var(--ink2); font-weight: 400; }
 .job .need { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink2); }
 .job .need span:first-child { white-space: nowrap; }
-.job .bar { flex: 1; height: 4px; border-radius: 99px; background: rgba(36,27,69,.08); overflow: hidden; display: block; }
+.job .bar { flex: 1; height: 4px; border-radius: 99px; background: var(--line); overflow: hidden; display: block; }
 .job .bar i { display: block; height: 100%; border-radius: 99px; background-color: var(--ink); }
 .job .tags { display: flex; gap: 6px; flex-wrap: wrap; }
 .job .tags span { font-size: 13px; font-weight: 500; padding: 5px 12px; border-radius: 99px; background: rgba(36,27,69,.06); color: var(--ink2); }

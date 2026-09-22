@@ -791,7 +791,8 @@ function placeTxt(j) {
 }
 function jobCard(j) {                                      // l.425–463
   const liked = state.likedIds.includes(j.id);
-  const pct = Math.round(Math.max(0, j.need - (j.taken || 0)) / j.need * 100);
+  // ciara ukazuje obsadene miesta: vsetko volne = prazdna, polovica obsadena = polovicna
+  const pct = Math.round(Math.min(j.need || 1, Math.max(0, j.taken || 0)) / (j.need || 1) * 100);
   const menu = state.rowMenu !== 'j' + j.id ? '' : `
     <div class="row-menu" data-rowmenu="1">
       <button data-job="${j.id}" data-act="report">Nahlásiť inzerát</button>
