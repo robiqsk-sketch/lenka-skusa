@@ -85,7 +85,8 @@ create table public.students (
 
 create table public.companies (
   id            uuid primary key references public.profiles (id) on delete cascade,
-  name          text not null,
+  name          text not null,                       -- zobrazovaný názov, volí si ho firma
+  legal_name    text not null default '',            -- oficiálny názov z RPO; píše ho len verify_my_company()
   ico           text not null default '',
   fields        text[] not null default '{}',
   contact_name  text not null default '',
@@ -508,9 +509,12 @@ create or replace function public.companies_guard_verified() returns trigger
 language plpgsql set search_path = public as $$
 begin
   if current_setting('robiq.allow_verified', true) is distinct from 'on' then
-    if tg_op = 'INSERT' then new.verified := false; else new.verified := old.verified; end if;
+    if tg_op = 'INSERT' then new.verified := false; new.legal_name := '';
+    else new.verified := old.verified; new.legal_name := old.legal_name; end if;
   end if;
-  if tg_op = 'UPDATE' and new.ico is distinct from old.ico then new.verified := false; end if;
+  if tg_op = 'UPDATE' and new.ico is distinct from old.ico then           -- nové IČO → overiť znova
+    new.verified := false; new.legal_name := '';
+  end if;
   return new;
 end $$;
 
@@ -527,11 +531,14 @@ begin
   select * into c from companies where id = auth.uid();
   if not found then raise exception 'Firma neexistuje.'; end if;
   r := public.rpo_lookup(c.ico);
-  if r ->> 'reason' = 'unavailable' then return r || jsonb_build_object('verified', c.verified); end if;
+  if r ->> 'reason' = 'unavailable' then
+    return r || jsonb_build_object('verified', c.verified, 'legal_name', c.legal_name);
+  end if;
   ok := (r ->> 'found')::boolean and not coalesce((r ->> 'terminated')::boolean, false);
   perform set_config('robiq.allow_verified', 'on', true);
-  update companies set verified = ok, updated_at = now() where id = c.id;
-  return r || jsonb_build_object('verified', ok);
+  update companies set verified = ok, legal_name = case when ok then coalesce(r ->> 'name', '') else '' end,
+                       updated_at = now() where id = c.id;
+  return r || jsonb_build_object('verified', ok, 'legal_name', case when ok then coalesce(r ->> 'name', '') else '' end);
 end $$;
 
 revoke all on function public.verify_my_company() from public;

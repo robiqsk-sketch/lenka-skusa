@@ -22,7 +22,7 @@ const initialState = () => ({
   // company
   fobStep: 1, fobName: '', fobIco: '', fobLogo: '', fobLogoFile: null, fobFields: [], fobContact: '', fobEmail: '', fobPass: '', fobTerms: false,
   fobRpo: null,                                            // result of the IČO lookup for state.fobIco (see rpoLookup)
-  fpName: '', fpDesc: '', fpLogo: '', fpIco: '', fpVerified: false, fpRpo: null,
+  fpName: '', fpLegal: '', fpDesc: '', fpLogo: '', fpIco: '', fpVerified: false, fpRpo: null,
   offers: [], candidates: [], suggestions: {}, contacted: [], blocked: [], fchats: [], activeFChat: 0, fdraft: '',
   invitedPostingIds: [],                                   // student: postings whose company reached out first
   fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fCityId: null, fRemote: false, fAddress: '', fpCityId: null,
@@ -160,6 +160,7 @@ function jobFromRow(p) {                                   // posting row (+comp
     id: p.id, companyId: p.company_id, t: p.title, f: c.name || 'Firma', pay: p.pay + ' €', need: p.need, taken: p.taken,
     posted: ago(p.created_at), start: p.start, lg: colorFor(c.name), logo: c.logo_url, ini: (c.name || 'F')[0].toUpperCase(),
     badges: c.verified ? ['✓ Overená firma'] : [], tags: p.types || [], desc: p.description || '', ice: [], only18: p.only18,
+    legal: c.legal_name || '',                             // official name from the register — shown in the detail
     photos: p.photos || [], cityId: p.city_id || null, city: p.cities?.name || cityName(p.city_id), remote: !!p.remote, address: p.address || '',
   };
 }
@@ -167,8 +168,8 @@ function shuffle(list) { return list.map(x => x.id).sort(() => Math.random() - .
 
 async function loadPostings() {
   const q = (sel) => sb.from('postings').select(sel).eq('active', true).order('created_at', { ascending: false });
-  let { data, error } = await q('*, companies(name, verified, logo_url), cities(name)').eq('blocked', false);
-  if (error) ({ data, error } = await q('*, companies(name, verified, logo_url)'));   // DB migrations not applied yet (blocked / cities) → feed still works
+  let { data, error } = await q('*, companies(name, legal_name, verified, logo_url), cities(name)').eq('blocked', false);
+  if (error) ({ data, error } = await q('*, companies(name, verified, logo_url)'));   // DB migrations not applied yet (blocked / cities / legal_name) → feed still works
   if (error) throw error;
   state.postings = data.map(jobFromRow);
   if (!order.length) order = shuffle(state.postings);
@@ -238,8 +239,10 @@ async function loadCompany() {
     sb.from('postings').select('*, interests(count), matches(count)').eq('company_id', state.uid).order('created_at', { ascending: false }),
     sb.from('company_interests').select('student_id, posting_id').eq('company_id', state.uid),
   ]);
-  if (c) Object.assign(state, { fpName: c.name, fpDesc: c.description || '', fpLogo: c.logo_url || '', fpIco: c.ico || '', fpVerified: c.verified, fpCityId: c.city_id || null });
-  if (c && !c.verified && ICO_RE.test(c.ico)) await verifyCompany();   // not verified yet (e-mail confirmation, register was down…) → try again
+  if (c) Object.assign(state, { fpName: c.name, fpLegal: c.legal_name || '', fpDesc: c.description || '', fpLogo: c.logo_url || '', fpIco: c.ico || '', fpVerified: c.verified, fpCityId: c.city_id || null });
+  // Not verified yet (e-mail confirmation, register was down…), or verified before the official name was
+  // stored at all (older accounts) → ask the register again.
+  if (c && (!c.verified || !c.legal_name) && ICO_RE.test(c.ico)) await verifyCompany();
   state.offers = (posts || []).map(p => ({ id: p.id, t: p.title, pay: p.pay + ' € / hod', views: p.views,
     likes: p.interests?.[0]?.count || 0, m: p.matches?.[0]?.count || 0, need: p.need, on: p.active,
     blocked: !!p.blocked, blockReason: p.block_reason || '', photos: p.photos || [] }));   // blocked by Robiq (admin) — the company cannot lift it
@@ -1098,7 +1101,9 @@ function fprofil() {
           <div class="fp-badges">${s.fpVerified ? '<span class="badge-ok">✓ Overená firma</span>' : '<span class="badge-pending">◷ Neoverená firma</span>'}</div></div>
       </div>
       <div class="fp-fields">
-        <div><div class="label">Názov firmy</div><input class="input" id="fp-name" value="${esc(s.fpName)}"></div>
+        <div><div class="label">Oficiálny názov — z Registra právnických osôb, nedá sa prepísať</div>
+          <input class="input locked" id="fp-legal" value="${esc(s.fpLegal)}" placeholder="Doplní sa po overení IČO" readonly tabindex="-1"></div>
+        <div><div class="label">Zobrazovaný názov — uvidia ho študenti na karte</div><input class="input" id="fp-name" value="${esc(s.fpName)}"></div>
         <div><div class="label">Sídlo (mesto) — predvyplní miesto v novom inzeráte</div><div class="place-row"><input class="input" id="fp-city" value="${esc(cityName(s.fpCityId))}" placeholder="Mesto" autocomplete="off"></div></div>
         <div><div class="label">IČO — overujeme v Registri právnických osôb</div>
           <div class="fp-ico-row"><input class="input" id="fp-ico" value="${esc(s.fpIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
@@ -1287,7 +1292,8 @@ function layers() {                                        // banner l.946, toas
   const d = state.detail;
   if (d) h += `<div class="overlay detail" data-go="closeDetail"><div class="dmodal" data-go="noop">
     <div class="top"><div class="who"><div class="lg" style="${logoStyle(d)}">${logoText(d)}</div>
-      <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)}${placeTxt(d) ? ` · ${esc(placeTxt(d))}` : ''}</div></div></div>
+      <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)}${placeTxt(d) ? ` · ${esc(placeTxt(d))}` : ''}</div>
+        ${d.legal && d.legal !== d.f ? `<div class="legal">✓ ${esc(d.legal)} — podľa Registra právnických osôb</div>` : ''}</div></div>
       <button class="x" data-go="closeDetail">✕</button></div>
     ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
@@ -1575,6 +1581,9 @@ function availSummary() {                                  // l.1558–1563
 
 // ─── FOB — company registration — l.230–291 ───
 const ICO_RE = /^[0-9]{8}$/;                               // Slovak IČO: 8 digits
+// The official name always comes from the register lookup for the IČO that is typed right now —
+// a stale answer for an older IČO must not stay on the screen.
+const fobLegalName = () => state.fobRpo?.ico === state.fobIco && rpoOk(state.fobRpo) ? state.fobRpo.name : '';
 function fobCanContinue() {
   if (state.fobStep === 1) return state.fobName.trim() !== '' && ICO_RE.test(state.fobIco);
   if (state.fobStep === 2) return state.fobFields.length > 0;
@@ -1606,12 +1615,12 @@ const rpoClass = r => !r ? '' : rpoOk(r) ? 'ok' : r.reason === 'unavailable' ? '
 async function verifyCompany() {                           // signed-in company: RPO check, sets companies.verified in the DB
   const { data, error } = await sb.rpc('verify_my_company');
   if (error) { console.warn('verify_my_company', error); return null; }
-  state.fpVerified = !!data.verified; state.fpRpo = data;
+  state.fpVerified = !!data.verified; state.fpRpo = data; state.fpLegal = data.legal_name || '';
   return data;
 }
 document.getElementById('fob-back').addEventListener('click', () => { if (state.fobStep > 1) state.fobStep--; else state.screen = 'pick'; render(); });
 document.getElementById('fob-next').addEventListener('click', async () => {          // l.1480–1490
-  if (!fobCanContinue()) { if (state.fobStep === 1) setErr('fob-err', !state.fobName.trim() ? 'Zadajte názov firmy.' : 'IČO má 8 číslic.'); return; }
+  if (!fobCanContinue()) { if (state.fobStep === 1) setErr('fob-err', !ICO_RE.test(state.fobIco) ? 'IČO má 8 číslic.' : 'Zadajte zobrazovaný názov firmy.'); return; }
   if (state.fobStep === 1) {                               // the IČO must be a live company in the register
     const btn = document.getElementById('fob-next'); btn.disabled = true; setErr('fob-err', '');
     const r = state.fobRpo?.ico === state.fobIco ? state.fobRpo : await rpoLookup(state.fobIco);
@@ -1669,25 +1678,32 @@ function fobStep1() {                                      // l.244–256
     <h2>Kto <b>ste?</b></h2>
     <p class="desc" style="margin-bottom:24px">Overíme firmu podľa IČO — ľudia tak vedia, že píšu reálnemu zamestnávateľovi.</p>
     <div class="f1-row"><label class="flogo" id="flogo" title="Nahrať logo"><span id="flogo-init"></span><span class="tag">LOGO</span><input type="file" accept="image/*" id="flogo-file"></label>
-      <div class="col"><input class="input" id="fob-name" placeholder="Názov firmy" value="${esc(state.fobName)}">
+      <div class="col">
         <input class="input" id="fob-ico" placeholder="IČO (8 číslic)" value="${esc(state.fobIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
-        <div class="ico-note ${rpoClass(state.fobRpo)}" id="fob-ico-note">${esc(state.fobRpo?.ico === state.fobIco ? rpoText(state.fobRpo) : '')}</div></div></div>`;
+        <div class="ico-note ${rpoClass(state.fobRpo)}" id="fob-ico-note">${esc(state.fobRpo?.ico === state.fobIco ? rpoText(state.fobRpo) : '')}</div>
+        <div class="f1-lab">Oficiálny názov — z registra, nedá sa prepísať</div>
+        <input class="input locked" id="fob-legal" placeholder="Doplní sa podľa IČO" value="${esc(fobLegalName())}" readonly tabindex="-1">
+        <div class="f1-lab">Zobrazovaný názov — uvidia ho študenti</div>
+        <input class="input" id="fob-name" placeholder="Napríklad skrátený názov firmy" value="${esc(state.fobName)}">
+      </div></div>`;
   paintLogo();
   const upd = () => { document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
   const nameEl = document.getElementById('fob-name');
   nameEl.addEventListener('input', () => { state.fobName = nameEl.value; paintLogo(); upd(); });
   // IČO: digits only; as soon as there are 8 of them, ask the register and show the company under the field.
   const icoEl = document.getElementById('fob-ico'), noteEl = document.getElementById('fob-ico-note');
+  const legalEl = document.getElementById('fob-legal');
   const showRpo = r => { noteEl.textContent = rpoText(r); noteEl.className = 'ico-note ' + rpoClass(r); };
   icoEl.addEventListener('input', async () => {
     icoEl.value = icoEl.value.replace(/\D/g, '').slice(0, 8);
-    state.fobIco = icoEl.value; state.fobRpo = null; setErr('fob-err', ''); upd();
+    state.fobIco = icoEl.value; state.fobRpo = null; legalEl.value = ''; setErr('fob-err', ''); upd();
     if (!ICO_RE.test(state.fobIco)) { showRpo(null); return; }
     noteEl.textContent = 'Hľadám v registri…'; noteEl.className = 'ico-note';
     const r = await rpoLookup(state.fobIco);
     if (!r || r.ico !== state.fobIco) return;             // typed on meanwhile
     showRpo(r);
-    if (rpoOk(r) && !state.fobName.trim()) { state.fobName = r.name; nameEl.value = r.name; paintLogo(); upd(); }   // prefill the official name
+    legalEl.value = rpoOk(r) ? r.name : '';                // the official name comes from the register, never from typing
+    if (rpoOk(r) && !state.fobName.trim()) { state.fobName = r.name; nameEl.value = r.name; paintLogo(); upd(); }   // display name starts as the official one
   });
   document.getElementById('flogo-file').addEventListener('change', e => {      // l.1460–1464
     const f = e.target.files && e.target.files[0]; if (!f) return;

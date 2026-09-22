@@ -64,6 +64,9 @@ h2 b { font-weight: 700; color: var(--accent); }
   background: var(--fill2); border: 1px solid var(--line); border-radius: 12px;
   padding: 13px 16px; font-size: 14px; color: var(--ink); width: 100%;
 }
+/* Pole, ktoré vypĺňa register, nie človek — vyzerá ako údaj, nie ako vstup. */
+.input.locked { background: var(--fill); color: var(--ink2); cursor: default; }
+.input.locked::placeholder { color: var(--muted); }
 .foot { display: flex; justify-content: space-between; align-items: center; }
 .back { background: none; border: none; color: var(--ink2); font-size: 13px; cursor: pointer; padding: 10px 4px; }
 .back:hover { color: var(--ink); }
@@ -553,6 +556,7 @@ h2 b { font-weight: 700; color: var(--accent); }
 .dmodal .t { font-size: 24px; font-weight: 700; line-height: 1.15; }
 .dmodal .f { font-size: 13.5px; color: var(--ink2); }
 .dmodal .f b { color: var(--ink); font-weight: 700; }
+.dmodal .legal { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
 .dmodal .x { background: var(--fill); border: none; color: var(--ink2); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 14px; }
 .dmodal .x:hover { color: var(--ink); }
 .dmodal .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -743,6 +747,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer;
 
 /* ═══════════ FOB — l.230–291 ═══════════ */
 .f1-row { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 22px; }
+.f1-lab { font-size: 12px; font-weight: 600; color: var(--ink2); margin: 4px 0 -4px 2px; }
 .flogo { position: relative; width: 82px; height: 82px; border-radius: 20px; flex-shrink: 0; overflow: hidden; cursor: pointer; background-color: var(--accent-hi); background-repeat: no-repeat; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; color: #fff; border: 1px solid rgba(85,70,196,.3); }
 .flogo .tag { position: absolute; left: 0; right: 0; bottom: 0; padding: 5px 0; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .04em; background: rgba(23,18,46,.62); color: #fff; }
 .flogo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
