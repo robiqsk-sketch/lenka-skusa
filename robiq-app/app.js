@@ -277,7 +277,7 @@ async function loadCandidates() {                          // students who liked
   const profiles = await loadCandidateProfiles([...new Set(rows.map(r => r.student_id))]);
   state.candidates = rows.filter(r => profiles[r.student_id]).map(r => {
     const s = profiles[r.student_id];
-    return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: (HOURS[s.hours] || '') + (s.city ? ' · 📍 ' + s.city : ''), photo: avatarUrl(s.avatar_path),
+    return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: (HOURS[s.hours] || '') + (s.city ? ' · ' + s.city : ''), photo: avatarUrl(s.avatar_path),
       skills: (s.skills || []).map(k => k.n), offer: r.postings.title, postingId: r.posting_id, at: r.created_at,
       g: `linear-gradient(135deg, ${colorFor(s.name)}, #9F8FF2)` };
   });
@@ -778,7 +778,7 @@ function feed() {                                          // l.408–475
       ${state.skippedIds.length ? '<button data-go="resetDeck">Prezrieť znova</button>' : ''}
     </div>`;
   const noCity = state.authed && isStudent() && !state.cityId && CITIES.length ? `
-    <div class="city-nudge">📍 <b>Doplň si mesto</b> — firmy ťa potom nájdu na brigády vo svojom okolí a ponuky zoradíme podľa vzdialenosti.
+    <div class="city-nudge"><b>Doplň si mesto</b> — firmy ťa potom nájdu na brigády vo svojom okolí a ponuky zoradíme podľa vzdialenosti.
       <button data-go="goProfileEdit">Doplniť</button></div>` : '';
   return `<div class="a-wrap">
     <div class="a-title"><h2>Ponuky <b>pre teba</b></h2></div>
@@ -899,7 +899,7 @@ function chatUI(list, active, isFirm) {
     : 'Zatiaľ žiadne zhody. Chat vznikne, keď o teba prejaví záujem firma, ktorej si dal „Mám záujem".'}</div>`;
   // One-time notice (per browser): the chat is not end-to-end encrypted — privacy policy §3.4, terms §8.
   let warn = '';
-  try { if (!localStorage.getItem('robiq_chat_warn')) warn = `<div class="chat-warn">🔒 Chat nie je šifrovaný medzi zariadeniami — neposielaj sem fotky dokladov, rodné číslo ani platobné údaje. Správy vidí druhá strana a technicky aj Robiq.
+  try { if (!localStorage.getItem('robiq_chat_warn')) warn = `<div class="chat-warn">Chat nie je šifrovaný medzi zariadeniami — neposielaj sem fotky dokladov, rodné číslo ani platobné údaje. Správy vidí druhá strana a technicky aj Robiq.
       <button data-go="chatWarnOk">Rozumiem</button></div>`; } catch {}
   return `<div class="chat">
     <div class="chat-list">${items}</div>
@@ -962,7 +962,7 @@ function suggCard(o, r) {
   const days = (r.avail_days || []).length === 7 ? 'každý deň' : (r.avail_days || []).join(', ');
   const times = (r.avail_times || []).map(t => t.toLowerCase()).join(', ');
   const avail = [days, times].filter(Boolean).join(' · ') || 'dostupnosť neuvedená';
-  const place = !r.city ? '' : (r.distance_km === null || r.distance_km === undefined || r.distance_km === 0) ? `📍 ${r.city}` : `📍 ${r.city} · ${r.distance_km} km`;
+  const place = !r.city ? '' : (r.distance_km === null || r.distance_km === undefined || r.distance_km === 0) ? r.city : `${r.city} · ${r.distance_km} km`;
   return `<div class="cand sugg">
     <div class="top">
       <div class="av anon">${PERSON}</div>
@@ -1006,7 +1006,7 @@ function ponuky() {
         <button class="danger" data-offer="${i}" data-act="askDel">Zmazať inzerát</button></div>`;
     return `<div class="offer ${o.on && !o.blocked ? '' : 'off'}">
       <div><div class="t">${esc(o.t)}</div><div class="pay">${esc(o.pay)}</div>
-        ${o.blocked ? `<div class="blocked-note">⛔ Pozastavené Robiqom${o.blockReason ? ': ' + esc(o.blockReason) : ''} · napíšte na support@robiq.sk</div>` : ''}</div>
+        ${o.blocked ? `<div class="blocked-note">Pozastavené Robiqom${o.blockReason ? ': ' + esc(o.blockReason) : ''} · napíšte na support@robiq.sk</div>` : ''}</div>
       <div class="stat"><div class="n">${o.views}</div><div class="l">zobrazenia</div></div>
       <div class="stat"><div class="n">${o.likes}</div><div class="l">záujmy</div></div>
       <div class="stat"><div class="n green">${o.m}</div><div class="l">zhody</div></div>
@@ -1046,7 +1046,7 @@ function nova() {
       </div>
       <div><div class="label">Miesto <b class="req">*</b></div>
         <div class="place-row"><input class="input" id="f-city" placeholder="Mesto" value="${esc(cityName(s.fCityId))}" autocomplete="off" ${s.fRemote ? 'disabled' : ''}>
-          <button type="button" class="tchip ${s.fRemote ? 'on' : ''}" data-act="remote">🏠 Na diaľku</button></div>
+          <button type="button" class="tchip ${s.fRemote ? 'on' : ''}" data-act="remote">Na diaľku</button></div>
         ${s.fRemote ? '' : `<input class="input" id="f-address" placeholder="Adresa prevádzky (ulica a číslo)" value="${esc(s.fAddress)}" maxlength="200" style="margin-top:8px">`}</div>
       <div><div class="label">Vek kandidátov</div>
         <div class="seg"><button class="${s.only18 ? '' : 'on'}" data-go="set18All">Bez obmedzenia</button><button class="${s.only18 ? 'on' : ''}" data-go="set18Only">Len 18+</button></div></div>
@@ -1296,7 +1296,7 @@ function layers() {                                        // banner l.946, toas
       <button class="x" data-go="closeDetail">✕</button></div>
     ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
-    ${d.remote ? '' : d.address || d.city ? `<div class="addr">📍 ${esc([d.address, d.city].filter(Boolean).join(', '))}
+    ${d.remote ? '' : d.address || d.city ? `<div class="addr">${esc([d.address, d.city].filter(Boolean).join(', '))}
       ${d.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([d.address, d.city].filter(Boolean).join(', '))}" target="_blank" rel="noopener">mapa ↗</a>` : ''}</div>` : ''}
     ${d.desc ? `<p>${esc(d.desc)}</p>` : ''}
     ${d.ice.length ? `<div class="sec">Icebreakery</div><div class="ice">${d.ice.map(i => `<div>${esc(i)}</div>`).join('')}</div>` : ''}
