@@ -191,7 +191,6 @@ h2 b { font-weight: 700; color: var(--accent); }
 .a-title { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; }
 .a-title h2 { font-size: 24px; margin: 0; color: var(--ink); }
 .a-title h2 b { color: var(--ink); }
-.a-title .sorted { font-size: 13px; color: var(--ok); }
 
 .ai-tip {
   background: linear-gradient(160deg, #F0FBF3, #E7F6EC); border: 1px solid rgba(21,128,61,.25); border-radius: 18px;

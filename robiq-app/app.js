@@ -952,9 +952,8 @@ function brig() {
       <div class="h">Zatiaľ nikto neprejavil záujem</div>
       <div class="p">Kandidáti sa tu objavia, keď klepnú „Mám záujem" na niektorý z vašich inzerátov.</div></div>`;
   }
-  const has = s.authed && (s.candidates.length > 0 || Object.values(s.suggestions).some(l => l.length));
   return `<div class="a-wrap">
-    <div class="a-title" style="align-items:center"><h2>Ponuka <b>brigádnikov</b></h2>${has ? '<span class="sorted">✦ zoradené podľa zhody s vašimi ponukami</span>' : ''}</div>
+    <div class="a-title" style="align-items:center"><h2>Ponuka <b>brigádnikov</b></h2></div>
     ${body}</div>`;
 }
 // Anonymous suggestion card: no name, no photo — skills, hours, availability, match score, "Osloviť".
@@ -1101,9 +1100,9 @@ function fprofil() {
           <div class="fp-badges">${s.fpVerified ? '<span class="badge-ok">✓ Overená firma</span>' : '<span class="badge-pending">◷ Neoverená firma</span>'}</div></div>
       </div>
       <div class="fp-fields">
-        <div><div class="label">Oficiálny názov — z Registra právnických osôb, nedá sa prepísať</div>
+        <div><div class="label">Oficiálny názov</div>
           <input class="input locked" id="fp-legal" value="${esc(s.fpLegal)}" placeholder="Doplní sa po overení IČO" readonly tabindex="-1"></div>
-        <div><div class="label">Zobrazovaný názov — uvidia ho študenti na karte</div><input class="input" id="fp-name" value="${esc(s.fpName)}"></div>
+        <div><div class="label">Zobrazovaný názov</div><input class="input" id="fp-name" value="${esc(s.fpName)}"></div>
         <div><div class="label">Sídlo (mesto) — predvyplní miesto v novom inzeráte</div><div class="place-row"><input class="input" id="fp-city" value="${esc(cityName(s.fpCityId))}" placeholder="Mesto" autocomplete="off"></div></div>
         <div><div class="label">IČO — overujeme v Registri právnických osôb</div>
           <div class="fp-ico-row"><input class="input" id="fp-ico" value="${esc(s.fpIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
@@ -1681,9 +1680,9 @@ function fobStep1() {                                      // l.244–256
       <div class="col">
         <input class="input" id="fob-ico" placeholder="IČO (8 číslic)" value="${esc(state.fobIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
         <div class="ico-note ${rpoClass(state.fobRpo)}" id="fob-ico-note">${esc(state.fobRpo?.ico === state.fobIco ? rpoText(state.fobRpo) : '')}</div>
-        <div class="f1-lab">Oficiálny názov — z registra, nedá sa prepísať</div>
+        <div class="f1-lab">Oficiálny názov</div>
         <input class="input locked" id="fob-legal" placeholder="Doplní sa podľa IČO" value="${esc(fobLegalName())}" readonly tabindex="-1">
-        <div class="f1-lab">Zobrazovaný názov — uvidia ho študenti</div>
+        <div class="f1-lab">Zobrazovaný názov</div>
         <input class="input" id="fob-name" placeholder="Napríklad skrátený názov firmy" value="${esc(state.fobName)}">
       </div></div>`;
   paintLogo();
