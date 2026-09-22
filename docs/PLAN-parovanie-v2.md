@@ -43,7 +43,7 @@ Skóre 0–100; navrhnú sa kandidáti s ≥ 30, max 12, zostupne. Miesto je **b
 | **Čerstvosť profilu** (`updated_at`) | do 30 dní 5 · do 90 dní 2 · staršie 0 | nové |
 | Vyplnený profil | zrušiť (dnes 5) | — |
 
-Mapa odvetví: Gastro → Barista, Čašník / Servírka, Kuchyňa, Pokladňa · Retail → Predaj, Pokladňa · Sklad a logistika → Sklad, Vodičák B, Fyzická kondícia · Eventy → Eventy, Hostesing, Promo akcie · IT a dizajn → skupina Digitálne zručnosti · Doučovanie → Doučovanie + Jazyky · Administratíva → Administratíva, Excel · Manuálna práca → Fyzická kondícia, Upratovanie, Kuchyňa.
+Mapa odvetví: Gastro → Barista, Čašník / Servírka, Kuchyňa, Pokladňa · Retail → Predaj, Pokladňa · Sklad a logistika → Sklad, Vodičský preukaz B, Fyzická kondícia · Eventy → Eventy, Hostesing, Promo akcie · IT a dizajn → skupina Digitálne zručnosti · Doučovanie → Doučovanie + Jazyky · Administratíva → Administratíva, Excel · Manuálna práca → Fyzická kondícia, Upratovanie, Kuchyňa.
 
 **Slovná zhoda:** bez diakritiky, malé písmená, porovnanie kmeňa (prvých 5 znakov: „barist" nájde „baristu", „baristov"). Nie AI.
 

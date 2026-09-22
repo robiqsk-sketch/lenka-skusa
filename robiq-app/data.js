@@ -5,7 +5,7 @@ const GROUPS = [
   { g: 'Pracovné pozície', items: ['Barista','Čašník / Servírka','Predaj','Pokladňa','Sklad','Eventy','Hostesing','Promo akcie','Doučovanie','Kuriér','Rozvoz','Recepcia','Kuchyňa','Upratovanie','Administratíva'] },
   { g: 'Digitálne zručnosti', items: ['React','Tvorba webu','Grafika','Figma','Canva','Photoshop','Video strih','Copywriting','Sociálne siete','Excel','Dátová analýza','AI nástroje'] },
   { g: 'Jazyky', items: ['Angličtina','Nemčina','Španielčina','Francúzština','Taliančina','Ruština','Ukrajinčina','Maďarčina','Poľština','Čínština'] },
-  { g: 'Vlastnosti a iné', items: ['Vodičák B','Komunikatívnosť','Spoľahlivosť','Práca v tíme','Fyzická kondícia','Flexibilita','Práca pod tlakom','Organizovanosť','Rýchle učenie'] },
+  { g: 'Vlastnosti a iné', items: ['Vodičský preukaz B','Komunikatívnosť','Spoľahlivosť','Práca v tíme','Fyzická kondícia','Flexibilita','Práca pod tlakom','Organizovanosť','Rýchle učenie'] },
 ];
 const SKILLS = GROUPS.flatMap(x => x.items);
 const LANGS  = GROUPS.find(x => x.g === 'Jazyky').items;
@@ -21,7 +21,7 @@ const RELATED = {
   'Grafika':['Illustrator','Branding','Tlačoviny'], 'Figma':['Prototypovanie','UI dizajn'], 'Canva':['Prezentácie','Social media grafika'],
   'Photoshop':['Retuš','Fotografovanie'], 'Video strih':['CapCut','Premiere','Reels'], 'Copywriting':['SEO texty','Blog','Newslettre'],
   'Sociálne siete':['Reels','TikTok','Community management'], 'Excel':['PowerPoint','Dátové tabuľky','Google Sheets'], 'Dátová analýza':['SQL','Power BI'],
-  'AI nástroje':['ChatGPT','Midjourney','Automatizácie'], 'Vodičák B':['Vlastné auto','Rozvoz'], 'Angličtina':['Preklady','Zákaznícka podpora'],
+  'AI nástroje':['ChatGPT','Midjourney','Automatizácie'], 'Vodičský preukaz B':['Vlastné auto','Rozvoz'], 'Angličtina':['Preklady','Zákaznícka podpora'],
   'Nemčina':['Preklady','Zákaznícka podpora'], 'Španielčina':['Preklady'], 'Francúzština':['Preklady'], 'Ukrajinčina':['Tlmočenie'],
   'Komunikatívnosť':['Telefonovanie','Zákaznícka podpora'], 'Práca v tíme':['Vedenie zmeny'], 'Fyzická kondícia':['Sťahovanie','Stavba pódia'],
 };

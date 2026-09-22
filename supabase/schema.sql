@@ -388,7 +388,7 @@ language sql immutable as $$
   select coalesce(array_agg(distinct s), '{}') from unnest(fields) f cross join lateral unnest(case f
     when 'Gastro'            then array['Barista','Čašník / Servírka','Kuchyňa','Pokladňa']
     when 'Retail'            then array['Predaj','Pokladňa']
-    when 'Sklad a logistika' then array['Sklad','Vodičák B','Fyzická kondícia']
+    when 'Sklad a logistika' then array['Sklad','Vodičský preukaz B','Fyzická kondícia']
     when 'Eventy'            then array['Eventy','Hostesing','Promo akcie']
     when 'IT a dizajn'       then array['React','Tvorba webu','Grafika','Figma','Canva','Photoshop','Video strih','Copywriting','Sociálne siete','Excel','Dátová analýza','AI nástroje']
     when 'Doučovanie'        then array['Doučovanie','Angličtina','Nemčina','Španielčina','Francúzština','Taliančina','Ruština','Ukrajinčina','Maďarčina','Poľština','Čínština']
