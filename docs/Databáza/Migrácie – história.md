@@ -29,3 +29,4 @@ Každá zmena sa zároveň zapíše ako samostatná migrácia `supabase/migratio
 | 21. 9. | `posting-address` | adresa prevádzky pri inzeráte | |
 | 22. 9. | `legal-name` | oficiálny názov z registra oddelený od zobrazovaného | |
 | 22. 9. | `vodicsky-preukaz` | premenovanie zručnosti „Vodičák B" → „Vodičský preukaz B" | |
+| 23. 9. | `fixes` | počítanie zobrazení (`count_view`), obsadené miesta zo zhôd (`sync_taken`), tabuľka `blocks` | [[Otvorené otázky a nezrovnalosti]] |

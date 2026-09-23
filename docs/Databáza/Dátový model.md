@@ -32,6 +32,7 @@ erDiagram
   MATCHES ||--o{ MESSAGES : chat
   PROFILES ||--o{ MESSAGES : odosiela
   PROFILES ||--o{ REPORTS : "nahlasuje (aj hosť)"
+  PROFILES ||--o{ BLOCKS : blokuje
 ```
 
 ## Tabuľky
@@ -48,6 +49,7 @@ erDiagram
 | `matches` | zhoda (obojstranný záujem) — **vytvára ju len trigger** | obe strany |
 | `messages` | správy v chate (1–2000 znakov) | obe strany zhody |
 | `cities` | 143 slovenských miest s GPS | všetci |
+| `blocks` | študent skryl firmu / firma zablokovala brigádnika | len ten, kto blokoval |
 | `reports` | nahlásenia inzerátu / firmy / brigádnika | len admin (cez funkciu) |
 | `events` | anonymná štatistika (názov udalosti, rola, čas) | len admin (cez funkciu) |
 | `admins` | e-maily adminov | nikto priamo |
@@ -67,6 +69,8 @@ erDiagram
 - **Dátum narodenia**: minimálne 16 rokov a raz nastavený sa nedá zmeniť (trigger `students_guard_birth`).
 - `companies.verified` a `legal_name` si firma nemôže nastaviť sama — len funkcia overenia (trigger `companies_guard_verified`). Zmena IČO overenie zruší.
 - `postings.blocked` môže meniť len admin (trigger `postings_guard_blocked`).
+- `postings.taken` (obsadené miesta) = počet zhôd na inzerát, max. `need` — počíta ho trigger `matches_sync_taken`.
+- `postings.views` = počet otvorení detailu (funkcia `count_view`, vlastné inzeráty firmy sa nepočítajú).
 - Zmazanie používateľa v `auth.users` **kaskádovo** zmaže všetko jeho (profil, inzeráty, záujmy, zhody, správy).
 
 Súvisí: [[Prístupy a bezpečnosť (RLS)]], [[Databázové funkcie]], [[Slovník]]

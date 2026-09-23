@@ -15,11 +15,13 @@ tags: [robiq, databáza]
 | `students_guard_birth` | zápis študenta | vek min. 16, dátum narodenia nemenný |
 | `companies_guard_verified` | zápis firmy | `verified`/`legal_name` nemení firma sama; nové IČO = overenie znova |
 | `postings_guard_blocked` | zápis inzerátu | `blocked` mení len admin |
+| `matches_sync_taken` → `sync_taken` | nová / zmazaná zhoda | prepočíta `postings.taken` (obsadené miesta, max. `need`) |
 
 ## Funkcie volané z appky (`sb.rpc(...)`)
 | Funkcia | Kto | Na čo |
 |---|---|---|
 | `email_taken` | ktokoľvek | je e-mail už registrovaný? (krok registrácie) |
+| `count_view` | ktokoľvek | +1 zobrazenie inzerátu pri otvorení detailu (raz za načítanie stránky) |
 | `rpo_lookup` | ktokoľvek | nájde firmu podľa IČO v registri → [[Registrácia firmy a overenie IČO]] |
 | `verify_my_company` | firma | overí vlastnú firmu, nastaví `verified` + `legal_name` |
 | `candidate_profiles` | firma | profily kandidátov (bez dátumu narodenia a bia) |

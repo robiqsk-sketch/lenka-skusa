@@ -18,6 +18,7 @@ používateľ smie čítať alebo meniť. Keďže appka nemá vlastný server, *
 | dátum narodenia, bio študenta | – | svoj | **nikdy** | – |
 | IČO, kontaktná osoba firmy | – | – | svoje | ✓ |
 | správy | – | vo svojich zhodách | vo svojich zhodách | – |
+| zablokovania | – | svoje | svoje | – |
 | štatistika, nahlásenia | – | – | – | ✓ |
 
 ## Kľúčové pravidlá
