@@ -51,5 +51,5 @@ flowchart LR
 | `config.js` | adresa Supabase + verejný kľúč |
 | `styles.css` | vzhľad (farby ako premenné, tmavý režim cez `.theme-dark`) |
 | `admin.html` | admin panel → [[Admin panel]] |
-| `_headers` | bezpečnostné hlavičky pre Cloudflare Pages |
+| `_headers` | bezpečnostné hlavičky (Cloudflare) |
 | `manifest.webmanifest`, `icons/` | inštalácia ako appka na mobile (PWA) |

@@ -4,7 +4,7 @@ Robiq — brigádny matching systém pre študentov a firmy. Frontend postavený
 
 ## Priečinky
 
-- `robiq-app/` — samotná appka (statické HTML + JS, bez build kroku). Dáta, prihlásenie, súbory a chat sú v Supabase. Nasadzuje sa na Cloudflare Pages.
+- `robiq-app/` — samotná appka (statické HTML + JS, bez build kroku). Dáta, prihlásenie, súbory a chat sú v Supabase. Nasadzuje sa na Cloudflare podľa `wrangler.jsonc`.
 - `supabase/` — databázová schéma (`schema.sql`) a migrácie, ktoré sa spúšťajú ručne v Supabase → SQL Editor.
 - `docs/` — poznámky o systéme (Obsidian vault), začni na `docs/00 Mapa systému.md`.
 - `design_handoff_robiq/` — zadanie: klikateľný prototyp (`Robiq MVP - standalone.html`), `README.md` so špecifikáciou obrazoviek a `DESIGN.md` s dizajnovým systémom.
