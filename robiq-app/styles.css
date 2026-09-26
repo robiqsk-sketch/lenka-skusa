@@ -776,6 +776,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer;
 }
 
 /* ═══ Dark theme: the few places that used literal light tints ═══ */
+html.theme-dark .a-art { opacity: .35; }                   /* light strokes on a dark page stand out much more — keep them in the background */
+html.theme-dark .job .tags span { background: var(--fill); }   /* the light-mode tint is invisible on a dark card */
+html.theme-dark .job .bar i { background-color: var(--accent); }   /* white was the brightest thing on the card */
 html.theme-dark .sk, html.theme-dark .sk.lt, html.theme-dark .sk.xl { background: linear-gradient(90deg, #2A2350 25%, #372F5F 37%, #2A2350 63%); }
 html.theme-dark .ai-tip { background: linear-gradient(160deg, #15302A, #0F2A22); border-color: rgba(74,222,128,.25); }
 html.theme-dark #scr-login { background: #120d2b; }
