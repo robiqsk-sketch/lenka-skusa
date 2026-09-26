@@ -16,6 +16,7 @@ Sem si zapisuj veci, ktoré nesedia alebo treba doriešiť. Keď sa niečo vyrie
 - [x] Pri registrácii firmy sa občas ukazovalo „Register je teraz nedostupný" → pomalý register narazil na 3 s limit databázy; limit zvýšený, appka skúša znova.
 - [x] Upratanie kódu (YAGNI): preč nepoužívané funkcie, poistky pre už spustené migrácie, `netlify.toml`, prázdne „Icebreakery", atrapa notifikácií a vymyslené čísla vo firemnom profile („~2 h čas odpovede", „o 40 % viac zhôd").
 - [x] Migrácia `2026-09-23-fixes` je spustená (overené v databáze).
+- [x] Deduplikácia kódu v `app.js` (opakované kroky → spoločné funkcie). Popri tom opravené: súhlas s podmienkami vo firemnej registrácii prepínal skryté políčko študenta, ak človek predtým prešiel registráciu študenta až po krok 3.
 
 ## Vyriešené 23. 9. 2026
 - [x] Počítadlo zobrazení bolo stále 0 → `count_view` pri otvorení detailu.

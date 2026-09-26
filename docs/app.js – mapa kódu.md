@@ -32,6 +32,7 @@ flowchart LR
 | Data: reading | načítanie dát zo Supabase | `loadPostings`, `loadMe`, `loadStudent`, `loadCompany`, `loadSuggestions`, `loadCandidates`, `loadMatches` |
 | Realtime | počúvanie nových správ, zhôd, oslovení | `subscribe`, `onNewMatch` |
 | Actions | záujem/preskočiť, vstup do appky, všetky tlačidlá | `act`, `enterApp`, objekt `go`, `sendMsg`, `saveStudent`, `saveCompany`, `uploadLogo` |
+| — spoločné kroky | veci, ktoré robí viac tlačidiel rovnako | `resetToGuest` (odhlásenie aj zmazanie účtu), `reloadCompany`, `removeFolder`, `checkMatch`, `reachOut`, `openReport`, `openPick` |
 | Render | vykreslenie obrazoviek | `render`, `renderApp`, `renderHeader` |
 | — študent | Objavuj, Správy, Profil | `feed`, `jobCard`, `zhody`, `profile` → [[Obrazovky hosťa a študenta]] |
 | — firma | Ponuka, Správy, Inzeráty, Nový, Profil | `brig`, `suggCard`, `candCard`, `fspravy`, `ponuky`, `nova`, `fprofil` → [[Obrazovky firmy]] |

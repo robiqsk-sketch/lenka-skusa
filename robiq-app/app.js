@@ -106,9 +106,9 @@ async function resolveAvatars(paths) {                     // fetch signed URLs 
   for (const r of data || []) if (r.signedUrl && !r.error) avatarUrls[r.path] = r.signedUrl;
 }
 const avatarUrl = path => (path && avatarUrls[path]) || '';
+const fileExt = (file, def) => (file.name.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '') || def;   // safe for a storage path
 async function uploadAvatar(file) {                        // <uid>/avatar.<ext>, replaces the previous one
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-  const path = `${state.uid}/avatar.${ext}`;
+  const path = `${state.uid}/avatar.${fileExt(file, 'jpg')}`;
   if (state.avatarPath && state.avatarPath !== path) await sb.storage.from('avatars').remove([state.avatarPath]);
   const { error } = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
   if (error) throw error;
@@ -146,6 +146,9 @@ function colorFor(name) {                                  // deterministic logo
   let h = 0; for (const ch of name || '') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return LOGO_COLORS[h % LOGO_COLORS.length];
 }
+const firmIni = name => (name || 'F')[0].toUpperCase();   // company logo placeholder letter
+const candGrad = name => `linear-gradient(135deg, ${colorFor(name)}, #9F8FF2)`;   // student avatar without a photo (company side)
+const plural = (n, one, few, many) => n === 1 ? one : n > 1 && n < 5 ? few : many;   // Slovak: 1 kandidát · 2–4 kandidáti · 5+ kandidátov
 function ago(ts) {                                         // "pred 2 dňami" etc.
   const s = (Date.now() - new Date(ts)) / 1000;
   if (s < 60) return 'práve teraz';
@@ -158,7 +161,7 @@ function jobFromRow(p) {                                   // posting row (+comp
   const c = p.companies || {};
   return {
     id: p.id, companyId: p.company_id, t: p.title, f: c.name || 'Firma', pay: p.pay + ' €', need: p.need, taken: p.taken,
-    posted: ago(p.created_at), lg: colorFor(c.name), logo: c.logo_url, ini: (c.name || 'F')[0].toUpperCase(),
+    posted: ago(p.created_at), lg: colorFor(c.name), logo: c.logo_url, ini: firmIni(c.name),
     badges: c.verified ? ['✓ Overená firma'] : [], tags: p.types || [], desc: p.description || '', only18: p.only18,
     legal: c.legal_name || '',                             // official name from the register — shown in the detail
     photos: p.photos || [], cityId: p.city_id || null, city: p.cities?.name || cityName(p.city_id), remote: !!p.remote, address: p.address || '',
@@ -256,7 +259,7 @@ async function loadStudent() {
   state.likedIds = (ints || []).map(i => i.posting_id);
   state.myInterests = (ints || []).filter(i => i.postings).map(i => ({
     postingId: i.posting_id, t: i.postings.title, f: i.postings.companies?.name || 'Firma', pay: i.postings.pay + ' €',
-    lg: colorFor(i.postings.companies?.name), ini: (i.postings.companies?.name || 'F')[0].toUpperCase() }));
+    lg: colorFor(i.postings.companies?.name), ini: firmIni(i.postings.companies?.name) }));
   state.skippedIds = (skips || []).map(x => x.posting_id);
   await loadMatches();
 }
@@ -310,7 +313,7 @@ async function loadCandidates() {                          // students who liked
     const s = profiles[r.student_id];
     return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: (HOURS[s.hours] || '') + (s.city ? ' · ' + s.city : ''), photo: avatarUrl(s.avatar_path),
       skills: (s.skills || []).map(k => k.n), offer: r.postings.title, postingId: r.posting_id, at: r.created_at,
-      g: `linear-gradient(135deg, ${colorFor(s.name)}, #9F8FF2)` };
+      g: candGrad(s.name) };
   });
 }
 
@@ -325,8 +328,8 @@ async function loadMatches() {
     return { id: m.id, postingId: m.posting_id, name: other, job: m.postings?.title || '', msgs: [],
       otherId: isStudent() ? m.company_id : m.student_id,   // for „Nahlásiť" in the chat header
       photo: isStudent() ? (m.companies?.logo_url || '') : avatarUrl(names[m.student_id]?.avatar_path),
-      ini: isStudent() ? other[0].toUpperCase() : initialsOf(other),
-      lg: isStudent() ? colorFor(other) : `linear-gradient(135deg, ${colorFor(other)}, #9F8FF2)` };
+      ini: isStudent() ? firmIni(other) : initialsOf(other),
+      lg: isStudent() ? colorFor(other) : candGrad(other) };
   });
   if (list.length) {
     const { data: msgs } = await sb.from('messages').select('*').in('match_id', list.map(m => m.id)).order('created_at');
@@ -343,7 +346,7 @@ function subscribe() {
   if (!state.authed) return;
   rt = sb.channel('robiq')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, ({ new: msg }) => {
-      const list = isStudent() ? state.matches : state.fchats;
+      const list = myChats();
       const m = list.find(x => x.id === msg.match_id);
       if (!m || m.msgs.some(x => x.id === msg.id)) return;
       m.msgs.push({ id: msg.id, me: msg.sender_id === state.uid, txt: msg.body });
@@ -363,10 +366,10 @@ function subscribe() {
     .subscribe();
 }
 async function onNewMatch(id) {                            // banner l.946–950
-  const list = isStudent() ? state.matches : state.fchats;
+  const list = myChats();
   if (list.some(x => x.id === id)) return;
   await loadMatches();
-  const m = (isStudent() ? state.matches : state.fchats).find(x => x.id === id);
+  const m = myChats().find(x => x.id === id);
   if (!m) return;
   if (isStudent()) { state.banner = true; state.bannerName = m.name; clearTimeout(bannerT); bannerT = setTimeout(() => { state.banner = false; render(); }, 3500); }
   else showToast(`Zhoda: ${m.name} má záujem o ${m.job}.`);
@@ -382,6 +385,34 @@ function showToast(msg) {                                  // l.1148–1152
 }
 function fail(e) { console.error(e); showToast(e.message || 'Niečo sa nepodarilo.'); }
 
+async function resetToGuest() {                            // l.1506–1514: sign out → clean guest view (logout, account deletion)
+  await sb.auth.signOut();
+  state = initialState(); order = [];
+  subscribe();
+  state.loading = true; render();
+  try { await loadPostings(); } catch (e) { fail(e); }
+  state.loading = false;
+}
+async function reloadCompany() { await loadCompany(); await loadPostings(); }   // after a change to my postings / profile
+async function removeFolder(bucket, folder) {              // deletes the files directly inside a Storage folder
+  const { data: files } = await sb.storage.from(bucket).list(folder);
+  if (files?.length) await sb.storage.from(bucket).remove(files.map(f => `${folder}/${f.name}`));
+}
+const myChats = () => isStudent() ? state.matches : state.fchats;
+async function checkMatch(postingId, studentId) {          // after a like / invite: did it just become a match?
+  const { data: m } = await sb.from('matches').select('id').eq('posting_id', postingId).eq('student_id', studentId).maybeSingle();
+  if (m) await onNewMatch(m.id);
+}
+async function reachOut(studentId, postingId) {            // company → student interest (candidate card or anonymous suggestion)
+  const { error } = await sb.from('company_interests').insert({ company_id: state.uid, student_id: studentId, posting_id: +postingId });
+  if (error) throw error;
+  state.contacted.push(studentId + ':' + postingId);
+}
+function openReport(type, id, label) {                     // report form: posting → "scam", people → "inappropriate" preselected
+  state.rowMenu = null;
+  state.report = { type, id: String(id), label, reason: type === 'posting' ? 'scam' : 'inappropriate', note: '' };
+}
+
 async function act(job, dir) {                             // l.1219–1235
   if (!state.authed && dir === 'like') { state.gate = true; state.pendingJob = job; state.detail = null; render(); track('gate_shown'); return; }
   if (state.likedIds.includes(job.id) || state.skippedIds.includes(job.id)) return;
@@ -392,8 +423,7 @@ async function act(job, dir) {                             // l.1219–1235
       state.likedIds.push(job.id);
       state.myInterests.push({ postingId: job.id, t: job.t, f: job.f, pay: job.pay, lg: job.lg, ini: job.ini });
       render();
-      const { data: m } = await sb.from('matches').select('id').eq('posting_id', job.id).eq('student_id', state.uid).maybeSingle();
-      if (m) await onNewMatch(m.id);
+      await checkMatch(job.id, state.uid);
     } else {
       const { error } = await sb.from('skips').insert({ posting_id: job.id, student_id: state.uid });
       if (error) throw error;
@@ -416,6 +446,7 @@ async function enterApp(extra) {                           // after sign-in / re
   if (pj && state.authed && isStudent()) setTimeout(() => act(pj, 'like'), 40);   // l.1498–1503
 }
 
+function openPick(from) { state.pickFrom = from; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; }   // account-type screen; "← Späť" returns to `from`
 function setErr(id, msg) { const el = document.getElementById(id); if (el) el.textContent = msg || ''; }
 
 const go = {
@@ -457,12 +488,10 @@ const go = {
     await enterApp();
     showToast('Heslo je zmenené. ✓');
   },
-  goRegister:  () => { state.pickFrom = 'login'; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },   // from the login card
-  goSignup:    () => { state.pickFrom = 'app';   state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },   // from the feed header
-  goFirmReg:   () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },
+  goRegister:  () => openPick('login'),                   // from the login card
+  goSignup:    () => openPick('app'),                     // from the feed header
   pickStudent: () => { state.screen = 'ob';  state.obStep = 1; track('reg_start', { role: 'student' }); },
-  pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },
-  goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
+  pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },  goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
   // "← Späť" on login and account-type screens: login → feed; pick → wherever it was opened from
   back:        () => { state.screen = state.screen === 'pick' ? (state.pickFrom || 'app') : 'app'; },
   // Google sign-in: Supabase redirects to Google and back to this page; loadMe() then decides
@@ -476,7 +505,7 @@ const go = {
   // gate — l.1444–1446
   gateClose:   () => { state.gate = false; state.pendingJob = null; },
   gateLogin:   () => { state.gate = false; state.screen = 'login'; },
-  gateSignup:  () => { state.gate = false; state.pickFrom = 'app'; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; },
+  gateSignup:  () => { state.gate = false; openPick('app'); },
   // account menu — l.1515–1524
   menuToggle:  el => { if (el && el.classList.contains('a-menu')) { state.accMenu = true; return; } state.accMenu = !state.accMenu; },
   menuProfile: () => { if (isStudent()) state.tab = 2; else state.ftab = 3; state.accMenu = false; },
@@ -486,15 +515,7 @@ const go = {
   menuTerms:   () => { state.accMenu = false; window.open('podmienky.html', '_blank', 'noopener'); },
   menuStats:   () => { state.accMenu = false; location.href = 'admin.html'; },   // admin only — the session is shared, no second sign-in
   menuTheme:   () => { try { localStorage.setItem(THEME_KEY, isDarkTheme() ? 'light' : 'dark'); } catch {} applyTheme(); state.accMenu = true; track('theme', { dark: isDarkTheme() }); },
-  logout: async () => {                                    // l.1506–1514: clean guest view
-    clearTimeout(bannerT);
-    await sb.auth.signOut();
-    state = initialState(); order = [];
-    subscribe();
-    state.loading = true; render();
-    try { await loadPostings(); } catch (e) { fail(e); }
-    state.loading = false;
-  },
+  logout: async () => { clearTimeout(bannerT); await resetToGuest(); },
   goNova:      () => { state.ftab = 9; if (!state.fCityId) state.fCityId = state.fpCityId; },   // the company's seat prefills the place
   // feed — l.1577–1591
   resetDeck: async () => {
@@ -507,11 +528,11 @@ const go = {
   bannerGo:    () => { state.banner = false; state.tab = 1; state.activeChat = state.matches.length - 1; },
   noop:        () => {},
   // Reports (⚑) — a posting from its detail, the other party from the chat header.
-  reportPosting: () => { const d = state.detail; if (!d) return; state.detail = null; state.report = { type: 'posting', id: String(d.id), label: `${d.t} — ${d.f}`, reason: 'scam', note: '' }; },
+  reportPosting: () => { const d = state.detail; if (!d) return; state.detail = null; openReport('posting', d.id, `${d.t} — ${d.f}`); },
   reportChat:  () => {
-    const list = isStudent() ? state.matches : state.fchats, cur = list[isStudent() ? state.activeChat : state.activeFChat];
+    const list = myChats(), cur = list[isStudent() ? state.activeChat : state.activeFChat];
     if (!cur) return;
-    state.report = { type: isStudent() ? 'company' : 'student', id: cur.otherId, label: cur.name, reason: 'inappropriate', note: '' };
+    openReport(isStudent() ? 'company' : 'student', cur.otherId, cur.name);
   },
   reportCancel: () => { state.report = null; },
   chatWarnOk:  () => { try { localStorage.setItem('robiq_chat_warn', '1'); } catch {} },
@@ -560,10 +581,10 @@ const go = {
         if (urls.length < state.fPhotos.length) showToast('Niektoré fotky sa nepodarilo nahrať.');
       }
       Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fPhotos: [], fCityId: state.fpCityId, fRemote: false, fAddress: '', ftab: 0 });   // straight to candidates
-      await loadCompany(); await loadPostings();
+      await reloadCompany();
       const n = Object.values(state.suggestions)[0]?.length ?? 0;
       const first = state.offers[0] && state.suggestions[state.offers[0].id] ? state.suggestions[state.offers[0].id].length : n;
-      showToast(first ? `Inzerát zverejnený — ${first} ${first === 1 ? 'kandidát sedí' : first < 5 ? 'kandidáti sedia' : 'kandidátov sedí'} na profil pozície.` : 'Inzerát zverejnený. Kandidátov navrhneme, hneď ako sa objavia.');
+      showToast(first ? `Inzerát zverejnený — ${first} ${plural(first, 'kandidát sedí', 'kandidáti sedia', 'kandidátov sedí')} na profil pozície.` : 'Inzerát zverejnený. Kandidátov navrhneme, hneď ako sa objavia.');
     } catch (e) { fail(e); }
   },
   // account deletion — GDPR right to erasure; everything cascades in the database
@@ -572,26 +593,15 @@ const go = {
   delAccountConfirm: async () => {
     state.delAccount = false;
     try {
-      {                                                    // Storage files must go through the Storage API, not SQL
-        const bucket = isStudent() ? 'avatars' : 'logos';
-        const { data: files } = await sb.storage.from(bucket).list(state.uid);
-        if (files && files.length) await sb.storage.from(bucket).remove(files.map(f => `${state.uid}/${f.name}`));
-      }
+      // Storage files must go through the Storage API, not SQL
+      await removeFolder(isStudent() ? 'avatars' : 'logos', state.uid);
       if (!isStudent()) {                                  // company: photos of all postings, <uid>/<posting_id>/<file>
         const { data: dirs } = await sb.storage.from('posting-photos').list(state.uid);
-        for (const dir of dirs || []) {
-          const { data: files } = await sb.storage.from('posting-photos').list(`${state.uid}/${dir.name}`);
-          if (files?.length) await sb.storage.from('posting-photos').remove(files.map(f => `${state.uid}/${dir.name}/${f.name}`));
-        }
+        for (const dir of dirs || []) await removeFolder('posting-photos', `${state.uid}/${dir.name}`);
       }
       const { error } = await sb.rpc('delete_my_account');
       if (error) throw error;
-      await sb.auth.signOut();
-      state = initialState(); order = [];
-      subscribe();
-      state.loading = true; render();
-      try { await loadPostings(); } catch (e) { fail(e); }
-      state.loading = false;
+      await resetToGuest();
       showToast('Účet bol zmazaný.');
     } catch (e) { fail(e); }
   },
@@ -600,10 +610,9 @@ const go = {
   delConfirm: async () => {
     const o = state.offers[state.delIdx]; state.delIdx = null;
     try {
-      const { data: files } = await sb.storage.from('posting-photos').list(`${state.uid}/${o.id}`);   // photos go with the posting
-      if (files?.length) await sb.storage.from('posting-photos').remove(files.map(f => `${state.uid}/${o.id}/${f.name}`));
+      await removeFolder('posting-photos', `${state.uid}/${o.id}`);   // photos go with the posting
       const { error } = await sb.from('postings').delete().eq('id', o.id); if (error) throw error;
-      await loadCompany(); await loadPostings(); showToast('Inzerát zmazaný.');
+      await reloadCompany(); showToast('Inzerát zmazaný.');
     } catch (e) { fail(e); }
   },
   // "Fotky" on an existing posting (row menu ⋯)
@@ -615,7 +624,7 @@ const go = {
       await sb.storage.from('posting-photos').remove([photoPath(url)]);
       pe.photos = pe.photos.filter(u => u !== url);
       const { error } = await sb.from('postings').update({ photos: pe.photos }).eq('id', pe.offerId); if (error) throw error;
-      await loadCompany(); await loadPostings();
+      await reloadCompany();
     } catch (e) { fail(e); }
   },
 };
@@ -647,8 +656,7 @@ async function saveCompany(patch) {
   } catch (e) { fail(e); }
 }
 async function uploadLogo(file) {                          // Storage bucket "logos", path <uid>/logo.<ext>
-  const ext = (file.name.split('.').pop() || 'png').toLowerCase();
-  const path = `${state.uid}/logo.${ext}`;
+  const path = `${state.uid}/logo.${fileExt(file, 'png')}`;
   const { error } = await sb.storage.from('logos').upload(path, file, { upsert: true, contentType: file.type });
   if (error) throw error;
   const { data } = sb.storage.from('logos').getPublicUrl(path);
@@ -717,7 +725,7 @@ function renderApp() {
     try {
       for (const [n, f] of files.entries()) pe.photos.push(await uploadPostingPhoto(pe.offerId, f, pe.photos.length + n));
       const { error } = await sb.from('postings').update({ photos: pe.photos }).eq('id', pe.offerId); if (error) throw error;
-      await loadCompany(); await loadPostings(); render(); showToast('Fotky uložené.');
+      await reloadCompany(); render(); showToast('Fotky uložené.');
     } catch (err) { fail(err); }
   });
 }
@@ -978,7 +986,7 @@ function brig() {
       const cands = visible.filter(c => c.postingId === o.id).sort((a, b) => new Date(b.at) - new Date(a.at));
       const sugg = s.suggestions[o.id] || [];
       if (!cands.length && !sugg.length) return '';
-      const count = cands.length ? cands.length + (cands.length === 1 ? ' kandidát' : cands.length < 5 ? ' kandidáti' : ' kandidátov') : '';
+      const count = cands.length ? cands.length + ' ' + plural(cands.length, 'kandidát', 'kandidáti', 'kandidátov') : '';
       return `<div class="cgroup">
         <div class="cgroup-head"><div class="t">${esc(o.t)}</div>${count ? `<span class="c">${count}</span>` : ''}</div>
         ${cands.length ? `<div class="cards">${cands.map(candCard).join('')}</div>` : ''}
@@ -1119,8 +1127,7 @@ const pickPhotos = (files, have) => {                      // validates size, re
   return out;
 };
 async function uploadPostingPhoto(postingId, file, n) {    // bucket posting-photos, path <uid>/<posting>/<time>-<n>.<ext>
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-  const path = `${state.uid}/${postingId}/${Date.now()}-${n}.${ext}`;
+  const path = `${state.uid}/${postingId}/${Date.now()}-${n}.${fileExt(file, 'jpg')}`;
   const { error } = await sb.storage.from('posting-photos').upload(path, file, { contentType: file.type });
   if (error) throw error;
   return sb.storage.from('posting-photos').getPublicUrl(path).data.publicUrl;
@@ -1225,7 +1232,7 @@ document.getElementById('a-main').addEventListener('click', async e => {
     if (a === 'like')   act(j, 'like');
     if (a === 'skip')   act(j, 'skip');
     if (a === 'menu')   { state.rowMenu = state.rowMenu === 'j' + j.id ? null : 'j' + j.id; render(); }
-    if (a === 'report') { state.rowMenu = null; state.report = { type: 'posting', id: String(j.id), label: `${j.t} — ${j.f}`, reason: 'scam', note: '' }; render(); }
+    if (a === 'report') { openReport('posting', j.id, `${j.t} — ${j.f}`); render(); }
     if (a === 'block')  {
       state.rowMenu = null; if (!state.blockedFirms.includes(j.companyId)) state.blockedFirms.push(j.companyId); state.blockNames[j.companyId] = j.f;
       showToast('Firmu sme skryli z tvojho feedu. Vrátiť ju môžeš v Profile.');
@@ -1236,7 +1243,7 @@ document.getElementById('a-main').addEventListener('click', async e => {
     const [sid, pid] = d.cand.split(':');
     const c = state.candidates.find(x => x.id === sid && x.postingId === +pid);
     if (a === 'menu')   { state.rowMenu = state.rowMenu === 'c' + d.cand ? null : 'c' + d.cand; render(); }
-    if (a === 'report') { state.rowMenu = null; state.report = { type: 'student', id: sid, label: c?.n || 'Brigádnik', reason: 'inappropriate', note: '' }; render(); }
+    if (a === 'report') { openReport('student', sid, c?.n || 'Brigádnik'); render(); }
     if (a === 'block')  {
       state.rowMenu = null; if (!state.blocked.includes(sid)) state.blocked.push(sid); state.blockNames[sid] = c?.n || 'Brigádnik';
       showToast('Profil zablokovaný. Odblokovať ho môžete vo Firemnom profile.');
@@ -1244,21 +1251,17 @@ document.getElementById('a-main').addEventListener('click', async e => {
     }
     if (a === 'contact') {
       try {
-        const { error } = await sb.from('company_interests').insert({ company_id: state.uid, student_id: sid, posting_id: +pid });
-        if (error) throw error;
-        state.contacted.push(d.cand); render();
-        const { data: m } = await sb.from('matches').select('id').eq('posting_id', +pid).eq('student_id', sid).maybeSingle();
-        if (m) await onNewMatch(m.id);
+        await reachOut(sid, pid);
+        render();
+        await checkMatch(+pid, sid);
       } catch (err) { fail(err); }
     }
   }
   else if (d.sugg && a === 'invite') {                                          // firm reaches out first
     const [sid, pid] = d.sugg.split(':');
     try {
-      const { error } = await sb.from('company_interests').insert({ company_id: state.uid, student_id: sid, posting_id: +pid });
-      if (error) throw error;
-      state.contacted.push(d.sugg);
-      const r = (state.suggestions[+pid] || []).find(x => x.student_id === sid); if (r) r.contacted = true;
+      await reachOut(sid, pid);
+      const r =(state.suggestions[+pid] || []).find(x => x.student_id === sid); if (r) r.contacted = true;
       render(); showToast('Oslovené. Keď brigádnik prejaví záujem, vznikne zhoda a uvidíte jeho profil.');
     } catch (err) { fail(err); }
   }
@@ -1283,7 +1286,7 @@ document.getElementById('a-main').addEventListener('click', async e => {
           }
           if (urls.length) await sb.from('postings').update({ photos: urls }).eq('id', row.id);
         }
-        await loadCompany(); await loadPostings(); showToast('Inzerát zduplikovaný.');
+        await reloadCompany(); showToast('Inzerát zduplikovaný.');
       }
       if (a === 'askDel') { state.rowMenu = null; state.delIdx = i; render(); }
       if (a === 'photos') { state.rowMenu = null; state.photoEdit = { offerId: o.id, title: o.t, photos: [...o.photos] }; render(); }
@@ -1396,7 +1399,11 @@ const REPORT_REASONS = [['scam', 'Podvod / vyzerá nedôveryhodne'], ['inappropr
 // ─── OB — student onboarding — l.97–194 ───
 // Privacy policy §10: Robiq is for people aged 16+, younger cannot register.
 const MIN_AGE = 16;
+const AGE_NOTE    = `Robiq je pre ľudí od ${MIN_AGE} rokov. Dátum sa neskôr nedá zmeniť.`;
+const AGE_BLOCKED = `Robiq je pre ľudí od ${MIN_AGE} rokov — registrácia zatiaľ nie je možná.`;
 const isOldEnough = () => (ageOf(state.birth) ?? -1) >= MIN_AGE;
+const avatarTooBig = f => f.size > 5 * 1024 * 1024;       // profile photo limit (posting photos: see pickPhotos)
+const AVATAR_TOO_BIG = 'Fotka je príliš veľká (max. 5 MB).';
 // Latest birth date that makes someone MIN_AGE today — the date picker's upper bound.
 function maxBirth() { const d = new Date(); d.setFullYear(d.getFullYear() - MIN_AGE); return d.toISOString().slice(0, 10); }
 const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('sk-SK'); };
@@ -1406,14 +1413,22 @@ function obCanContinue() {
   return state.obTerms && !!state.cityId;                  // step 3: city (required) + terms/privacy consent (also for Google sign-ups)
 }
 // Consent line for the last registration step (student and company). Links open in a new tab so the form is not lost.
-const TERMS_HTML = (who) => `<button type="button" class="terms ${state[who] ? 'on' : ''}" id="terms"><span class="box">${state[who] ? '✓' : ''}</span>
-  <span class="txt">Mám 16 rokov alebo viac, súhlasím s <a href="podmienky.html" target="_blank" rel="noopener">Podmienkami používania</a> a beriem na vedomie <a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">Ochranu osobných údajov</a>.</span></button>`;
+const TERMS_LINK   = '<a href="podmienky.html" target="_blank" rel="noopener">Podmienkami používania</a>';
+const PRIVACY_LINK = '<a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">Ochranu osobných údajov</a>';
+const TERMS_HTML = (key, txt) => `<button type="button" class="terms ${state[key] ? 'on' : ''}" id="terms"><span class="box">${state[key] ? '✓' : ''}</span>
+  <span class="txt">${txt}</span></button>`;
+function bindTerms(root, key) {                            // root: both registrations have an #terms, the other one may be hidden in the page
+  root.querySelector('#terms').addEventListener('click', e => {
+    if (e.target.closest('a')) return;                     // the link opens the terms; it must not toggle the checkbox
+    state[key] = !state[key]; render();
+  });
+}
 function obStep1Problem() {                                // why step 1 cannot continue — shown when the button is pressed anyway
   if (!state.obName.trim()) return 'Napíš svoje meno.';
   if (!state.oauth && !state.obEmail.trim()) return 'Zadaj e-mail.';
   if (!state.oauth && state.obPass.length < 6) return 'Heslo musí mať aspoň 6 znakov.';
   if (!state.birth) return 'Zadaj dátum narodenia.';
-  if (!isOldEnough()) return `Robiq je pre ľudí od ${MIN_AGE} rokov — registrácia zatiaľ nie je možná.`;
+  if (!isOldEnough()) return AGE_BLOCKED;
   return '';
 }
 document.getElementById('ob-back').addEventListener('click', () => { if (state.obStep > 1) state.obStep--; else state.screen = 'pick'; render(); });
@@ -1450,8 +1465,7 @@ async function registerStudent() {
       skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute });
     btn.disabled = false;
     if (s.error) { setErr('ob-err', s.error.message); return; }
-    if (state.obPhotoFile) { try { await uploadAvatar(state.obPhotoFile); } catch (e) { console.warn('avatar upload failed', e); } state.obPhotoFile = null; state.obPhotoPreview = ''; }
-    await enterApp({ tab: 0 });
+    await finishStudentReg();
     track('reg_done', { role: 'student', via: 'google' });
     return;
   }
@@ -1466,19 +1480,26 @@ async function registerStudent() {
     setErr('login-err', 'Poslali sme ti potvrdzovací e-mail. Po potvrdení sa prihlás.');
     return;
   }
-  if (state.obPhotoFile) {                                 // the account exists now — store the photo chosen in step 1
-    state.uid = data.user.id;
+  state.uid = data.user.id;
+  await finishStudentReg();
+}
+async function finishStudentReg() {                        // the account exists now — store the photo chosen in step 1, open the app
+  if (state.obPhotoFile) {
     try { await uploadAvatar(state.obPhotoFile); } catch (e) { console.warn('avatar upload failed', e); }
     state.obPhotoFile = null; state.obPhotoPreview = '';
   }
   await enterApp({ tab: 0 });
 }
+// Step number, progress dots and the "next" button of a 3-step registration (prefix 'ob' = student, 'fob' = company).
+function renderStepChrome(prefix, step, lastLabel, canContinue) {
+  document.getElementById(prefix + '-no').textContent = step;
+  [...document.getElementById(prefix + '-dots').children].forEach((d, i) => d.classList.toggle('on', step >= i + 1));
+  const next = document.getElementById(prefix + '-next');
+  next.textContent = step === 3 ? lastLabel : 'Pokračovať';
+  next.style.opacity = canContinue ? 1 : .45;
+}
 function renderOb() {
-  document.getElementById('ob-no').textContent = state.obStep;
-  [...document.getElementById('ob-dots').children].forEach((d, i) => d.classList.toggle('on', state.obStep >= i + 1));
-  const next = document.getElementById('ob-next');
-  next.textContent = state.obStep === 3 ? 'Hotovo — pozri ponuky' : 'Pokračovať';
-  next.style.opacity = obCanContinue() ? 1 : .45;
+  renderStepChrome('ob', state.obStep, 'Hotovo — pozri ponuky', obCanContinue());
   if (state.obStep === 1) obStep1();
   if (state.obStep === 2) obStep2();
   if (state.obStep === 3) obStep3();
@@ -1494,13 +1515,13 @@ function obStep1() {                                       // l.111–119 + e-ma
         <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
         <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
         <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" max="${maxBirth()}" autocomplete="bday"></label>
-        <div class="ob-age-note" id="ob-age-note">Robiq je pre ľudí od ${MIN_AGE} rokov. Dátum sa neskôr nedá zmeniť.</div>
+        <div class="ob-age-note" id="ob-age-note">${AGE_NOTE}</div>
         <label class="photo-btn">${state.obPhotoFile ? 'Zmeniť fotku' : 'Nahrať fotku (voliteľné)'}<input type="file" accept="image/*" id="ob-photo" hidden></label>
         ${state.obPhotoFile ? '<button type="button" class="photo-remove" id="ob-photo-remove">Odstrániť fotku</button>' : ''}</div></div>`;
   const upd = () => {
     document.getElementById('ob-next').style.opacity = obCanContinue() ? 1 : .45;
     const a = ageOf(state.birth), note = document.getElementById('ob-age-note');
-    note.textContent = a !== null && a < MIN_AGE ? `Robiq je pre ľudí od ${MIN_AGE} rokov — registrácia zatiaľ nie je možná.` : `Robiq je pre ľudí od ${MIN_AGE} rokov. Dátum sa neskôr nedá zmeniť.`;
+    note.textContent = a !== null && a < MIN_AGE ? AGE_BLOCKED : AGE_NOTE;
     note.classList.toggle('err', a !== null && a < MIN_AGE);
     setErr('ob-err', '');
   };
@@ -1511,7 +1532,7 @@ function obStep1() {                                       // l.111–119 + e-ma
   const birthEl = document.getElementById('ob-birth');  birthEl.addEventListener('input', () => { state.birth = birthEl.value; upd(); });
   document.getElementById('ob-photo').addEventListener('change', e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
-    if (f.size > 5 * 1024 * 1024) { setErr('ob-err', 'Fotka je príliš veľká (max. 5 MB).'); return; }
+    if (avatarTooBig(f)) { setErr('ob-err', AVATAR_TOO_BIG); return; }
     setErr('ob-err', ''); state.obPhotoFile = f; state.obPhotoPreview = URL.createObjectURL(f); render();
   });
   const rm = document.getElementById('ob-photo-remove');
@@ -1519,10 +1540,7 @@ function obStep1() {                                       // l.111–119 + e-ma
   upd();
   obEl.onclick = null;
 }
-function initials() {                                      // l.1247–1248
-  const name = state.obName.trim() || 'Tomáš Novák';
-  return name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
-}
+const initials = () => initialsOf(state.obName.trim() || 'Tomáš Novák');   // the student's own avatar — l.1247–1248
 function obStep2() {                                       // l.123–162
   obEl.innerHTML = `
     <h2>Čo ti <b>ide?</b></h2>
@@ -1537,12 +1555,9 @@ function obStep3() {                                       // l.166–188
     <p class="desc" style="margin-bottom:30px">Ponuky uvidíš len podľa svojej reálnej dostupnosti.</p>
     <div class="hours-label" id="hours-label">${HOURS[state.obHours]}</div>
     ${availabilityEditor()}
-    <div style="margin-top:22px">${TERMS_HTML('obTerms')}</div>`;
-  obEl.onclick = e => {
-    const el = e.target.closest('button'); if (!el) return;
-    if (el.id === 'terms') { if (e.target.closest('a')) return; state.obTerms = !state.obTerms; render(); return; }   // the link opens the terms; it must not toggle
-    editorClick(el);
-  };
+    <div style="margin-top:22px">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`;
+  obEl.onclick = e => { const el = e.target.closest('button'); if (el && el.id !== 'terms') editorClick(el); };
+  bindTerms(obEl, 'obTerms');
   bindEditors();
 }
 
@@ -1625,7 +1640,7 @@ function bindEditors() {
   const photo = document.getElementById('p-photo');
   if (photo) photo.addEventListener('change', async e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
-    if (f.size > 5 * 1024 * 1024) { showToast('Fotka je príliš veľká (max. 5 MB).'); return; }
+    if (avatarTooBig(f)) { showToast(AVATAR_TOO_BIG); return; }
     try { await uploadAvatar(f); render(); showToast('Fotka uložená.'); } catch (err) { fail(err); }
   });
   const photoRm = document.getElementById('p-photo-remove');
@@ -1708,9 +1723,7 @@ async function registerCompany() {
       fields: state.fobFields, contact_name: state.fobContact.trim() });
     btn.disabled = false;
     if (c.error) { setErr('fob-err', c.error.message); return; }
-    if (state.fobLogoFile) { try { const url = await uploadLogo(state.fobLogoFile); await sb.from('companies').update({ logo_url: url }).eq('id', state.uid); } catch (e) { console.warn(e); } }
-    await verifyCompany();                                 // the company row exists now → RPO check sets `verified`
-    await enterApp({ ftab: 0 });
+    await finishCompanyReg();
     track('reg_done', { role: 'firm', via: 'google' });
     return;
   }
@@ -1726,16 +1739,15 @@ async function registerCompany() {
     return;
   }
   state.uid = data.user.id;
+  await finishCompanyReg();
+}
+async function finishCompanyReg() {                        // the company row exists now → logo, RPO check sets `verified`, open the app
   if (state.fobLogoFile) { try { const url = await uploadLogo(state.fobLogoFile); await sb.from('companies').update({ logo_url: url }).eq('id', state.uid); } catch (e) { console.warn(e); } }
   await verifyCompany();                                   // (with e-mail confirmation on, loadCompany() does this at first sign-in)
   await enterApp({ ftab: 0 });
 }
 function renderFob() {
-  document.getElementById('fob-no').textContent = state.fobStep;
-  [...document.getElementById('fob-dots').children].forEach((d, i) => d.classList.toggle('on', state.fobStep >= i + 1));
-  const next = document.getElementById('fob-next');
-  next.textContent = state.fobStep === 3 ? 'Vytvoriť firemný účet' : 'Pokračovať';
-  next.style.opacity = fobCanContinue() ? 1 : .45;
+  renderStepChrome('fob', state.fobStep, 'Vytvoriť firemný účet', fobCanContinue());
   if (state.fobStep === 1) fobStep1();
   if (state.fobStep === 2) fobStep2();
   if (state.fobStep === 3) fobStep3();
@@ -1801,15 +1813,11 @@ function fobStep3() {                                      // l.272–282
       ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
       <input class="input" id="fob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.fobPass)}" autocomplete="new-password">`}</div>
-    <button type="button" class="terms ${state.fobTerms ? 'on' : ''}" id="terms"><span class="box">${state.fobTerms ? '✓' : ''}</span>
-      <span class="txt">Súhlasím s <a href="podmienky.html" target="_blank" rel="noopener">Podmienkami používania</a>, beriem na vedomie <a href="ochrana-osobnych-udajov.html" target="_blank" rel="noopener">Ochranu osobných údajov</a> a potvrdzujem, že som oprávnený/á konať za túto firmu.</span></button>`;
+    ${TERMS_HTML('fobTerms', `Súhlasím s ${TERMS_LINK}, beriem na vedomie ${PRIVACY_LINK} a potvrdzujem, že som oprávnený/á konať za túto firmu.`)}`;
   const upd = () => { setErr('fob-err', ''); document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
   bindInput('fob-contact', 'fobContact');
   if (!state.oauth) { bindInput('fob-email', 'fobEmail', upd); bindInput('fob-pass', 'fobPass', upd); }
-  document.getElementById('terms').addEventListener('click', e => {
-    if (e.target.closest('a')) return;                     // the link opens the terms; it must not toggle the checkbox
-    state.fobTerms = !state.fobTerms; render();
-  });
+  bindTerms(fobEl, 'fobTerms');
   fobEl.onclick = null;
 }
 
