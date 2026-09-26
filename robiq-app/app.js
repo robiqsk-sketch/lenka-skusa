@@ -1676,8 +1676,13 @@ function fobCanContinue() {
 let rpoSeq = 0;
 async function rpoLookup(ico) {
   const seq = ++rpoSeq;
-  const { data, error } = await sb.rpc('rpo_lookup', { p_ico: ico });
-  if (seq !== rpoSeq) return null;                         // a newer lookup is running — ignore this one
+  let res;
+  for (let i = 0; i < 2; i++) {                            // the register is sometimes slow → one retry before "unavailable"
+    res = await sb.rpc('rpo_lookup', { p_ico: ico });
+    if (seq !== rpoSeq) return null;                       // a newer lookup is running — ignore this one
+    if (!res.error && res.data?.reason !== 'unavailable') break;
+  }
+  const { data, error } = res;
   state.fobRpo = error ? { ico, found: false, reason: 'unavailable' } : { ico, ...data };
   if (error) console.warn('rpo_lookup', error);
   return state.fobRpo;
