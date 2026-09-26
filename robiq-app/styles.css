@@ -243,8 +243,7 @@ h2 b { font-weight: 700; color: var(--accent); }
 .job .bar i { display: block; height: 100%; border-radius: 99px; background-color: var(--ink); }
 .job .tags { display: flex; gap: 6px; flex-wrap: wrap; }
 .job .tags span { font-size: 13px; font-weight: 500; padding: 5px 12px; border-radius: 99px; background: rgba(36,27,69,.06); color: var(--ink2); }
-.job .start { font-size: 13px; color: var(--ink2); margin-top: auto; }
-.job .start b { font-weight: 700; color: var(--ink); }
+.job .act, .job .sent { margin-top: auto; }               /* buttons sit at the bottom of the card */
 .job .act { display: flex; gap: 8px; }
 .job .like { flex: 1; background: var(--accent); color: #fff; border: none; border-radius: 11px; padding: 11px 0; font-size: 13px; font-weight: 700; cursor: pointer; }
 .job .like:hover { background: var(--accent-hi); }
@@ -437,9 +436,6 @@ h2 b { font-weight: 700; color: var(--accent); }
 .ai-sub { font-size: 13px; color: var(--ink2); margin-bottom: 10px; }
 .form-card textarea { width: 100%; background: var(--fill2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 15px; font-size: 13px; line-height: 1.55; color: var(--ink); font-family: 'Satoshi', sans-serif; resize: vertical; }
 .form-card textarea:focus { outline: none; border-color: var(--accent); }
-.tip { border: 1px dashed var(--line); border-radius: 14px; padding: 16px 18px; font-size: 13px; color: var(--ink2); line-height: 1.6; }
-.tip b { color: var(--accent); font-weight: 700; }
-.tip.r16 { border-radius: 16px; padding: 16px 20px; }
 .publish { background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 14px 0; font-size: 14.5px; font-weight: 700; cursor: pointer; }
 .publish:hover { background: var(--accent-hi); }
 
@@ -567,8 +563,6 @@ h2 b { font-weight: 700; color: var(--accent); }
 .dmodal .need { font-size: 13px; font-weight: 700; color: var(--ink); }
 .dmodal p { font-size: 14px; color: var(--ink2); line-height: 1.65; margin: 0 0 26px; }
 .dmodal .sec { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
-.dmodal .ice { display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px; }
-.dmodal .ice div { background: var(--fill3); border: 1px solid var(--fill); border-radius: 14px; padding: 14px 18px; font-size: 13px; line-height: 1.55; color: var(--ink2); }
 .dmodal .day { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 28px; }
 @media (max-width: 640px) { .dmodal .day { grid-template-columns: 1fr 1fr; } }
 .dmodal .day div {

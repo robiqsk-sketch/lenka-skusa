@@ -9,7 +9,7 @@ const sb = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
 const initialState = () => ({
   screen: 'app', authed: false, role: 'student', uid: null, pendingJob: null, gate: false, isAdmin: false,
   oauth: false, oauthEmail: '', oauthRole: null,           // signed in (Google) but registration unfinished → finish it in-app; oauthRole = role already chosen, if any
-  tab: 0, ftab: 0, loading: false, accMenu: false, notifOn: true, rowMenu: null,
+  tab: 0, ftab: 0, loading: false, accMenu: false, rowMenu: null,
   detail: null, toast: '', banner: false, bannerName: '', delIdx: null, delAccount: false, report: null,
   // feed (guest + student)
   postings: [], likedIds: [], skippedIds: [], blockedFirms: [],   // blockedFirms: company ids hidden by the student (table blocks)
@@ -90,13 +90,12 @@ const inReach = j => j.remote || !j.cityId || !state.cityId ? true : (() => {   
   const d = kmBetween(state.cityId, j.cityId); if (d === null) return true;
   return j.cityId === state.cityId || (state.commute === '15km' && d <= 15) || (state.commute === '30km' && d <= 30) || state.commute === 'any';
 })();
-const cityDatalist = () => `<datalist id="cities-dl">${CITIES.map(c => `<option value="${esc(c.name)}">${esc(c.district)}</option>`).join('')}</datalist>`;
 async function loadCities() {
   const { data, error } = await sb.from('cities').select('id, name, district, lat, lng').order('name');
   if (error) { console.warn('cities', error.message); return; }
   CITIES = data || [];
 }
-let loadT, toastT, bannerT, rt;
+let toastT, bannerT, rt;
 const avatarUrls = {};                                     // storage path → signed URL (bucket "avatars" is private)
 
 // ═══════════ Profile photos (private bucket) ═══════════
@@ -159,8 +158,8 @@ function jobFromRow(p) {                                   // posting row (+comp
   const c = p.companies || {};
   return {
     id: p.id, companyId: p.company_id, t: p.title, f: c.name || 'Firma', pay: p.pay + ' €', need: p.need, taken: p.taken,
-    posted: ago(p.created_at), start: p.start, lg: colorFor(c.name), logo: c.logo_url, ini: (c.name || 'F')[0].toUpperCase(),
-    badges: c.verified ? ['✓ Overená firma'] : [], tags: p.types || [], desc: p.description || '', ice: [], only18: p.only18,
+    posted: ago(p.created_at), lg: colorFor(c.name), logo: c.logo_url, ini: (c.name || 'F')[0].toUpperCase(),
+    badges: c.verified ? ['✓ Overená firma'] : [], tags: p.types || [], desc: p.description || '', only18: p.only18,
     legal: c.legal_name || '',                             // official name from the register — shown in the detail
     photos: p.photos || [], cityId: p.city_id || null, city: p.cities?.name || cityName(p.city_id), remote: !!p.remote, address: p.address || '',
   };
@@ -179,8 +178,7 @@ function shuffle(list) { return list.map(x => x.id).sort(() => Math.random() - .
 
 async function loadPostings() {
   const q = (sel) => sb.from('postings').select(sel).eq('active', true).order('created_at', { ascending: false });
-  let { data, error } = await q('*, companies(name, legal_name, verified, logo_url), cities(name)').eq('blocked', false);
-  if (error) ({ data, error } = await q('*, companies(name, verified, logo_url)'));   // DB migrations not applied yet (blocked / cities / legal_name) → feed still works
+  const { data, error } = await q('*, companies(name, legal_name, verified, logo_url), cities(name)').eq('blocked', false);
   if (error) throw error;
   state.postings = data.map(jobFromRow);
   if (!order.length) order = shuffle(state.postings);
@@ -228,7 +226,7 @@ function resumeOnboarding() {
 // Blocks (table `blocks`): the student hides a company, the company hides a student — kept across reloads.
 async function loadBlocks() {
   const { data, error } = await sb.from('blocks').select('target_id').eq('blocker_id', state.uid);
-  if (error) { console.warn('blocks', error.message); return []; }   // DB migration not applied yet → nothing blocked
+  if (error) { console.warn('blocks', error.message); return []; }
   return data.map(b => b.target_id);
 }
 async function setBlocked(targetId, on) {
@@ -377,11 +375,6 @@ async function onNewMatch(id) {                            // banner l.946–950
 }
 
 // ═══════════ Actions ═══════════
-function startLoad(ms) {                                   // skeleton while "loading" — l.1143–1147
-  clearTimeout(loadT);
-  state.loading = true; render();
-  loadT = setTimeout(() => { state.loading = false; render(); }, ms || 900);
-}
 function showToast(msg) {                                  // l.1148–1152
   clearTimeout(toastT);
   state.rowMenu = null; state.toast = msg; render();
@@ -492,7 +485,6 @@ const go = {
   menuHelp:    () => { state.accMenu = false; location.href = 'mailto:support@robiq.sk?subject=Robiq%20%E2%80%93%20pomoc'; },
   menuTerms:   () => { state.accMenu = false; window.open('podmienky.html', '_blank', 'noopener'); },
   menuStats:   () => { state.accMenu = false; location.href = 'admin.html'; },   // admin only — the session is shared, no second sign-in
-  menuNotif:   () => { state.notifOn = !state.notifOn; state.accMenu = true; },
   menuTheme:   () => { try { localStorage.setItem(THEME_KEY, isDarkTheme() ? 'light' : 'dark'); } catch {} applyTheme(); state.accMenu = true; track('theme', { dark: isDarkTheme() }); },
   logout: async () => {                                    // l.1506–1514: clean guest view
     clearTimeout(bannerT);
@@ -559,10 +551,7 @@ const go = {
       const rec = { company_id: state.uid, title: state.fT.trim(), pay: state.fPay.trim() || '8',
         need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote, description: state.fDesc.trim(),
         city_id: state.fRemote ? null : state.fCityId, remote: state.fRemote, address: state.fRemote ? '' : state.fAddress.trim() };
-      let { data: row, error } = await sb.from('postings').insert(rec).select('id').single();
-      if (error && (error.code === '42703' || error.code === 'PGRST204')) {   // DB migration (address) not applied yet → publish without it
-        delete rec.address; ({ data: row, error } = await sb.from('postings').insert(rec).select('id').single());
-      }
+      const { data: row, error } = await sb.from('postings').insert(rec).select('id').single();
       if (error) throw error;
       if (state.fPhotos.length) {                          // the row exists now → upload the photos under its id
         const urls = [];
@@ -747,8 +736,6 @@ function renderHeader() {                                  // l.342–372
     <div class="a-menu" data-go="menuToggle">
       <div class="name">${esc(menuName())}</div><hr>
       <button data-go="menuProfile"><span class="ic">◔</span>Môj profil</button>
-      <button class="notif" data-go="menuNotif"><span style="display:flex;align-items:center;gap:10px"><span class="ic">◇</span>Notifikácie</span>
-        <span class="st" style="color:${state.notifOn ? 'var(--ok)' : 'var(--muted)'}">${state.notifOn ? 'Zap.' : 'Vyp.'}</span></button>
       <button class="notif" data-go="menuTheme"><span style="display:flex;align-items:center;gap:10px"><span class="ic">◐</span>Tmavý režim</span>
         <span class="st" style="color:${isDarkTheme() ? 'var(--ok)' : 'var(--muted)'}">${isDarkTheme() ? 'Zap.' : 'Vyp.'}</span></button>
       <button data-go="menuHelp"><span class="ic">?</span>Pomoc a podpora</button>
@@ -855,7 +842,6 @@ function jobCard(j) {                                      // l.425–463
     <div class="pay">${esc(j.pay)} <small>/ hod</small></div>
     <div class="need"><span>${needTxt(j)}</span><span class="bar"><i style="width:${pct}%"></i></span></div>
     ${j.tags.length ? `<div class="tags">${j.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
-    <div class="start">Nástup <b>${esc(j.start)}</b></div>
     ${liked ? `<div class="sent">✓ Záujem odoslaný</div>` : `
     <div class="act"><button class="like" data-job="${j.id}" data-act="like">♥ Mám záujem</button>
       <button class="skip" aria-label="Preskočiť" data-job="${j.id}" data-act="skip">✕</button></div>`}
@@ -1166,11 +1152,9 @@ function fprofil() {
       <div class="p-stats">
         <div><div class="n">${S.active}</div><div class="l">aktívne inzeráty</div></div>
         <div><div class="n green">${S.m}</div><div class="l">zhody spolu</div></div>
-        <div><div class="n">~2 h</div><div class="l">čas odpovede</div></div>
       </div>
     </div>
     ${blockedCard(s.blocked, 'Zablokovaní <b>brigádnici</b>', 'nevidíte ich medzi kandidátmi', 'Odblokovať')}
-    <div class="tip r16"><b>Tip:</b> firmy s vyplneným profilom a fotkami majú o 40 % viac zhôd. Študent vidí profil pri každej vašej ponuke.</div>
   </div>`;
 }
 
@@ -1380,7 +1364,6 @@ function layers() {                                        // banner l.946, toas
     ${d.remote ? '' : d.address || d.city ? `<div class="addr">${esc([d.address, d.city].filter(Boolean).join(', '))}
       ${d.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([d.address, d.city].filter(Boolean).join(', '))}" target="_blank" rel="noopener">mapa ↗</a>` : ''}</div>` : ''}
     ${d.desc ? `<p>${esc(d.desc)}</p>` : ''}
-    ${d.ice.length ? `<div class="sec">Icebreakery</div><div class="ice">${d.ice.map(i => `<div>${esc(i)}</div>`).join('')}</div>` : ''}
     ${d.photos.length ? `<div class="sec">Deň v práci</div>
     <div class="day">${d.photos.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" class="ph" style="background-image:url('${esc(u)}')"></a>`).join('')}</div>` : ''}
     ${state.likedIds.includes(d.id) ? `<div class="sent">✓ Záujem odoslaný</div>` : `

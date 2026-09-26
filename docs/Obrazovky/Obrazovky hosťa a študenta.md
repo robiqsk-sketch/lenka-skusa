@@ -29,6 +29,6 @@ Zoznam zhôd a chat. Pri novej zhode banner **„Máte zhodu!"**. → [[Záujem,
 - **Skryté firmy** — zablokované firmy s tlačidlom „Zobraziť" (ukáže sa, len ak nejaké sú).
 
 ## Menu účtu (vpravo hore)
-Profil · notifikácie · svetlý/tmavý režim · pomoc (e-mail na support) · podmienky · **Štatistika** (len admin) · odhlásiť · **zmazať účet** → [[Zmazanie účtu]]
+Profil · svetlý/tmavý režim · pomoc (e-mail na support) · podmienky · **Štatistika** (len admin) · odhlásiť · **zmazať účet** → [[Zmazanie účtu]]
 
 Súvisí: [[Registrácia študenta]], [[Obrazovky firmy]]

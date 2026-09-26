@@ -537,6 +537,8 @@ end $$;
 
 revoke all on function public.rpo_lookup(text) from public;
 grant execute on function public.rpo_lookup(text) to anon, authenticated;
+-- Register občas odpovedá ~5 s; predvolený limit pre anon (3 s) by rpo_lookup zrušil skôr, než vyprší jej 6 s timeout.
+alter role anon set statement_timeout = '10s';
 
 create or replace function public.companies_guard_verified() returns trigger
 language plpgsql set search_path = public as $$

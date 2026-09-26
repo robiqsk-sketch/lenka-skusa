@@ -1,4 +1,4 @@
-# Cloudflare Pages: security headers for the whole site (same as netlify.toml had).
+# Cloudflare: security headers for the whole site.
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
