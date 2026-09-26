@@ -108,9 +108,9 @@
 
 <div class="wrap">
   <header class="top">
-    <p class="eyebrow">Aplikácia Robiq · Verzia 1.0</p>
+    <p class="eyebrow">Aplikácia Robiq · Verzia 1.1</p>
     <h1>Ochrana <b>osobných údajov</b></h1>
-    <p class="meta">Posledná aktualizácia 20. 9. 2026</p>
+    <p class="meta">Posledná aktualizácia 26. 9. 2026</p>
     <p class="lede">Tu nájdeš, aké údaje o tebe spracúvame, prečo, kto sa k nim dostane a ako ich máš pod kontrolou. Bez právnickej hmly — píšeme to tak, aby to dávalo zmysel.</p>
   </header>
 
@@ -187,7 +187,7 @@
 <p>Aj keď je firma právnická osoba, údaje o jej kontaktnej osobe (meno, e-mail) sú osobné údaje konkrétneho človeka a chránime ich rovnako. Ak je firmou živnostník, jeho meno, IČO a e-mail sú tiež osobné údaje.</p>
 <hr />
 <h2 id="sek-3-ake-udaje-spracuvame">3. Aké údaje spracúvame</h2>
-<p>Všetky údaje získavame <strong>priamo od teba</strong> – z registrácie, onboardingu, profilu a z toho, ako aplikáciu používaš. Nekupujeme údaje od tretích strán, nesťahujeme ich zo sociálnych sietí ani z verejných registrov.</p>
+<p>Všetky údaje získavame <strong>priamo od teba</strong> – z registrácie, onboardingu, profilu a z toho, ako aplikáciu používaš. Nekupujeme údaje od tretích strán a nesťahujeme ich zo sociálnych sietí. Z verejného registra získavame jedinú vec: <strong>oficiálny názov firmy</strong> podľa IČO, ktoré firma sama zadá (pozri 3.2). Ak sa prihlásiš cez Google, dostaneme od Googlu tvoj e-mail a meno (pozri 3.1).</p>
 <h3 id="sek-3-1-ak-si-brigadnik">3.1 Ak si brigádnik</h3>
 <p><strong>Pri registrácii (povinné):</strong></p>
 <ul>
@@ -195,7 +195,8 @@
 <li><strong>heslo</strong> – ukladá ho prihlasovacia služba Supabase Auth výlučne v podobe kryptografického odtlačku (hash). My tvoje heslo nikdy nevidíme a nevieme ho zistiť.</li>
 <li><strong>meno a priezvisko</strong></li>
 </ul>
-<p><strong>V onboardingu a v profile (dobrovoľné, môžeš ich kedykoľvek zmeniť alebo vymazať):</strong></p>
+<p><strong>Ak sa registruješ alebo prihlasuješ cez Google:</strong> heslo u nás nevzniká. Google overí, že účet je tvoj, a odovzdá nám tvoju e-mailovú adresu a meno, ktoré máš v Google účte. Nič iné (kontakty, fotky, históriu) od Googlu nedostávame.</p>
+<p><strong>V onboardingu a v profile</strong> (povinné sú len mesto a dátum narodenia; ostatné je dobrovoľné a môžeš to kedykoľvek zmeniť alebo vymazať):</p>
 <ul>
 <li><strong>zručnosti</strong> – čo vieš a na akej úrovni (Základy / Dobré / Top), pri jazykoch úroveň A1–C2. Vrátane vlastného textu, ktorý si sám doplníš do poľa „Niečo iné?“.</li>
 <li><strong>koľko hodín týždenne môžeš pracovať</strong></li>
@@ -216,6 +217,7 @@
 <li><strong>záujem firiem o teba</strong> – ktorá firma o teba prejavila záujem a kedy</li>
 <li><strong>zhody</strong> – kedy vznikla zhoda, s ktorou firmou a na ktorý inzerát</li>
 <li><strong>správy</strong> – celý obsah chatu so zhodnutou firmou</li>
+<li><strong>zablokované firmy</strong> – ak si firmu zablokuješ, uložíme, ktorú a kedy, aby sa ti jej ponuky už nezobrazovali. Vidíš to len ty, firma sa o tom nedozvie. Zablokovanie môžeš kedykoľvek zrušiť v Profile.</li>
 <li><strong>technické údaje účtu</strong> – čas vytvorenia účtu, časy prihlásení a IP adresa pri prihlásení. Tieto zaznamenáva prihlasovacia služba Supabase ako súčasť bezpečnostného protokolu.</li>
 <li><strong>technická kópia registračných údajov</strong> – prihlasovacia služba si popri profile drží aj kópiu údajov, ktoré si zadal pri registrácii a v onboardingu. Je to technické duplikovanie v rámci tej istej databázy, nie ďalší príjemca, a maže sa spolu s účtom.</li>
 </ul>
@@ -237,14 +239,17 @@
 <p><strong>V inzerátoch:</strong></p>
 <ul>
 <li>názov pozície, odmena, počet ľudí, typ práce, termín, popis – <strong>verejné</strong></li>
+<li><strong>adresa prevádzky</strong> (nepovinná) – <strong>verejná</strong>, zobrazuje sa v detaile inzerátu s odkazom na mapu</li>
+<li><strong>fotky „deň v práci“</strong> (nepovinné, najviac 3) – <strong>verejné</strong>: súbor je dostupný cez priamy odkaz aj bez prihlásenia. Ak sú na fotke ľudia (napríklad vaši zamestnanci), zodpovedáte za to, že s jej zverejnením súhlasia. Fotky dokladov, zmlúv či čohokoľvek s osobnými údajmi sem nepatria.</li>
 <li>príznak „Len 18+“</li>
 <li><strong>poznámka pre AI</strong> („Povedzte AI, koho hľadáte“) – voľný text, ktorý vidíte len vy. Dnes ho <strong>nespracúva žiadny AI systém</strong>, len sa ukladá. Ak to zmeníme, tento dokument aktualizujeme skôr, než AI zapneme (pozri kapitolu 9).</li>
-<li>počet zobrazení inzerátu, stav a čas vytvorenia</li>
+<li>počet zobrazení inzerátu (len číslo – neukladáme, kto inzerát otvoril), počet obsadených miest, stav a čas vytvorenia</li>
 </ul>
 <p><strong>Vzniká pri používaní aplikácie:</strong></p>
 <ul>
 <li>prejavené záujmy o konkrétnych brigádnikov, zhody, správy v chate, technické údaje účtu a technická kópia registračných údajov – rovnako ako pri brigádnikoch</li>
-<li><strong>príznak overenia firmy</strong> – pri registrácii a pri zmene IČO overíme, či firma s týmto IČO existuje v Registri právnických osôb (verejný register Štatistického úradu SR). Do registra sa posiela iba IČO; späť dostaneme názov, obec a to, či firma nie je zrušená. Ak sa IČO v registri nenájde alebo je firma zrušená, účet sa nedá vytvoriť.</li>
+<li><strong>zablokovaní brigádnici</strong> – ak brigádnika zablokujete, uložíme, koho a kedy, aby sa vám už nezobrazoval medzi kandidátmi ani v návrhoch. Brigádnik sa o tom nedozvie. Zablokovanie môžete zrušiť vo Firemnom profile.</li>
+<li><strong>príznak overenia firmy</strong> – pri registrácii a pri zmene IČO overíme, či firma s týmto IČO existuje v Registri právnických osôb (verejný register Štatistického úradu SR). Do registra sa posiela iba IČO; späť dostaneme názov, obec a to, či firma nie je zrušená. Ak sa IČO v registri nenájde alebo je firma zrušená, účet sa nedá vytvoriť. <strong>Oficiálny názov z registra</strong> si uložíme a zobrazujeme ho v detaile vašich inzerátov vedľa názvu, ktorý si zvolíte sami – aby brigádnik vedel, s kým má do činenia.</li>
 </ul>
 <h3 id="sek-3-3-ak-si-stranku-len-prezeras-bez-uctu">3.3 Ak si stránku len prezeráš bez účtu</h3>
 <p>Bez prihlásenia si môžeš pozrieť zoznam ponúk. <strong>Do našej databázy sa o tebe neuloží nič, čo by sa dalo spojiť s tebou</strong> – nevytvárame ti žiadny záznam, nesledujeme ťa, nemáme reklamné skripty ani analytiku tretích strán.</p>
@@ -256,6 +261,7 @@
 <li>bio brigádnika</li>
 <li>vlastné zručnosti („Niečo iné?“)</li>
 <li>popis firmy a poznámka pre AI</li>
+<li>poznámka k nahláseniu (3.6)</li>
 <li><strong>obsah správ v chate</strong></li>
 </ul>
 <p><strong>Nepýtame sa v nich na citlivé údaje a neprajeme si ich tam.</strong> Do voľných textov a do chatu nepíš údaje o svojom zdraví, o zdravotnom postihnutí, o náboženskom vyznaní, politických názoroch, členstve v odboroch, etnickom pôvode, sexuálnom živote ani rodné číslo, číslo občianskeho preukazu či platobnej karty. Sú to podľa čl. 9 GDPR osobitné kategórie údajov (alebo údaje s vysokým rizikom zneužitia) a Robiq ich zámerne nespracúva.</p>
@@ -264,6 +270,15 @@
 <h3 id="sek-3-5-co-o-tebe-nezbierame">3.5 Čo o tebe nezbierame</h3>
 <p>Telefónne číslo, adresu bydliska, rodné číslo, číslo dokladu, údaje o polohe, platobné údaje, údaje zo sociálnych sietí, cookies, analytiku správania viazanú na osobu ani žiadne údaje o zariadení nad rámec bežných serverových protokolov. (Súhrnné počty používania bez identifikátorov – pozri 3.3.)</p>
 <p>Ak niekedy pribudne pole, ktoré tu nie je uvedené (napríklad telefónne číslo), doplníme ho do tohto dokumentu <strong>skôr</strong>, než ho v aplikácii spustíme.</p>
+<h3 id="sek-3-6-nahlasenia">3.6 Nahlásenia</h3>
+<p>Každý – aj bez účtu – môže nahlásiť inzerát, firmu alebo brigádnika, ak mu niečo pripadá podozrivé alebo nevhodné (tlačidlo ⚑). Takto plníme povinnosť podľa čl. 16 nariadenia (EÚ) 2022/2065 o digitálnych službách (DSA). Pri nahlásení uložíme:</p>
+<ul>
+<li><strong>čo</strong> sa nahlasuje (inzerát, firma alebo brigádnik) a <strong>dôvod</strong> (podvod, nevhodný obsah, duplicita, iné)</li>
+<li><strong>poznámku</strong>, ak ju napíšeš – voľný text do 1000 znakov</li>
+<li><strong>kto</strong> nahlasuje – ak si prihlásený, tvoj účet; ak nie, nič</li>
+<li>čas, stav vybavenia a poznámku nášho správcu</li>
+</ul>
+<p>Nahlásenie vidí <strong>len prevádzkovateľ</strong>. Nahlásená firma ani brigádnik sa nedozvie, kto ju nahlásil. Ak nahlásenie vedie k pozastaveniu inzerátu, firma uvidí pri inzeráte dôvod pozastavenia.</p>
 <hr />
 <h2 id="sek-4-na-co-udaje-pouzivame-a-na-akom-pravnom-zaklade">4. Na čo údaje používame a na akom právnom základe</h2>
 <div class="tablewrap"><table>
@@ -314,14 +329,32 @@
 </tr>
 <tr>
 <td>7</td>
-<td><strong>Podpora a vybavovanie tvojich žiadostí</strong> (vrátane práv podľa kapitoly 12)</td>
+<td><strong>Podpora a vybavovanie tvojich žiadostí</strong> (vrátane práv podľa kapitoly 11)</td>
 <td>e-mail a údaje potrebné na vybavenie</td>
 <td>čl. 6 ods. 1 písm. c) GDPR – plnenie zákonnej povinnosti</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Zablokovanie</strong> – skrytie firmy (brigádnik) alebo brigádnika (firma)</td>
+<td>kto koho zablokoval a kedy</td>
+<td>čl. 6 ods. 1 písm. b) GDPR – funkcia služby, ktorú si si sám vyžiadal</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Vybavovanie nahlásení</strong> (DSA čl. 16) a moderovanie obsahu</td>
+<td>obsah nahlásenia, účet nahlasujúceho (ak je prihlásený), nahlásený obsah</td>
+<td>čl. 6 ods. 1 písm. c) GDPR – povinnosť podľa nariadenia (EÚ) 2022/2065; čl. 6 ods. 1 písm. f) GDPR – oprávnený záujem na bezpečnej službe</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Prihlásenie cez Google</strong> (ak ho použiješ)</td>
+<td>e-mail a meno z Google účtu</td>
+<td>čl. 6 ods. 1 písm. b) GDPR – plnenie zmluvy; spôsob prihlásenia si volíš sám</td>
 </tr>
 </tbody>
 </table></div>
 <p><strong>Čo nerobíme:</strong> neposielame newsletter z aplikácie, nerobíme marketingové profilovanie, nepredávame ani neposkytujeme údaje inzerentom mimo popísaných prípadov a nepoužívame údaje na trénovanie žiadneho AI modelu.</p>
-<p><strong>Ak niektorý údaj neposkytneš:</strong> e-mail, heslo a meno sú nevyhnutné na vznik účtu – bez nich sa registrovať nedá. Všetko ostatné je dobrovoľné; bez zručností a dostupnosti ťa však firmy ťažšie nájdu a bez dátumu narodenia neuvidíš inzeráty označené „Len 18+“.</p>
+<p><strong>Ak niektorý údaj neposkytneš:</strong> e-mail, heslo (alebo prihlásenie cez Google), meno, dátum narodenia a mesto sú nevyhnutné na vznik účtu brigádnika – bez nich sa registrovať nedá. Všetko ostatné je dobrovoľné; bez zručností a dostupnosti ťa však firmy ťažšie nájdu.</p>
 <hr />
 <h2 id="sek-5-kto-ktore-udaje-vidi">5. Kto ktoré údaje vidí</h2>
 <p>Prístup k údajom je vynútený priamo v databáze (pravidlá RLS – row level security), nie iba v rozhraní aplikácie.</p>
@@ -337,7 +370,7 @@
 </thead>
 <tbody>
 <tr>
-<td>Aktívne inzeráty, názov, popis a logo firmy</td>
+<td>Aktívne inzeráty (vrátane adresy prevádzky a fotiek „deň v práci“), názov, oficiálny názov z registra, popis a logo firmy</td>
 <td>áno</td>
 <td>áno</td>
 <td>áno</td>
@@ -400,6 +433,20 @@
 <td>áno</td>
 </tr>
 <tr>
+<td>Zablokovanie (kto koho zablokoval)</td>
+<td>nie</td>
+<td>len svoje</td>
+<td>len svoje</td>
+<td>áno</td>
+</tr>
+<tr>
+<td>Nahlásenia</td>
+<td>nie</td>
+<td>nie</td>
+<td>nie</td>
+<td>áno</td>
+</tr>
+<tr>
 <td>Heslo</td>
 <td>nie</td>
 <td>nie</td>
@@ -411,7 +458,7 @@
 <p>Dve veci stoja za zvýraznenie:</p>
 <ol>
 <li><strong>Firma sa k tvojmu profilu dostane až vtedy, keď ty sám klikneš „Mám záujem“ na jej inzerát.</strong> Dovtedy o tebe nevie nič. Kontrolu nad tým, kto ťa vidí, máš teda v ruke ty.</li>
-<li><strong>Firma nevidí tvoj dátum narodenia ani bio.</strong> Nie je to len sľub v texte – firma číta kandidátov cez databázový pohľad, ktorý tieto stĺpce vôbec neobsahuje, a k základnej tabuľke prístup nemá.</li>
+<li><strong>Firma nevidí tvoj dátum narodenia ani bio.</strong> Nie je to len sľub v texte – firma číta kandidátov cez databázovú funkciu, ktorá tieto údaje vôbec nevracia, a k základnej tabuľke prístup nemá.</li>
 </ol>
 <hr />
 <h2 id="sek-6-komu-udaje-odovzdavame">6. Komu údaje odovzdávame</h2>
@@ -431,9 +478,15 @@
 <td>všetky údaje uvedené v kapitole 3</td>
 <td>serverový región <strong>Central EU – Frankfurt, Nemecko</strong></td>
 </tr>
+<tr>
+<td><strong>Cloudflare, Inc.</strong> (USA) – hosting aplikácie (doručenie stránky do tvojho prehliadača)</td>
+<td>IP adresa, hlavičky prehliadača a technické záznamy o požiadavkách na stránku; žiadne údaje z tvojho účtu</td>
+<td>globálna sieť serverov – stránku doručí najbližší server, ktorý môže byť aj mimo EÚ</td>
+</tr>
 </tbody>
 </table></div>
 <p>So Supabase máme uzavretú zmluvu o spracúvaní osobných údajov (Data Processing Addendum) podľa čl. 28 GDPR. Databáza, prihlasovacia služba aj úložisko súborov bežia vo frankfurtskom regióne, teda v Európskej únii. Spoločnosť Supabase Inc. má sídlo v USA a v obmedzenom rozsahu (technická podpora, prevádzka infraštruktúry) môže mať k údajom prístup zo Spojených štátov. Takýto prenos je zabezpečený <strong>štandardnými zmluvnými doložkami</strong> schválenými Európskou komisiou podľa čl. 46 ods. 2 písm. c) GDPR, ktoré sú súčasťou uvedenej zmluvy. Kópiu týchto záruk ti na požiadanie pošleme na support@robiq.sk.</p>
+<p>S Cloudflare platí zmluva o spracúvaní osobných údajov (Data Processing Addendum), ktorá je súčasťou podmienok služby a obsahuje štandardné zmluvné doložky pre prenos mimo EÚ; Cloudflare je zároveň certifikovaný podľa rámca EÚ – USA pre ochranu údajov (Data Privacy Framework).</p>
 <h3 id="sek-dalsi-prijemcovia">Ďalší príjemcovia</h3>
 <div class="tablewrap"><table>
 <thead>
@@ -460,6 +513,11 @@
 <td>globálna sieť serverov; pri tomto poskytovateľovi nevieme vylúčiť, že obsah doručí server mimo EÚ</td>
 </tr>
 <tr>
+<td><strong>Google</strong> (Google Ireland Limited) – len ak použiješ „Pokračovať s Google“</td>
+<td>Google sa dozvie, že sa prihlasuješ do Robiqu; nám odovzdá tvoj e-mail a meno</td>
+<td>Google je pri tom samostatný prevádzkovateľ a riadi sa vlastnými zásadami ochrany súkromia. Ak Google používať nechceš, zaregistruj sa e-mailom a heslom.</td>
+</tr>
+<tr>
 <td><strong>Štatistický úrad SR</strong> – Register právnických osôb (verejné API)</td>
 <td>IČO firmy pri registrácii firemného účtu a pri zmene IČO</td>
 <td>slúži na overenie, že firma existuje; posiela ho náš server, nie tvoj prehliadač; IČO je verejný údaj o firme</td>
@@ -475,7 +533,13 @@
 <hr />
 <h2 id="sek-7-co-si-ukladame-do-tvojho-zariadenia">7. Čo si ukladáme do tvojho zariadenia</h2>
 <p><strong>Aplikácia Robiq nepoužíva cookies.</strong> Nemáme analytické skripty tretích strán ani reklamné skripty, nesledujeme, odkiaľ prichádzaš, a nespájame tvoje správanie naprieč webmi. Súhrnné počty používania (3.3) sa ukladajú bez akéhokoľvek identifikátora v tvojom zariadení.</p>
-<p>Do pamäte tvojho prehliadača (localStorage) ukladáme jedinú vec: <strong>prihlasovací token</strong>, vďaka ktorému zostaneš prihlásený a nemusíš zadávať heslo pri každom otvorení aplikácie. Je to podľa § 109 ods. 8 zákona č. 452/2021 Z. z. údaj nevyhnutne potrebný na poskytnutie služby, ktorú si výslovne vyžiadal, a preto naň nepotrebujeme tvoj súhlas. Token zmizne, keď sa odhlásiš alebo vymažeš údaje stránky v prehliadači.</p>
+<p>Do pamäte tvojho prehliadača (localStorage) ukladáme len tieto tri veci:</p>
+<ul>
+<li><strong>prihlasovací token</strong> – vďaka nemu zostaneš prihlásený a nemusíš zadávať heslo pri každom otvorení aplikácie; zmizne, keď sa odhlásiš</li>
+<li><strong>svetlý alebo tmavý režim</strong> – ak si ho sám prepneš v menu</li>
+<li><strong>že si už videl upozornenie v chate</strong> – aby sa ti nezobrazovalo stále dokola</li>
+</ul>
+<p>Ide podľa § 109 ods. 8 zákona č. 452/2021 Z. z. o údaje nevyhnutne potrebné na poskytnutie služby, ktorú si výslovne vyžiadal, a preto na ne nepotrebujeme tvoj súhlas. Neobsahujú nič, podľa čoho by sa dalo sledovať tvoje správanie. Všetky zmiznú, keď vymažeš údaje stránky v prehliadači.</p>
 <hr />
 <h2 id="sek-8-ako-dlho-udaje-uchovavame">8. Ako dlho údaje uchovávame</h2>
 <div class="tablewrap"><table>
@@ -487,12 +551,16 @@
 </thead>
 <tbody>
 <tr>
-<td>Účet, profil, profilová fotka, inzeráty, záujmy, zhody, správy, logo firmy</td>
+<td>Účet, profil, profilová fotka, inzeráty (aj s fotkami), záujmy, zhody, správy, zablokovania, logo firmy</td>
 <td>po celý čas, čo máš účet</td>
 </tr>
 <tr>
 <td>Všetko uvedené vyššie po zmazaní účtu</td>
 <td>okamžite sa maže z databázy; zo záložných kópií poskytovateľa sa odstráni najneskôr do 30 dní</td>
+</tr>
+<tr>
+<td>Nahlásenia</td>
+<td>kým ich vybavíme a potom najviac 1 rok, aby sme vedeli doložiť, ako sme nahlásenie riešili (DSA). Ak si nahlásenie podal a zmažeš účet, nahlásenie zostane, ale už bez väzby na teba.</td>
 </tr>
 <tr>
 <td>Protokoly prihlásení a IP adresy v systéme Supabase Auth</td>
@@ -509,7 +577,7 @@
 </tbody>
 </table></div>
 <h3 id="sek-zmazanie-uctu">Zmazanie účtu</h3>
-<p>Účet si môžeš <strong>zmazať sám kedykoľvek</strong>: menu účtu → <strong>Zmazať účet</strong> → potvrdenie. Zmaže sa účet, profil, profilová fotka, inzeráty, prejavené záujmy, zhody, správy aj logo firmy. Nepotrebuješ na to nás a nemusíš to nijako odôvodňovať.</p>
+<p>Účet si môžeš <strong>zmazať sám kedykoľvek</strong>: menu účtu → <strong>Zmazať účet</strong> → potvrdenie. Zmaže sa účet, profil, profilová fotka, inzeráty aj s fotkami, prejavené záujmy, zhody, správy, zablokovania aj logo firmy. Nepotrebuješ na to nás a nemusíš to nijako odôvodňovať.</p>
 <p>Ak sa do účtu neprihlásiš viac ako 24 mesiacov, môžeme ho po predchádzajúcom upozornení na tvoj e-mail zmazať, aby sme nedržali údaje, ktoré už nikto nepotrebuje.</p>
 <p><strong>Čo zmazanie účtu neovplyvní:</strong> správy, ktoré si už odoslal druhej strane, zostanú v jej schránke – rovnako ako pri e-maile. Rovnako nevieme zmazať údaje, ktoré si firme oznámil mimo Robiqu (napr. telefonicky alebo e-mailom); tam už je prevádzkovateľom daná firma a so žiadosťou sa treba obrátiť na ňu.</p>
 <hr />

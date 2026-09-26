@@ -25,6 +25,7 @@ Stav k: 23. 9. 2026.
 | **Prehliadač používateľa — localStorage** | prihlasovací token (session) Supabase, aby človek zostal prihlásený; voľba svetlý/tmavý režim; či už videl upozornenie v chate | — | zariadenie používateľa |
 | **Register právnických osôb (api.statistics.sk)** | pri registrácii firmy sa odošle **IČO** na overenie; vráti oficiálny názov a obec | Štatistický úrad SR | SR |
 | **Google (OAuth)** | ak sa používateľ prihlási cez Google: Google overí identitu a Supabase dostane e-mail a meno | Google | — |
+| **Cloudflare (hosting aplikácie)** | doručenie stránky; IP adresa, hlavičky prehliadača, technické záznamy požiadaviek — žiadne údaje z účtu | Cloudflare, Inc. (sprostredkovateľ) | globálna sieť |
 | **jsDelivr CDN** | načítanie knižnice supabase-js (pri načítaní stránky sa odošle IP adresa a hlavičky prehliadača) | jsDelivr (Prospect One) | globálna CDN |
 | **cdnfonts.com** | načítanie písiem Satoshi a Open Sauce One (rovnako IP adresa) | CDNFonts | globálna CDN |
 
