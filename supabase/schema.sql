@@ -170,6 +170,14 @@ create table public.messages (
 );
 create index messages_match_idx on public.messages (match_id, created_at);
 
+-- Blokovanie: študent skryje firmu, firma skryje brigádnika (trvalo, kým to nezruší)
+create table public.blocks (
+  blocker_id  uuid not null references public.profiles (id) on delete cascade,
+  target_id   uuid not null references public.profiles (id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  primary key (blocker_id, target_id)
+);
+
 -- ─────────────────────────── Trigger: zhoda ───────────────────────────
 
 create or replace function public.try_match(p_posting bigint, p_student uuid)
@@ -192,6 +200,18 @@ end $$;
 
 create trigger interests_match         after insert on public.interests         for each row execute function public.on_interest();
 create trigger company_interests_match after insert on public.company_interests for each row execute function public.on_interest();
+
+-- Obsadené miesta = počet zhôd na inzerát (max. need) — čiara na karte a „obsadené" v Inzerátoch firmy.
+create or replace function public.sync_taken() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare pid bigint := coalesce(new.posting_id, old.posting_id);
+begin
+  update postings set taken = least(need, (select count(*) from matches where posting_id = pid)) where id = pid;
+  return null;
+end $$;
+
+create trigger matches_sync_taken after insert or delete on public.matches
+  for each row execute function public.sync_taken();
 
 -- ─────────────────────────── Trigger: nový používateľ → profil ───────────────────────────
 -- Klient pri signUp pošle údaje z onboardingu v `options.data`; tu z nich vznikne profil.
@@ -311,6 +331,7 @@ alter table public.skips             enable row level security;
 alter table public.company_interests enable row level security;
 alter table public.matches           enable row level security;
 alter table public.messages          enable row level security;
+alter table public.blocks            enable row level security;
 
 -- profiles: len vlastný riadok
 create policy "profiles: own read"   on public.profiles for select using (auth.uid() = id);
@@ -349,6 +370,18 @@ create policy "matches: parties read" on public.matches for select using (studen
 -- messages: obe strany zhody čítajú a píšu
 create policy "messages: parties read"  on public.messages for select using (public.is_match_party(match_id));
 create policy "messages: parties write" on public.messages for insert with check (sender_id = auth.uid() and public.is_match_party(match_id));
+
+-- blocks: len ten, kto blokoval
+create policy "blocks: own" on public.blocks for all using (blocker_id = auth.uid()) with check (blocker_id = auth.uid());
+
+-- Zobrazenia inzerátu: +1 pri otvorení detailu (aj hosť); vlastné inzeráty firmy sa nepočítajú.
+create or replace function public.count_view(p_posting bigint) returns void
+language sql security definer set search_path = public as $$
+  update postings set views = views + 1
+  where id = p_posting and active and not blocked and company_id is distinct from auth.uid()
+$$;
+revoke all on function public.count_view(bigint) from public;
+grant execute on function public.count_view(bigint) to anon, authenticated;
 
 -- ─────────────────────────── Kandidáti pre firmy ───────────────────────────
 -- Firma vidí o študentovi len meno, zručnosti, hodiny a fotku — a len ak študent dal záujem o jej inzerát.

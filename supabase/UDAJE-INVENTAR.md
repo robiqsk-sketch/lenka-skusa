@@ -2,7 +2,7 @@
 
 Tento dokument popisuje **presne**, aké údaje aplikácia Robiq zbiera, kde ich ukladá, kto k nim má prístup a s akými tretími stranami pracuje. Vychádza z databázovej schémy (`schema.sql`) a z kódu aplikácie (`robiq-app/app.js`). Je určený ako vstup pre vypracovanie dokumentu „Ochrana osobných údajov" pre aplikáciu (nie pre waitlist na robiq.sk — ten má vlastný, jednoduchší dokument).
 
-Stav k: 20. 9. 2026.
+Stav k: 23. 9. 2026.
 
 ---
 
@@ -20,13 +20,15 @@ Stav k: 20. 9. 2026.
 |---|---|---|---|
 | **Supabase — databáza (PostgreSQL)** | všetky údaje z tabuliek nižšie | Supabase Inc. (sprostredkovateľ) | región **Central EU (Frankfurt, Nemecko)** |
 | **Supabase — Auth** | e-mail, heslo (uložené len ako hash, aplikácia ho nikdy nevidí), časy prihlásení, IP adresa pri prihlásení (systémový log Supabase) | Supabase | Frankfurt |
-| **Supabase — Storage** | logá firiem (obrázky), bucket `logos`, **verejne čitateľné** cez URL | Supabase | Frankfurt |
+| **Supabase — Storage** | logá firiem (bucket `logos`, **verejné**), fotky „deň v práci" pri inzerátoch (bucket `posting-photos`, **verejné**), profilové fotky brigádnikov (bucket `avatars`, **neverejné**) | Supabase | Frankfurt |
 | **Supabase — Realtime** | prenos nových správ a zhôd v reálnom čase (nič sa navyše neukladá) | Supabase | Frankfurt |
-| **Prehliadač používateľa — localStorage** | prihlasovací token (session) Supabase, aby človek zostal prihlásený | — | zariadenie používateľa |
+| **Prehliadač používateľa — localStorage** | prihlasovací token (session) Supabase, aby človek zostal prihlásený; voľba svetlý/tmavý režim; či už videl upozornenie v chate | — | zariadenie používateľa |
+| **Register právnických osôb (api.statistics.sk)** | pri registrácii firmy sa odošle **IČO** na overenie; vráti oficiálny názov a obec | Štatistický úrad SR | SR |
+| **Google (OAuth)** | ak sa používateľ prihlási cez Google: Google overí identitu a Supabase dostane e-mail a meno | Google | — |
 | **jsDelivr CDN** | načítanie knižnice supabase-js (pri načítaní stránky sa odošle IP adresa a hlavičky prehliadača) | jsDelivr (Prospect One) | globálna CDN |
 | **cdnfonts.com** | načítanie písiem Satoshi a Open Sauce One (rovnako IP adresa) | CDNFonts | globálna CDN |
 
-Aplikácia **nepoužíva** cookies, analytiku, reklamné skripty ani sledovanie.
+Aplikácia **nepoužíva** cookies, reklamné skripty ani sledovanie. Štatistika používania je anonymná (§3.13).
 
 ## 3. Údaje podľa tabuliek
 
@@ -55,31 +57,36 @@ Vzniká pri registrácii študenta aj firmy.
 | `hours` | onboarding krok 3 / profil | nie | koľko hodín týždenne môže pracovať (4 stupne) |
 | `avail_days` | onboarding / profil | nie | dni v týždni |
 | `avail_times` | onboarding / profil | nie | časy dňa (ráno, poobede, večer, nočné) |
-| `birth` | onboarding krok 1 | **áno** | **dátum narodenia** — vek 16+ (DB trigger), inzeráty „Len 18+" sa mladším neukazujú; po nastavení nemenný |
+| `birth` | onboarding krok 1 | **áno** | **dátum narodenia** — vek 16+ (kontroluje appka aj DB trigger), inzeráty „Len 18+" sa mladším neukazujú; po nastavení nemenný |
 | `city_id`, `commute` | onboarding krok 3 / profil | **áno** (mesto) | mesto z pevného zoznamu `cities` + dochádzanie (city / 15km / 30km / any); vzdialenosť sa počíta v DB medzi mestami, bez GPS používateľa; mesto vidí firma v anonymných návrhoch a po záujme |
 | `bio` | profil → Upraviť | nie | voľný text do 240 znakov — **môže obsahovať čokoľvek**, čo človek napíše (škola, záľuby…) |
+| `avatar_path` | onboarding krok 1 / profil | nie | **profilová fotka** v neverejnom bucket-e `avatars`; vidí ju študent a firma, o ktorej inzerát študent prejavil záujem (podpísané URL) |
 | `updated_at` | systém | | |
-
-Profilová fotka: tlačidlo „Nahrať fotku" v onboardingu **zatiaľ nič nenahráva** (nie je implementované).
 
 ### 3.4 `companies` — profil firmy
 | Údaj | Odkiaľ | Povinný | Poznámka |
 |---|---|---|---|
 | `name` | registrácia krok 1 | áno | názov firmy — **verejne viditeľný** (na kartách ponúk aj pre hostí) |
-| `ico` | registrácia krok 1 | nie | IČO |
+| `ico` | registrácia krok 1 | áno | IČO — overuje sa v Registri právnických osôb |
+| `legal_name` | Register právnických osôb | | oficiálny názov firmy — zobrazuje sa v detaile inzerátu |
 | `fields` | registrácia krok 2 | áno | odvetvia |
 | `contact_name` | registrácia krok 3 | nie | **meno kontaktnej osoby** (fyzická osoba) |
 | `description` | firemný profil | nie | voľný text o firme — verejne viditeľný |
 | `logo_url` | firemný profil / registrácia | nie | odkaz na logo v Storage — **verejne dostupný súbor** |
-| `verified` | systém (zatiaľ vždy `false`, overenie podľa IČO nie je implementované) | | |
+| `city_id` | firemný profil | nie | sídlo firmy (mesto) |
+| `verified` | systém — `true`, ak IČO existuje v Registri právnických osôb a firma nezanikla; môže nastaviť aj admin | | |
 
 ### 3.5 `postings` — inzeráty firmy
 | Údaj | Poznámka |
 |---|---|
-| `title`, `pay`, `need`, `taken`, `types`, `start`, `description` | obsah inzerátu — **verejný** (vidí ho aj hosť) |
+| `title`, `pay`, `need`, `types`, `start`, `description` | obsah inzerátu — **verejný** (vidí ho aj hosť) |
+| `city_id`, `remote`, `address` | miesto výkonu (mesto, na diaľku, adresa prevádzky) — **verejné** |
+| `photos` | fotky „deň v práci" (max. 3) — **verejné** súbory; môžu na nich byť ľudia |
+| `taken` | počet obsadených miest — počíta sa automaticky zo zhôd |
 | `only18` | či je inzerát len pre 18+ |
 | `ai_note` | voľný text firmy „Povedzte AI, koho hľadáte" — **môže obsahovať požiadavky na osobu** (napr. jazyk, skúsenosti); vidí ho len firma; zatiaľ sa nespracúva žiadnou AI |
-| `active`, `views`, `created_at` | stav a štatistika |
+| `active`, `blocked`, `block_reason`, `created_at` | stav; `blocked` = pozastavené Robiqom (admin) s dôvodom |
+| `views` | počet otvorení detailu (bez údajov o tom, kto ho otvoril) |
 
 ### 3.6 `interests` — „Mám záujem" (študent → inzerát)
 Kto (študent), o čo (inzerát), kedy. **Vidí študent (svoje) a firma, ktorej inzerát to je.**
@@ -102,12 +109,25 @@ Vznikne automaticky (databázový trigger), keď existuje záujem z oboch strán
 
 Vidia len obe strany danej zhody. Prevádzkovateľ má k správam technický prístup ako správca databázy.
 
+### 3.11 `blocks` — zablokovanie
+Kto (študent alebo firma) koho zablokoval a kedy. Študent si tak skryje firmu, firma brigádnika. Vidí a ruší ho len ten, kto blokoval; druhá strana sa o tom nedozvie.
+
+### 3.12 `reports` — nahlásenia (DSA čl. 16)
+Kto nahlásil (ID používateľa, pri hosťovi nič), čo (inzerát / firmu / brigádnika), dôvod, **voľný text poznámky** (do 1000 znakov), stav a poznámka admina. Vidí len admin.
+
+### 3.13 `events` — štatistika používania
+Len názov udalosti (napr. návšteva, otvorenie detailu, krok registrácie), rola (hosť/študent/firma), malé doplnkové údaje (napr. dôvod neúspešnej registrácie) a čas. **Žiadne ID používateľa, relácie, IP ani cookies.** Vidí len admin.
+
+### 3.14 `admins`
+E-maily správcov, ktorí vidia štatistiku a nahlásenia.
+
 ## 4. Kto čo vidí (podľa RLS politík v schéme)
 
 | Údaj | Hosť | Študent | Firma | Prevádzkovateľ |
 |---|---|---|---|---|
 | inzeráty (aktívne) + názov, popis a logo firmy | **áno** | áno | áno | áno |
-| profil študenta (meno, zručnosti, hodiny, dostupnosť) | nie | len svoj | **len študentov, ktorí dali záujem o jej inzerát** | áno |
+| profil študenta (meno, zručnosti, hodiny, mesto, fotka) | nie | len svoj | **len študentov, ktorí dali záujem o jej inzerát** | áno |
+| anonymný návrh študenta (zručnosti, hodiny, dostupnosť, mesto/vzdialenosť, skóre — **bez mena a fotky**) | nie | — | pre svoje inzeráty | áno |
 | dátum narodenia, bio študenta | nie | len svoj | **nie** (funkcia `candidate_profiles` ich nevracia) | áno |
 | IČO, kontaktná osoba firmy | nie | nie | len svoja | áno |
 | záujmy študenta | nie | svoje | len na svoje inzeráty | áno |
@@ -126,19 +146,19 @@ Zatiaľ **nie**: marketing, newsletter (ten rieši waitlist), profilovanie, auto
 
 ## 6. Na čo upozorniť pri písaní dokumentu
 
-- **Vek:** aplikácia je pre študentov, môžu sa registrovať aj **osoby mladšie ako 18** (inzeráty pre nich filtruje pole `only18`). Podľa GDPR (čl. 8) a slovenského zákona treba riešiť súhlas zákonného zástupcu pri deťoch **do 16 rokov**. Aplikácia dnes vek pri registrácii nekontroluje — dátum narodenia je nepovinný a zadáva sa až v profile.
+- **Vek:** aplikácia je pre študentov, môžu sa registrovať aj **osoby mladšie ako 18** (inzeráty pre nich filtruje pole `only18`). Dátum narodenia je pri registrácii **povinný** a registrácia mladších ako **16 rokov** sa nepustí (appka aj databáza).
 - **Voľné texty** (`bio`, `skills` vlastné položky, `ai_note`, `messages.body`) môžu obsahovať citlivé údaje, ak ich tam človek sám napíše. Dokument by mal používateľov upozorniť, aby do nich nepísali citlivé informácie, a určiť, ako sa s nimi zaobchádza.
 - **Verejné údaje firmy:** názov, popis a logo firmy sú verejné bez prihlásenia. Meno kontaktnej osoby verejné nie je.
 - **Prístup firmy k profilu študenta** je podmienený tým, že študent sám klikol „Mám záujem" na jej inzerát — to je vhodný právny základ (plnenie zmluvy / oprávnený záujem) a dá sa to v dokumente jasne opísať.
-- **Bio a dátum narodenia firma nevidí** — technicky zaručené: firma číta kandidátov len cez funkciu `candidate_profiles` (meno, zručnosti, hodiny, fotka), priamo k tabuľke `students` prístup nemá.
-- **Uchovávanie a zmazanie účtu:** schéma nemá automatické mazanie podľa času. Používateľ si **môže účet zmazať sám** (menu účtu → Zmazať účet, s potvrdením) — zmaže sa účet, profil, inzeráty, záujmy, zhody, správy aj logo firmy. Nič sa neuchováva po zmazaní okrem systémových logov poskytovateľa.
+- **Bio a dátum narodenia firma nevidí** — technicky zaručené: firma číta kandidátov len cez funkciu `candidate_profiles` (meno, zručnosti, hodiny, fotka, mesto), priamo k tabuľke `students` prístup nemá.
+- **Uchovávanie a zmazanie účtu:** schéma nemá automatické mazanie podľa času. Používateľ si **môže účet zmazať sám** (menu účtu → Zmazať účet, s potvrdením) — zmaže sa účet, profil, inzeráty, záujmy, zhody, správy, zablokovania, profilová fotka, logo aj fotky inzerátov firmy. Nahlásenia, ktoré človek podal, zostanú bez väzby na neho (`reporter_id` sa vynuluje). Nič sa neuchováva po zmazaní okrem systémových logov poskytovateľa.
 - **Export údajov (prenosnosť):** nie je v aplikácii; riešiť na žiadosť.
 - **Tretie strany mimo EÚ:** jsDelivr a cdnfonts sú globálne CDN — pri načítaní stránky im prehliadač odošle IP adresu. Ak to má byť čisto EÚ, dá sa knižnica aj písma hostovať priamo v aplikácii (jednoduchá úprava).
 - **Bezpečnosť:** prístup k dátam riadia RLS politiky v databáze (každý riadok má pravidlo, kto ho smie čítať/meniť); heslá hashuje Supabase Auth; prenos je cez HTTPS; verejný `anon` kľúč v kóde je určený na tento účel a sám o sebe prístup k údajom nedáva.
 
 ## 7. Čo aplikácia NEZBIERA
 
-Telefónne číslo študenta ani firmy (pole neexistuje), adresu, fotografiu študenta (nie je implementované), údaje o polohe, platobné údaje, údaje zo sociálnych sietí, cookies, analytiku správania, údaje o zariadení nad rámec bežných HTTP logov poskytovateľa.
+Telefónne číslo študenta ani firmy (pole neexistuje), adresu študenta, presnú polohu (GPS) — len mesto z pevného zoznamu, platobné údaje, údaje zo sociálnych sietí, cookies, analytiku správania, údaje o zariadení nad rámec bežných HTTP logov poskytovateľa.
 
 ---
 

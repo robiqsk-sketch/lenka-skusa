@@ -12,7 +12,8 @@ const initialState = () => ({
   tab: 0, ftab: 0, loading: false, accMenu: false, notifOn: true, rowMenu: null,
   detail: null, toast: '', banner: false, bannerName: '', delIdx: null, delAccount: false, report: null,
   // feed (guest + student)
-  postings: [], likedIds: [], skippedIds: [], blockedFirms: [],
+  postings: [], likedIds: [], skippedIds: [], blockedFirms: [],   // blockedFirms: company ids hidden by the student (table blocks)
+  blockNames: {},                                          // blocked id → name, for the „Odblokovať“ list in the profile
   // student
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   profEdit: false, birth: '', bio: '', obTerms: false,
@@ -164,6 +165,16 @@ function jobFromRow(p) {                                   // posting row (+comp
     photos: p.photos || [], cityId: p.city_id || null, city: p.cities?.name || cityName(p.city_id), remote: !!p.remote, address: p.address || '',
   };
 }
+// Posting detail: counts a view (postings.views) once per posting and page load.
+const viewedIds = new Set();
+function openDetail(j) {
+  state.detail = j;
+  if (!j) return;
+  track('detail_open');
+  if (viewedIds.has(j.id)) return;
+  viewedIds.add(j.id);
+  sb.rpc('count_view', { p_posting: j.id }).then(({ error }) => { if (error) console.warn('count_view', error.message); });
+}
 function shuffle(list) { return list.map(x => x.id).sort(() => Math.random() - .5); }
 
 async function loadPostings() {
@@ -214,13 +225,32 @@ function resumeOnboarding() {
   if (state.screen === 'ob' && obCanContinue()) state.obStep = 2;   // name + birth already known → straight to skills
 }
 
+// Blocks (table `blocks`): the student hides a company, the company hides a student — kept across reloads.
+async function loadBlocks() {
+  const { data, error } = await sb.from('blocks').select('target_id').eq('blocker_id', state.uid);
+  if (error) { console.warn('blocks', error.message); return []; }   // DB migration not applied yet → nothing blocked
+  return data.map(b => b.target_id);
+}
+async function setBlocked(targetId, on) {
+  const q = on ? sb.from('blocks').insert({ blocker_id: state.uid, target_id: targetId })
+               : sb.from('blocks').delete().eq('blocker_id', state.uid).eq('target_id', targetId);
+  const { error } = await q;
+  if (error && error.code !== '23505') console.warn('blocks', error.message);   // 23505 = already blocked
+}
+
 async function loadStudent() {
-  const [{ data: s }, { data: ints }, { data: skips }, { data: invites }] = await Promise.all([
+  const [{ data: s }, { data: ints }, { data: skips }, { data: invites }, blocks] = await Promise.all([
     sb.from('students').select('*').eq('id', state.uid).single(),
     sb.from('interests').select('posting_id, postings(id, title, pay, companies(name, logo_url))').eq('student_id', state.uid),
     sb.from('skips').select('posting_id').eq('student_id', state.uid),
     sb.from('company_interests').select('posting_id').eq('student_id', state.uid),
+    loadBlocks(),
   ]);
+  state.blockedFirms = blocks;
+  if (blocks.length) {                                     // names for the „Skryté firmy“ list (companies are public)
+    const { data: cs } = await sb.from('companies').select('id, name').in('id', blocks);
+    for (const c of cs || []) state.blockNames[c.id] = c.name;
+  }
   state.invitedPostingIds = (invites || []).map(x => x.posting_id);
   if (s) Object.assign(state, { obName: s.name, obSkills: s.skills || [], obHours: s.hours, availDays: s.avail_days || [],
     availTimes: s.avail_times || [], birth: s.birth || '', bio: s.bio || '', avatarPath: s.avatar_path || null, cityId: s.city_id || null, commute: s.commute || '30km' });
@@ -234,11 +264,13 @@ async function loadStudent() {
 }
 
 async function loadCompany() {
-  const [{ data: c }, { data: posts }, { data: cints }] = await Promise.all([
+  const [{ data: c }, { data: posts }, { data: cints }, blocks] = await Promise.all([
     sb.from('companies').select('*').eq('id', state.uid).single(),
     sb.from('postings').select('*, interests(count), matches(count)').eq('company_id', state.uid).order('created_at', { ascending: false }),
     sb.from('company_interests').select('student_id, posting_id').eq('company_id', state.uid),
+    loadBlocks(),
   ]);
+  state.blocked = blocks;
   if (c) Object.assign(state, { fpName: c.name, fpLegal: c.legal_name || '', fpDesc: c.description || '', fpLogo: c.logo_url || '', fpIco: c.ico || '', fpVerified: c.verified, fpCityId: c.city_id || null });
   // Not verified yet (e-mail confirmation, register was down…), or verified before the official name was
   // stored at all (older accounts) → ask the register again.
@@ -248,6 +280,7 @@ async function loadCompany() {
     blocked: !!p.blocked, blockReason: p.block_reason || '', photos: p.photos || [] }));   // blocked by Robiq (admin) — the company cannot lift it
   state.contacted = (cints || []).map(x => x.student_id + ':' + x.posting_id);
   await loadCandidates();
+  for (const c of state.candidates) if (state.blocked.includes(c.id)) state.blockNames[c.id] = c.n;
   await loadSuggestions();
   await loadMatches();
 }
@@ -257,7 +290,7 @@ async function loadSuggestions() {
   state.suggestions = {};
   await Promise.all(state.offers.filter(o => o.on && !o.blocked).map(async o => {
     const { data } = await sb.rpc('suggest_candidates', { p_posting: o.id });
-    state.suggestions[o.id] = (data || []).filter(r => !r.interested);   // those who already liked are in Brigádnici with a name
+    state.suggestions[o.id] = (data || []).filter(r => !r.interested && !state.blocked.includes(r.student_id));   // those who already liked are in Brigádnici with a name
   }));
 }
 
@@ -326,6 +359,7 @@ function subscribe() {
       if (!isStudent() || ci.student_id !== state.uid || state.invitedPostingIds.includes(ci.posting_id)) return;
       state.invitedPostingIds.push(ci.posting_id);
       const j = state.postings.find(p => p.id === ci.posting_id);
+      if (j && state.blockedFirms.includes(j.companyId)) return;   // hidden company — no toast
       showToast(j ? `${j.f} ťa oslovila: ${j.t}` : 'Firma ťa oslovila — pozri Objavuj.');
     })
     .subscribe();
@@ -474,7 +508,7 @@ const go = {
   resetDeck: async () => {
     try { await sb.from('skips').delete().eq('student_id', state.uid); state.skippedIds = []; } catch (e) { fail(e); }
   },
-  aiOpen:      () => { state.detail = aiJob(); },
+  aiOpen:      () => { openDetail(aiJob()); },
   closeDetail: () => { state.detail = null; },
   detailLike:  () => { const j = state.detail; state.detail = null; if (j) act(j, 'like'); },
   detailSkip:  () => { const j = state.detail; state.detail = null; if (j) act(j, 'skip'); },
@@ -553,6 +587,13 @@ const go = {
         const bucket = isStudent() ? 'avatars' : 'logos';
         const { data: files } = await sb.storage.from(bucket).list(state.uid);
         if (files && files.length) await sb.storage.from(bucket).remove(files.map(f => `${state.uid}/${f.name}`));
+      }
+      if (!isStudent()) {                                  // company: photos of all postings, <uid>/<posting_id>/<file>
+        const { data: dirs } = await sb.storage.from('posting-photos').list(state.uid);
+        for (const dir of dirs || []) {
+          const { data: files } = await sb.storage.from('posting-photos').list(`${state.uid}/${dir.name}`);
+          if (files?.length) await sb.storage.from('posting-photos').remove(files.map(f => `${state.uid}/${dir.name}/${f.name}`));
+        }
       }
       const { error } = await sb.rpc('delete_my_account');
       if (error) throw error;
@@ -754,7 +795,7 @@ function remaining() {                                     // l.1243–1245
   const adult = isAdult();
   const inv = id => state.invitedPostingIds.includes(id) ? 1 : 0, near = j => inReach(j) ? 1 : 0;
   return state.postings
-    .filter(j => !state.skippedIds.includes(j.id) && !state.blockedFirms.includes(j.f) && (!j.only18 || adult))
+    .filter(j => !state.skippedIds.includes(j.id) && !state.blockedFirms.includes(j.companyId) && (!j.only18 || adult))
     .sort(state.authed ? (a, b) => (inv(b) - inv(a)) || (near(b) - near(a)) || (b.id - a.id)   // invitations, then within reach, then newest
                        : (a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 }
@@ -874,6 +915,18 @@ function profile() {                                       // l.515–635
           <span class="st" style="background:${it.stBg};color:${it.stFg}">${it.status}</span></div>`).join('')}</div>`
       : `<div class="p-empty">Zatiaľ žiadne. Prejdi na <b>Objavuj</b> a označ ponuky, ktoré ťa zaujali.</div>`}
     </div>
+    ${blockedCard(s.blockedFirms, 'Skryté <b>firmy</b>', 'ich ponuky nevidíš', 'Zobraziť')}
+  </div>`;
+}
+
+// Blocked companies (student) / students (company) with a button to undo it; hidden when the list is empty.
+function blockedCard(ids, title, sub, btn) {
+  if (!ids.length) return '';
+  return `<div class="pcard sm blocked-card">
+    <div class="p-int-head"><div class="t">${title}</div><span class="s">${sub}</span></div>
+    <div class="p-int">${ids.map(id => `
+      <div class="p-int-row"><div style="flex:1;min-width:0"><div class="t">${esc(state.blockNames[id] || (isStudent() ? 'Firma' : 'Brigádnik'))}</div></div>
+        <button class="p-edit" data-unblock="${esc(id)}" data-act="unblock">${btn}</button></div>`).join('')}</div>
   </div>`;
 }
 
@@ -1116,6 +1169,7 @@ function fprofil() {
         <div><div class="n">~2 h</div><div class="l">čas odpovede</div></div>
       </div>
     </div>
+    ${blockedCard(s.blocked, 'Zablokovaní <b>brigádnici</b>', 'nevidíte ich medzi kandidátmi', 'Odblokovať')}
     <div class="tip r16"><b>Tip:</b> firmy s vyplneným profilom a fotkami majú o 40 % viac zhôd. Študent vidí profil pri každej vašej ponuke.</div>
   </div>`;
 }
@@ -1173,21 +1227,37 @@ document.getElementById('a-main').addEventListener('click', async e => {
   if (!el) return;
   const d = el.dataset, a = d.act;
 
+  if (d.unblock && a === 'unblock') {
+    const list = isStudent() ? state.blockedFirms : state.blocked;
+    if (list.includes(d.unblock)) list.splice(list.indexOf(d.unblock), 1);
+    render(); showToast(isStudent() ? 'Firmu zase uvidíš vo feede.' : 'Brigádnik je odblokovaný.');
+    await setBlocked(d.unblock, false);
+    if (!isStudent()) { await loadSuggestions(); render(); }
+    return;
+  }
   if (d.job) {
     const j = state.postings.find(x => x.id === +d.job);
-    if (a === 'open')   { state.detail = j; render(); track('detail_open'); }
+    if (a === 'open')   { openDetail(j); render(); }
     if (a === 'like')   act(j, 'like');
     if (a === 'skip')   act(j, 'skip');
     if (a === 'menu')   { state.rowMenu = state.rowMenu === 'j' + j.id ? null : 'j' + j.id; render(); }
     if (a === 'report') { state.rowMenu = null; state.report = { type: 'posting', id: String(j.id), label: `${j.t} — ${j.f}`, reason: 'scam', note: '' }; render(); }
-    if (a === 'block')  { state.blockedFirms.push(j.f); showToast('Firmu sme skryli z tvojho feedu.'); }
+    if (a === 'block')  {
+      state.rowMenu = null; if (!state.blockedFirms.includes(j.companyId)) state.blockedFirms.push(j.companyId); state.blockNames[j.companyId] = j.f;
+      showToast('Firmu sme skryli z tvojho feedu. Vrátiť ju môžeš v Profile.');
+      await setBlocked(j.companyId, true);
+    }
   }
   else if (d.cand) {
     const [sid, pid] = d.cand.split(':');
     const c = state.candidates.find(x => x.id === sid && x.postingId === +pid);
     if (a === 'menu')   { state.rowMenu = state.rowMenu === 'c' + d.cand ? null : 'c' + d.cand; render(); }
-    if (a === 'report') { state.rowMenu = null; state.report = { type: 'student', id: sid, label: c?.name || 'Brigádnik', reason: 'inappropriate', note: '' }; render(); }
-    if (a === 'block')  { state.blocked.push(sid); showToast('Profil zablokovaný.'); }
+    if (a === 'report') { state.rowMenu = null; state.report = { type: 'student', id: sid, label: c?.n || 'Brigádnik', reason: 'inappropriate', note: '' }; render(); }
+    if (a === 'block')  {
+      state.rowMenu = null; if (!state.blocked.includes(sid)) state.blocked.push(sid); state.blockNames[sid] = c?.n || 'Brigádnik';
+      showToast('Profil zablokovaný. Odblokovať ho môžete vo Firemnom profile.');
+      await setBlocked(sid, true);
+    }
     if (a === 'contact') {
       try {
         const { error } = await sb.from('company_interests').insert({ company_id: state.uid, student_id: sid, posting_id: +pid });
@@ -1215,9 +1285,20 @@ document.getElementById('a-main').addEventListener('click', async e => {
       if (a === 'menu')   { state.rowMenu = state.rowMenu === 'o' + i ? null : 'o' + i; render(); }
       if (a === 'dup')    {
         const { data: src } = await sb.from('postings').select('*').eq('id', o.id).single();
-        const { error } = await sb.from('postings').insert({ company_id: state.uid, title: src.title + ' (kópia)', pay: src.pay, need: src.need,
-          types: src.types, only18: src.only18, ai_note: src.ai_note, description: src.description, start: src.start });
+        const { data: row, error } = await sb.from('postings').insert({ company_id: state.uid, title: src.title + ' (kópia)', pay: src.pay, need: src.need,
+          types: src.types, only18: src.only18, ai_note: src.ai_note, description: src.description, start: src.start,
+          city_id: src.city_id, remote: src.remote, address: src.address || '' }).select('id').single();
         if (error) throw error;
+        if ((src.photos || []).length) {                   // own copies of the photos — deleting one posting must not break the other
+          const urls = [];
+          for (const [n, url] of src.photos.entries()) {
+            const from = photoPath(url), to = `${state.uid}/${row.id}/${Date.now()}-${n}.${from.split('.').pop()}`;
+            const { error: e } = await sb.storage.from('posting-photos').copy(from, to);
+            if (e) { console.warn('photo copy', e.message); continue; }
+            urls.push(sb.storage.from('posting-photos').getPublicUrl(to).data.publicUrl);
+          }
+          if (urls.length) await sb.from('postings').update({ photos: urls }).eq('id', row.id);
+        }
         await loadCompany(); await loadPostings(); showToast('Inzerát zduplikovaný.');
       }
       if (a === 'askDel') { state.rowMenu = null; state.delIdx = i; render(); }

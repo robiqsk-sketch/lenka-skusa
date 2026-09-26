@@ -1,0 +1,9 @@
+// Cloudflare Workers Builds (projekt „robiq"): nasadzuje statické súbory z robiq-app/ — bez build kroku.
+// Bezpečnostné hlavičky sú v robiq-app/_headers.
+{
+  "name": "robiq",
+  "compatibility_date": "2026-09-21",
+  "assets": {
+    "directory": "./robiq-app"
+  }
+}
