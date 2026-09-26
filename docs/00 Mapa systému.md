@@ -11,7 +11,7 @@ Toto je vstupná stránka — odtiaľto sa dá preklikať všade.
 > poznámky naň len odkazujú. Ako s nimi pracovať: [[Ako pracovať s poznámkami]].
 
 ## Systém jednou vetou
-Statická webová appka (HTML + JS, bez build kroku) beží na **Cloudflare Pages** a všetky dáta, prihlásenie,
+Statická webová appka (HTML + JS, bez build kroku) beží na **Cloudflare** a všetky dáta, prihlásenie,
 súbory a realtime chat má v **Supabase** (Frankfurt). Pravidlá „kto čo smie" sú priamo v databáze (RLS).
 
 ```mermaid
