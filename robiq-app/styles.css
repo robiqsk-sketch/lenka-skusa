@@ -212,12 +212,13 @@ h2 b { font-weight: 700; color: var(--accent); }
 @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
 .job {
   background: var(--card); border: 1px solid var(--line2); box-shadow: 0 12px 34px -12px var(--shadow);
-  border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 14px; color: var(--ink);
+  border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; color: var(--ink);
   transition: border-color .2s, box-shadow .2s;
 }
 .job:hover { border-color: rgba(124,108,224,.5); box-shadow: 0 16px 40px -20px rgba(91,33,182,.25); }
-.job .top { display: flex; align-items: flex-start; gap: 8px; }
-.job .posted { font-size: var(--text-sm); font-weight: 500; color: var(--ink2); }
+/* meta line: place · posted on the left, ⋯ menu on the right */
+.job .meta { display: flex; align-items: center; gap: 8px; min-height: 28px; margin: -4px 0; font-size: var(--text-sm); color: var(--muted); }
+.job .meta > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .job .more { margin-left: auto; position: relative; }
 .dots-btn {
   width: 28px; height: 28px; border: none; border-radius: 9px; background: transparent; color: var(--muted); font-size: var(--text-md); line-height: 1;
@@ -232,16 +233,17 @@ h2 b { font-weight: 700; color: var(--accent); }
 .row-menu button:hover { background: rgba(36,27,69,.06); }
 .row-menu button.danger { color: #B4232A; }
 .row-menu button.danger:hover { background: rgba(180,35,42,.08); }
-.job .who { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; margin-top: -8px; }
+.job .who { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+.job .name { flex: 1; min-width: 0; }
+.job .f .ok { color: var(--ok); font-weight: 700; font-size: var(--text-sm); white-space: nowrap; }
 .job .lg { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: var(--text-lg); color: #fff; flex-shrink: 0; }
 .job .t { font-size: var(--text-lg); font-weight: 700; line-height: 1.25; }
 .job .f { font-size: var(--text-base); font-weight: 500; color: var(--ink); margin-top: 2px; }
-.job .rat { font-size: var(--text-sm); color: var(--ink); margin-top: 3px; }
-.job .pay { font-size: var(--text-xl); font-weight: 700; color: var(--ink); white-space: nowrap; }
-.job .pay small { font-size: var(--text-sm); color: var(--ink2); font-weight: 400; }
-.job .need { display: flex; align-items: center; gap: 10px; font-size: var(--text-sm); color: var(--ink2); }
+.job .pay { font-size: var(--text-xl); font-weight: 700; color: var(--ink); white-space: nowrap; text-align: right; line-height: 1.1; }
+.job .pay small { display: block; font-size: var(--text-xs); color: var(--muted); font-weight: 500; }
+.job .need { display: flex; align-items: center; gap: 10px; font-size: var(--text-xs); color: var(--muted); }
 .job .need span:first-child { white-space: nowrap; }
-.job .bar { flex: 1; height: 4px; border-radius: 99px; background: var(--line); overflow: hidden; display: block; }
+.job .bar { flex: 1; height: 3px; border-radius: 99px; background: var(--line); overflow: hidden; display: block; }
 .job .bar i { display: block; height: 100%; border-radius: 99px; background-color: var(--accent); }   /* app colour — black competed with the price and the button */
 .job .tags { display: flex; gap: 6px; flex-wrap: wrap; }
 .job .tags span { font-size: var(--text-sm); font-weight: 500; padding: 5px 12px; border-radius: 99px; background: rgba(36,27,69,.06); color: var(--ink2); }
@@ -257,6 +259,17 @@ h2 b { font-weight: 700; color: var(--accent); }
 .deck-empty .h { font-size: var(--text-xl); font-weight: 700; color: var(--ink); }
 .deck-empty .h b { font-weight: 700; color: var(--accent); }
 .deck-empty p { font-size: var(--text-sm); color: var(--ink2); margin: 0; max-width: 32ch; }
+/* Feed filter chips — one row; on phones it scrolls sideways instead of wrapping */
+.filters { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.filters::-webkit-scrollbar { display: none; }
+.filters button {
+  flex-shrink: 0; min-height: 36px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line2); background: var(--card);
+  color: var(--ink2); font-size: var(--text-sm); font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, color .15s;
+}
+.filters button:hover { border-color: var(--accent); }
+.filters button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filters button.clear { border-color: transparent; background: transparent; color: var(--accent); }
+@media (max-width: 640px) { .filters { margin: 0 -16px 14px; padding: 0 16px; } }   /* chips run to the screen edge */
 .deck-empty button { background: transparent; color: var(--ink2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 22px; font-size: var(--text-sm); cursor: pointer; }
 .deck-empty button:hover { color: var(--ink); border-color: var(--accent); }
 

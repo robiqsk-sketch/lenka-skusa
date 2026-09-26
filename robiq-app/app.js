@@ -13,6 +13,7 @@ const initialState = () => ({
   detail: null, toast: '', banner: false, bannerName: '', delIdx: null, delAccount: false, report: null,
   // feed (guest + student)
   postings: [], likedIds: [], skippedIds: [], blockedFirms: [],   // blockedFirms: company ids hidden by the student (table blocks)
+  filters: [],                                             // feed filter chips: 'near' and/or posting types (TYPES)
   blockNames: {},                                          // blocked id → name, for the „Odblokovať“ list in the profile
   // student
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
@@ -790,11 +791,27 @@ function remaining() {                                     // l.1243–1245
   const adult = isAdult();
   const inv = id => state.invitedPostingIds.includes(id) ? 1 : 0, near = j => inReach(j) ? 1 : 0;
   return state.postings
-    .filter(j => !state.skippedIds.includes(j.id) && !state.blockedFirms.includes(j.companyId) && (!j.only18 || adult))
+    .filter(j => !state.skippedIds.includes(j.id) && !state.blockedFirms.includes(j.companyId) && (!j.only18 || adult) && matchesFilters(j))
     .sort(state.authed ? (a, b) => (inv(b) - inv(a)) || (near(b) - near(a)) || (b.id - a.id)   // invitations, then within reach, then newest
                        : (a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 }
 function aiJob() { return remaining().find(j => !state.likedIds.includes(j.id)) || null; }
+
+// Feed filters: "V mojom okolí" (student with a city) AND any of the chosen types ("Víkendy" or "Remote" …).
+const canFilterNear = () => state.authed && isStudent() && !!state.cityId;
+function matchesFilters(j) {
+  const f = state.filters;
+  if (f.includes('near') && canFilterNear() && !inReach(j)) return false;
+  const types = f.filter(x => x !== 'near');
+  return !types.length || types.some(t => j.tags.includes(t) || (t === 'Remote' && j.remote));
+}
+function filterBar() {
+  const chips = [...(canFilterNear() ? [['near', 'V mojom okolí']] : []), ...TYPES.map(t => [t, t])];
+  return `<div class="filters" role="group" aria-label="Filtre">
+    ${chips.map(([k, l]) => `<button type="button" class="${state.filters.includes(k) ? 'on' : ''}" data-act="filter" data-f="${esc(k)}" aria-pressed="${state.filters.includes(k)}">${esc(l)}</button>`).join('')}
+    ${state.filters.length ? '<button type="button" class="clear" data-act="filter-clear">Zrušiť</button>' : ''}
+  </div>`;
+}
 
 function feed() {                                          // l.408–475
   const list = remaining();
@@ -807,7 +824,12 @@ function feed() {                                          // l.408–475
         <div><div class="t">${esc(ai.t)}</div><div class="f">${esc(ai.f)} · <b>${esc(ai.pay)}/hod</b></div></div></div>
       <button data-go="aiOpen">Pozrieť detail</button>
     </div>`;
-  const cards = list.length ? `<div class="cards">${list.map(jobCard).join('')}</div>` : `
+  const cards = list.length ? `<div class="cards">${list.map(jobCard).join('')}</div>` : state.filters.length ? `
+    <div class="deck-empty">
+      <div class="h">Na tieto filtre <b>nič nesedí</b></div>
+      <p>Skús ubrať niektorý filter — ostatné ponuky na teba počkajú.</p>
+      <button data-act="filter-clear">Zrušiť filtre</button>
+    </div>` : `
     <div class="deck-empty">
       <div class="h">Na dnes si videl <b>všetko</b></div>
       <p>Robiq medzitým aktívne hľadá ďalšie ponuky, ktoré ti sadnú. Vráť sa večer.</p>
@@ -818,7 +840,7 @@ function feed() {                                          // l.408–475
       <button data-go="goProfileEdit">Doplniť</button></div>` : '';
   return `<div class="a-wrap">
     <div class="a-title"><h2>Ponuky <b>pre teba</b></h2></div>
-    ${noCity}${tip}${cards}</div>`;
+    ${noCity}${state.postings.length ? filterBar() : ''}${tip}${cards}</div>`;
 }
 
 // "Trnava" · "Na diaľku" · "Trnava · 12 km od teba" (student with a city)
@@ -838,16 +860,18 @@ function jobCard(j) {                                      // l.425–463
       <button class="danger" data-job="${j.id}" data-act="block">Zablokovať firmu</button>
     </div>`;
   const invited = state.invitedPostingIds.includes(j.id) && !liked;
+  // Compact layout: logo · title/company · pay in one row, then one quiet meta line (place · posted · ⋯), occupancy as a thin bar.
+  const meta = [placeTxt(j), j.posted].filter(Boolean).map(esc).join(' · ');
   return `<div class="job ${invited ? 'invited' : ''}">
     ${invited ? `<div class="invite-badge">✦ Firma ťa oslovila — sedíš na túto pozíciu</div>` : ''}
-    <div class="top"><div class="posted">${esc(j.posted)}</div>
-      <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-job="${j.id}" data-act="menu">⋯</button>${menu}</div></div>
     <div class="who" data-job="${j.id}" data-act="open">
       <div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
-      <div style="flex:1;min-width:0"><div class="t">${esc(j.t)}</div><div class="f">${esc(j.f)}${placeTxt(j) ? ` · ${esc(placeTxt(j))}` : ''}</div>
-        ${j.badges.length ? `<div class="rat"><b>${esc(j.badges[0])}</b></div>` : ''}</div>
+      <div class="name"><div class="t">${esc(j.t)}</div>
+        <div class="f">${esc(j.f)}${j.badges.length ? ` <span class="ok">✓ overená</span>` : ''}</div></div>
+      <div class="pay">${esc(j.pay)}<small>/ hod</small></div>
     </div>
-    <div class="pay">${esc(j.pay)} <small>/ hod</small></div>
+    <div class="meta"><span>${meta}</span>
+      <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-job="${j.id}" data-act="menu">⋯</button>${menu}</div></div>
     <div class="need"><span>${needTxt(j)}</span><span class="bar"><i style="width:${pct}%"></i></span></div>
     ${j.tags.length ? `<div class="tags">${j.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
     ${liked ? `<div class="sent">✓ Záujem odoslaný</div>` : `
@@ -1292,6 +1316,8 @@ document.getElementById('a-main').addEventListener('click', async e => {
       if (a === 'photos') { state.rowMenu = null; state.photoEdit = { offerId: o.id, title: o.t, photos: [...o.photos] }; render(); }
     } catch (err) { fail(err); }
   }
+  else if (a === 'filter') { toggleInList(state.filters, d.f); render(); track('filter', { f: d.f, on: state.filters.includes(d.f) }); }
+  else if (a === 'filter-clear') { state.filters = []; render(); }
   else if (a === 'type') { toggleInList(state.fTypes, d.type); render(); }
   else if (a === 'remote') { state.fRemote = !state.fRemote; if (state.fRemote && !state.fTypes.includes('Remote')) state.fTypes.push('Remote'); render(); }
   else if (a === 'fphoto-rm') {                            // new posting form: remove a preview

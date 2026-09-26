@@ -18,6 +18,7 @@ Zámerne **anonymná**: ukladá sa len názov udalosti, rola (hosť/študent/fir
 | `login`, `login_google_click`, `password_reset_sent` | prihlasovanie |
 | `report` | odoslané nahlásenie |
 | `theme` | prepnutie svetlý/tmavý režim |
+| `filter` | zapnutie/vypnutie filtra nad ponukami (ktorý filter, zap./vyp.) |
 
 Čítať ju vie len admin cez `analytics_summary(dni)` → [[Admin panel]] (záložka Štatistika).
 Okrem udalostí ukazuje aj počty z tabuliek: noví študenti a firmy, inzeráty, záujmy, zhody, správy.

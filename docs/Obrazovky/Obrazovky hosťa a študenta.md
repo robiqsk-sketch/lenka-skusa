@@ -9,7 +9,8 @@ tags: [robiq, obrazovky, študent]
 Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 
 ## Objavuj (`feed`)
-- Nadpis „Ponuky **pre teba**", karty inzerátov: firma, mesto (a vzdialenosť), plat/hod, typy, obsadenosť miest (čiara = počet zhôd / počet ľudí), „✓ Overená firma".
+- Nadpis „Ponuky **pre teba**", pod ním rad **filtrov**: „V mojom okolí" (len študent s mestom) a typy brigády (Víkendy, Poobede…). Vybrané typy platia ako „aspoň jeden z nich", okolie navyše; „Zrušiť" ich vypne. Filtre sa neukladajú — po obnovení stránky sú preč.
+- Kompaktné karty inzerátov: logo, názov, firma s „✓ overená" a plat/hod vpravo hore; pod tým mesto (a vzdialenosť) · kedy pridané · menu ⋯; obsadenosť miest (čiara = počet zhôd / počet ľudí), typy.
 - Otvorenie detailu sa započíta do zobrazení inzerátu.
 - Tlačidlá **Mám záujem** / **Preskočiť**; klik na kartu = **detail** (popis, fotky „deň v práci", adresa s odkazom na mapu, oficiálny názov firmy, nahlásenie).
 - Po 2 prezretých kartách sa hore ukáže tip **„✦ Toto by ti sedelo"** (prvý inzerát, o ktorý ešte nedal záujem).
