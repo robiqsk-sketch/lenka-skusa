@@ -30,6 +30,7 @@ Každá zmena sa zároveň zapíše ako samostatná migrácia `supabase/migratio
 | 22. 9. | `legal-name` | oficiálny názov z registra oddelený od zobrazovaného | |
 | 22. 9. | `vodicsky-preukaz` | premenovanie zručnosti „Vodičák B" → „Vodičský preukaz B" | |
 | 23. 9. | `fixes` | počítanie zobrazení (`count_view`), obsadené miesta zo zhôd (`sync_taken`), tabuľka `blocks` | [[Otvorené otázky a nezrovnalosti]] |
+| 27. 9. | `email-notify` | `profiles.email_notify` + `set_email_notify` — prepínač e-mailových upozornení v menu účtu | [[Upozornenia]] |
 | 27. 9. | `push` | upozornenia: tabuľka `push_subscriptions`, `notified_at` pri správach a zhodách, `notify_secret` (trezor) | [[Upozornenia]] |
 | 27. 9. | `advisors` | interné funkcie (triggery) nedostupné zvonka, 10 indexov, pravidlá prístupu s `(select auth.uid())` — rýchlejšie, kto čo vidí sa nemení | [[Prístupy a bezpečnosť (RLS)]] |
 | 26. 9. | `rpo-timeout` | limit príkazu pre neprihlásených (anon) 3 s → 10 s, aby pomalý register nekončil „nedostupný" | [[Registrácia firmy a overenie IČO]] |

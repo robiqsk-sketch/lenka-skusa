@@ -883,3 +883,12 @@ $$;
 revoke execute on function public.notify_secret(text) from public, anon, authenticated;
 grant  execute on function public.notify_secret(text) to service_role;
 -- Kľúče sa vkladajú ručne (nie v gite): select vault.create_secret('<kľúč>', 'vapid_private');
+
+-- Prepínač e-mailových upozornení (menu účtu → E-maily). profiles nemá pravidlo na úpravu → mení sa len cez funkciu.
+alter table public.profiles add column if not exists email_notify boolean not null default true;
+create or replace function public.set_email_notify(p_on boolean) returns void
+language sql security definer set search_path = public as $$
+  update profiles set email_notify = p_on where id = auth.uid();
+$$;
+revoke execute on function public.set_email_notify(boolean) from public, anon;
+grant  execute on function public.set_email_notify(boolean) to authenticated;

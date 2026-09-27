@@ -9,7 +9,7 @@ const sb = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
 const initialState = () => ({
   screen: 'app', authed: false, role: 'student', uid: null, pendingJob: null, gate: false, isAdmin: false,
   oauth: false, oauthEmail: '', oauthRole: null,           // signed in (Google) but registration unfinished → finish it in-app; oauthRole = role already chosen, if any
-  tab: 0, ftab: 0, loading: false, accMenu: false, rowMenu: null,
+  tab: 0, ftab: 0, loading: false, accMenu: false, rowMenu: null, emailNotify: true,   // emailNotify: e-mail on new match / message
   detail: null, toast: '', banner: false, bannerName: '', delIdx: null, delAccount: false, report: null,
   // feed (guest + student)
   postings: [], likedIds: [], skippedIds: [], blockedFirms: [],   // blockedFirms: company ids hidden by the student (table blocks)
@@ -253,7 +253,8 @@ async function loadMe() {                                  // who is signed in, 
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { state.authed = false; state.uid = null; return; }
   state.uid = session.user.id;
-  const { data: prof } = await sb.from('profiles').select('role').eq('id', state.uid).maybeSingle();
+  const { data: prof } = await sb.from('profiles').select('role, email_notify').eq('id', state.uid).maybeSingle();
+  state.emailNotify = prof?.email_notify !== false;        // menu → E-maily (the `notify` function checks it too)
   // The account exists but the registration is not finished — Google sign-in without a profile, or a profile
   // whose onboarding was interrupted (no student/company row, student without skills). The app stays locked
   // and the user finishes the steps (name, skills, time) first.
@@ -571,6 +572,12 @@ const go = {
   goTab:       el => switchTab(+el.dataset.tab),          // top-bar tabs on desktop
   menuPush:    async () => { state.accMenu = false; if (pushOn) { await disablePush(); showToast('Upozornenia sú vypnuté.'); track('push', { on: false }); } else await enablePush(); },
   pushOn:      () => enablePush(),                        // the nudge above the feed / candidates
+  menuEmail:   async () => {                              // e-mail notifications on / off (stored with the account)
+    state.accMenu = true; const on = !state.emailNotify;
+    const { error } = await sb.rpc('set_email_notify', { p_on: on });
+    if (error) { fail(error); return; }
+    state.emailNotify = on; showToast(on ? 'E-mailové upozornenia sú zapnuté.' : 'E-mailové upozornenia sú vypnuté.'); track('email_notify', { on });
+  },
   pushNudgeClose: () => { try { localStorage.setItem(PUSH_NUDGE_KEY, '1'); } catch {} },
   // gate — l.1444–1446
   gateClose:   () => { state.gate = false; state.pendingJob = null; },
@@ -817,6 +824,8 @@ function renderHeader() {                                  // l.342–372
       <button data-go="menuProfile">${icon('user', 16)}Môj profil</button>
       <button class="notif" data-go="menuPush"><span style="display:flex;align-items:center;gap:10px">${icon('message', 16)}Upozornenia</span>
         <span class="st" style="color:${pushOn ? 'var(--ok)' : 'var(--muted)'}">${pushOn ? 'Zap.' : 'Vyp.'}</span></button>
+      <button class="notif" data-go="menuEmail"><span style="display:flex;align-items:center;gap:10px">${icon('mail', 16)}E-maily</span>
+        <span class="st" style="color:${state.emailNotify ? 'var(--ok)' : 'var(--muted)'}">${state.emailNotify ? 'Zap.' : 'Vyp.'}</span></button>
       <button class="notif" data-go="menuTheme"><span style="display:flex;align-items:center;gap:10px">${icon('moon', 16)}Tmavý režim</span>
         <span class="st" style="color:${isDarkTheme() ? 'var(--ok)' : 'var(--muted)'}">${isDarkTheme() ? 'Zap.' : 'Vyp.'}</span></button>
       <button data-go="menuHelp">${icon('help', 16)}Pomoc a podpora</button>

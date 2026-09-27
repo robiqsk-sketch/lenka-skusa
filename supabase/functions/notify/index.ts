@@ -2,7 +2,8 @@
 // Volá ju appka odosielateľa hneď po odoslaní správy / po vzniku zhody: { message_id } alebo { match_id }.
 // Overí, že volajúci je naozaj účastník a že ide o čerstvý záznam, „zaberie" ho (notified_at), aby
 // upozornenie neodišlo dvakrát, a pošle push na všetky zariadenia príjemcu. E-mail ide cez Brevo,
-// len ak je v trezore kľúč `brevo_api_key` (je od 27. 9. 2026) — pri zhode vždy, pri správe len keď príjemca nemá push.
+// len ak je v trezore kľúč `brevo_api_key` (je od 27. 9. 2026) a príjemca nemá e-maily vypnuté (profiles.email_notify)
+// — pri zhode vždy, pri správe len keď príjemca nemá push.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 
@@ -77,7 +78,8 @@ Deno.serve(async (req) => {
   // ─── e-mail via Brevo (only once a Brevo key is in the vault; sender must be verified in Brevo) ───
   let emailed = false;
   const { data: brevoKey } = await db.rpc("notify_secret", { p_name: "brevo_api_key" });
-  if (brevoKey && (kind === "match" || pushed === 0)) {
+  const { data: pref } = await db.from("profiles").select("email_notify").eq("id", recipient).maybeSingle();
+  if (brevoKey && pref?.email_notify !== false && (kind === "match" || pushed === 0)) {   // menu → E-maily Vyp. = no e-mail
     const { data: { user: to } } = await db.auth.admin.getUserById(recipient);
     if (to?.email) {
       const r = await fetch("https://api.brevo.com/v3/smtp/email", {
