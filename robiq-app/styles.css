@@ -132,7 +132,8 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 #a-main + .a-footer { margin-top: auto; }
 /* Installed on a phone (standalone), the page runs under the status bar / notch — keep content and the sticky bar below it. */
 .a-content { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
-#scr-login, #scr-pick, #scr-ob, #scr-fob { padding-top: calc(28px + env(safe-area-inset-top, 0px)); padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+/* Rules further down that set `padding` again must keep these env() insets — otherwise the Dynamic Island covers the top bar in the home-screen app */
+#scr-login, #scr-reset, #scr-pick, #scr-ob, #scr-fob { padding-top: calc(28px + env(safe-area-inset-top, 0px)); padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
 
 .a-hdr {
   position: relative; z-index: 30; width: 100%; max-width: 1040px; margin: 0 auto 20px; height: 60px;   /* prototype: 64px */
@@ -638,7 +639,7 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 
 /* Mobile — l.43–55 */
 @media (max-width: 640px) {
-  .a-content { padding: 12px 16px 100px; }
+  .a-content { padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 100px; }   /* keep clear of the notch / Dynamic Island */
   .a-hdr { padding: 0 8px 0 14px; gap: 8px; }
   .a-guest { gap: 6px; }
   .a-pill, .a-pill-ghost { padding: 0 12px; }
@@ -647,11 +648,11 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 .a-pill, .a-pill-ghost { white-space: nowrap; }
 
 /* ═══════════ LOGIN — l.59–94 ═══════════ */
-#scr-login { position: relative; overflow: hidden; background: #F0EFF5; padding: 28px; }
+#scr-login { position: relative; overflow: hidden; background: #F0EFF5; padding: calc(28px + env(safe-area-inset-top, 0px)) 28px calc(28px + env(safe-area-inset-bottom, 0px)); }
 /* Phones: the dark panel fills the whole screen (no light frame, no rounded corners); page background goes dark too
    so Safari's bars and overscroll match — see html.dark below and the theme-color switch in app.js. */
 @media (max-width: 640px) {
-  #scr-login { background: #120d2b; padding: 24px 16px; min-height: 100vh; min-height: 100dvh; }
+  #scr-login { background: #120d2b; padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)); min-height: 100vh; min-height: 100dvh; }
   #scr-login .panel { inset: 0; border-radius: 0; }
   #scr-login .login-card { -webkit-mask: none; mask: none; }   /* concave sides only make sense inside the framed panel */
 }
@@ -691,7 +692,7 @@ html.dark, html.dark body { background: #120d2b; }
 .oauth-note b { color: var(--ink); }
 
 /* ═══════════ PICK — l.199–228 ═══════════ */
-#scr-pick { padding: 40px 24px; }
+#scr-pick { padding: calc(40px + env(safe-area-inset-top, 0px)) 24px calc(40px + env(safe-area-inset-bottom, 0px)); }
 #scr-pick .card { padding-bottom: 32px; }
 #scr-pick .logo span { font-size: var(--text-2xl); letter-spacing: 0; }
 #scr-pick .tagline { margin-bottom: 26px; }
