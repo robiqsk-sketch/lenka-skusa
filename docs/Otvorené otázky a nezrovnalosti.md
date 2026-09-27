@@ -11,12 +11,13 @@ Sem si zapisuj veci, ktoré nesedia alebo treba doriešiť. Keď sa niečo vyrie
 - [ ] **Nástup brigády** — firma ho pri inzeráte nevie zadať (v databáze je všade „ihneď"), preto sa na kartách zatiaľ nezobrazuje. Ak ho chceme ukazovať, treba pridať pole do formulára Nový inzerát.
 - [ ] **Notifikácie** — appka zatiaľ žiadne neposiela (prepínač v menu bol len atrapa, odstránený 26. 9.).
 - [ ] **Ochrana pred uniknutými heslami** — zapnúť ručne v Supabase → Authentication → Settings (kontrola hesiel cez HaveIBeenPwned).
-- [ ] **E-mailové upozornenia** — kód je hotový (cez Brevo), chýba účet v Brevo + overená doména robiq.sk + kľúč v trezore. Postup: [[Upozornenia]]. Pred zapnutím doplniť Brevo do dokumentu o ochrane údajov.
+- [ ] **Vypnutie e-mailových upozornení v appke** — dnes chodia každému (pri zhode; pri správe bez push). Kto ich nechce, musí napísať na support. Pridať prepínač do menu účtu (a stĺpec v profile).
 - [ ] V Supabase → Edge Functions zmazať nepotrebnú testovaciu funkciu **`notify-selftest`** (je vypnutá, len vracia 410).
 
 ## Vyriešené 27. 9. 2026
 - [x] **Push upozornenia** na novú zhodu a správu (aj keď appka nie je otvorená) → [[Upozornenia]]. Dokument o ochrane údajov doplnený (3.1, 4, 5, 6, 7, 8); kapitola 7 opravená aj o nastavenia v prehliadači (tmavý režim, zavreté hlášky), ktoré predtým chýbali.
 - [x] Tmavý režim: karty a okraje s jemným fialovým nádychom, ladia s hornou lištou.
+- [x] **E-mailové upozornenia** zapnuté cez Brevo (odosielateľ ahoj@robiq.sk). Brevo doplnené do dokumentu o ochrane údajov ako sprostredkovateľ — aj pre prihlasovacie e-maily, ktoré tam doteraz chýbali.
 - [x] Dokument o ochrane osobných údajov doplnený o zablokovania (3.1, 3.2, 4, 5, 8) a presnejší popis štatistiky používania; opravený odkaz na kapitolu s právami (11, nie 12). Zobrazenia inzerátu tam už boli.
 - [x] Supabase Advisors: interné funkcie triggerov nedostupné zvonka, 10 indexov, rýchlejšie pravidlá prístupu (migrácia `advisors`).
 

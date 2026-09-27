@@ -2,7 +2,7 @@
 // Volá ju appka odosielateľa hneď po odoslaní správy / po vzniku zhody: { message_id } alebo { match_id }.
 // Overí, že volajúci je naozaj účastník a že ide o čerstvý záznam, „zaberie" ho (notified_at), aby
 // upozornenie neodišlo dvakrát, a pošle push na všetky zariadenia príjemcu. E-mail ide cez Brevo,
-// len ak je v trezore kľúč `brevo_api_key` (zatiaľ nie je) — pri zhode vždy, pri správe len keď príjemca nemá push.
+// len ak je v trezore kľúč `brevo_api_key` (je od 27. 9. 2026) — pri zhode vždy, pri správe len keď príjemca nemá push.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
       const r = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST", headers: { "api-key": brevoKey, "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
-          sender: { name: "Robiq", email: "upozornenia@robiq.sk" }, to: [{ email: to.email }],
+          sender: { name: "Robiq", email: "ahoj@robiq.sk" }, to: [{ email: to.email }],   // the sender verified in Brevo
           subject: kind === "match" ? "Máte zhodu na Robiq" : `Nová správa: ${title}`,
           textContent: `${kind === "match" ? title + "\n" : title + " ti napísal(a):\n"}${body}\n\nOtvor Robiq: ${APP_URL}#spravy`,
         }),
