@@ -324,11 +324,11 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 .p-skills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 26px; }
 .p-skill { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-base); font-weight: 700; padding: 7px 14px; border-radius: 99px; background: rgba(124,108,224,.18); color: var(--ink3); }
 .p-skill b { font-size: var(--text-xs); letter-spacing: .14em; font-weight: 500; opacity: .8; }
-.p-birth { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; border: 1px solid var(--line); border-radius: 13px; padding: 12px 16px; }
+.p-birth { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 22px; border: 1px solid var(--line); border-radius: 13px; padding: 12px 16px; }
 .p-birth .l { flex: 1; font-size: var(--text-sm); font-weight: 700; color: var(--ink); }
 .p-birth .l small { display: block; font-size: var(--text-xs); font-weight: 500; color: var(--muted); margin-top: 2px; }
 .p-birth .v { font-size: var(--text-base); font-weight: 700; color: var(--muted); }   /* read-only once set */
-.p-birth input { background: var(--fill2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: var(--text-base); font-weight: 700; color: var(--ink); font-family: 'Satoshi', sans-serif; }
+.p-birth input { min-width: 0; max-width: 100%; background: var(--fill2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: var(--text-base); font-weight: 700; color: var(--ink); font-family: 'Satoshi', sans-serif; }
 .p-bio-edit { margin-bottom: 22px; }
 .p-bio-edit textarea { width: 100%; background: var(--fill2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 15px; font-size: var(--text-base); line-height: 1.55; color: var(--ink); font-family: 'Satoshi', sans-serif; resize: vertical; }
 .p-bio-edit textarea:focus { outline: none; border-color: var(--accent); }
@@ -393,7 +393,7 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 .msg.me { align-self: flex-end; background: #144F9E; color: #fff; border-radius: 16px 16px 4px 16px; }
 .msg.them { align-self: flex-start; background: var(--fill); border-radius: 16px 16px 16px 4px; color: var(--ink); }
 .chat-input { padding: 14px 16px; border-top: 1px solid var(--fill); display: flex; gap: 10px; }
-.chat-input input { flex: 1; background: var(--fill2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: var(--text-base); color: var(--ink); }
+.chat-input input { flex: 1; min-width: 0; background: var(--fill2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: var(--text-base); color: var(--ink); }
 .chat-input button { background: #144F9E; color: #fff; border: none; border-radius: 12px; padding: 0 22px; font-size: var(--text-base); font-weight: 700; cursor: pointer; }
 .chat-input button:hover { background: #1B6AD1; }
 
@@ -529,7 +529,22 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
   .chat-list > button { flex-shrink: 0; }
   .chat-box { height: 56vh; }
   .two { grid-template-columns: 1fr; }
-  .offer { grid-template-columns: 1fr 1fr; }
+}
+/* Posting rows (company → Inzeráty): one line needs ~900px. Narrower (tablet, unfolded foldable, phone):
+   title on top, the four numbers in a row, status + actions below. */
+@media (max-width: 900px) {
+  .offer { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 12px; }
+  .offer > :first-child { grid-column: 1 / -1; }
+  .offer .st { grid-column: 1 / 3; justify-self: start; }
+  .offer .act { grid-column: 3 / -1; justify-self: end; }
+}
+@media (max-width: 480px) {
+  .offer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .offer .st { grid-column: 1; }
+  .offer .act { grid-column: 2; }
+  .off-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 0; padding: 16px 18px; }
+  .off-stats > div + div { border-left: none; padding-left: 0; }
+  .off-stats > div:nth-child(even) { border-left: 1px solid var(--fill); padding-left: 16px; }
 }
 
 /* ═══════════ DOCK — l.929–941 ═══════════ */
@@ -558,11 +573,11 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
   display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; font-size: var(--text-lg); color: #fff;
   transition: transform .38s cubic-bezier(.55,0,.3,1.4), background .3s, color .3s; background: transparent;
 }
-.dock .glyph svg { width: 18px; height: 18px; }
+/* Icons only (no labels): the round glyph keeps its full 42px — with a label under it the 50px button squashed it */
+.dock .glyph { flex-shrink: 0; }
+.dock .glyph svg { width: 22px; height: 22px; }
+.dock button:not(.on) .glyph { opacity: .75; }
 .dock button.on .glyph { transform: translateY(-25px); background: var(--accent); box-shadow: 0 10px 26px rgba(91,33,182,.35); }
-.dock .lbl { font-size: var(--text-xs); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; transition: opacity .3s, color .3s; margin-top: -5px; color: #FFFFFF; }
-.dock button.on .lbl { opacity: 1; }                         /* the active tab keeps its name under the raised icon */
-.dock .lbl { opacity: .7; }
 
 /* ═══════════ BANNER / TOAST — l.946–954 ═══════════ */
 .banner {
@@ -646,6 +661,14 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
   .dock { width: min(360px, calc(100% - 20px)); }
 }
 .a-pill, .a-pill-ghost { white-space: nowrap; }
+/* Very narrow phones (iPhone SE 1st gen, folded Galaxy Fold): the guest bar must still fit in one row.
+   < 380px: no theme button (the app follows the system setting anyway), smaller pills.
+   < 320px: no "Prihlásiť sa" — sign-in stays reachable via "Vytvoriť účet" → "Už mám účet". */
+@media (max-width: 379px) {
+  .a-guest .theme-btn { display: none; }
+  .a-guest .a-pill, .a-guest .a-pill-ghost { padding: 0 10px; font-size: var(--text-xs); }
+}
+@media (max-width: 319px) { .a-guest .a-pill-ghost { display: none; } }
 
 /* ═══════════ LOGIN — l.59–94 ═══════════ */
 #scr-login { position: relative; overflow: hidden; background: #F0EFF5; padding: calc(28px + env(safe-area-inset-top, 0px)) 28px calc(28px + env(safe-area-inset-bottom, 0px)); }
@@ -708,7 +731,11 @@ html.dark, html.dark body { background: #120d2b; }
 /* ═══════════ OB — l.97–194 ═══════════ */
 .s1-row { display: flex; gap: 22px; align-items: center; margin-bottom: 26px; }
 .avatar { width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, var(--accent-hi), #9F8FF2); display: flex; align-items: center; justify-content: center; font-size: var(--text-3xl); font-weight: 700; }
-.col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }   /* min-width 0: may shrink below its inputs' natural width (else the page scrolled sideways on phones) */
+@media (max-width: 480px) {                                /* registration step 1: photo above the fields, not beside them */
+  .s1-row { flex-direction: column; align-items: stretch; gap: 16px; }
+  .s1-row > .avatar { align-self: center; }
+}
 /* Photo avatars: any round/rounded avatar shows the image instead of initials */
 .has-img { background-size: cover !important; background-position: center; background-repeat: no-repeat; color: transparent !important; }
 .photo-btn { display: block; text-align: center; background: var(--fill2); border: 1px dashed var(--line); border-radius: 12px; padding: 11px 0; font-size: var(--text-base); color: var(--ink2); cursor: pointer; font-weight: 500; }
@@ -718,7 +745,8 @@ html.dark, html.dark body { background: #120d2b; }
 .photo-remove:hover { color: var(--bad); }
 .p-photo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .p-photo-row .l { flex: 1; font-size: var(--text-sm); font-weight: 700; color: var(--ink); }
-.ob-birth { display: flex; align-items: center; gap: 12px; }
+.ob-birth { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.ob-birth .input { flex: 1; min-width: 150px; }
 .ob-birth span { font-size: var(--text-base); font-weight: 700; color: var(--ink); white-space: nowrap; }
 .ob-birth .input { padding: 11px 14px; font-size: var(--text-base); font-weight: 700; }
 /* place: city input + commute (onboarding step 3, profile, new posting) */
@@ -783,8 +811,9 @@ html.dark, html.dark body { background: #120d2b; }
 .hours-label { text-align: center; font-size: var(--text-3xl); font-weight: 700; color: var(--ink); margin-bottom: 18px; }
 input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; margin: 0 0 8px; }
 .ticks { display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--ink2); margin-bottom: 26px; }
-.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 20px; }
-.days button { height: 42px; border-radius: 11px; cursor: pointer; font-size: var(--text-base); font-weight: 700; transition: background .18s, color .18s; background: var(--fill3); color: var(--ink2); border: 1px solid var(--line); }
+.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 20px; }   /* minmax(0,…): seven days fit even on a 280px folded phone */
+@media (max-width: 360px) { .days { gap: 4px; } }
+.days button { min-width: 0; padding: 0; height: 42px; border-radius: 11px; cursor: pointer; font-size: var(--text-base); font-weight: 700; transition: background .18s, color .18s; background: var(--fill3); color: var(--ink2); border: 1px solid var(--line); }
 .days button.on { background: var(--accent); color: #FFFFFF; border: 1px solid var(--accent); }
 .times { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
 @media (max-width: 640px) { .times { grid-template-columns: 1fr; } }

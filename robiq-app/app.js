@@ -1342,7 +1342,7 @@ function updateDock() {
     host.dataset.role = state.role;
     host.innerHTML = `<div class="dock"><div class="bg"></div>
       <div class="tabs">${tabs.map(([label, glyph], i) => `
-        <button data-tab="${i}"><span class="glyph">${glyph}</span><span class="lbl">${label}</span></button>`).join('')}</div></div>`;
+        <button data-tab="${i}" aria-label="${label}" title="${label}"><span class="glyph">${glyph}</span></button>`).join('')}</div></div>`;   // icons only — the name is for screen readers / tooltip
   }
   const active = activeTab();
   const w = host.querySelector('.dock').offsetWidth || DOCK_W;   // narrower on small phones
