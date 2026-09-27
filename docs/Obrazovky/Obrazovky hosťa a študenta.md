@@ -5,7 +5,7 @@ tags: [robiq, obrazovky, študent]
 
 ← [[00 Mapa systému]] · kód: `app.js` → `feed`, `jobCard`, `zhody`, `profile`
 
-Študent má dole **dock** s tromi záložkami: **Objavuj · Správy · Profil** (`STUDENT_TABS` v `data.js`).
+Študent má tri záložky: **Objavuj · Správy · Profil** (`STUDENT_TABS` v `data.js`). Na mobile sú v plávajúcom **docku** dole, na počítači (šírka nad 960 px) v hornej lište vedľa loga — dock sa tam neukazuje.
 Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 
 ## Objavuj (`feed`)

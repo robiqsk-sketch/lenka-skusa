@@ -48,7 +48,7 @@ flowchart LR
 | Súbor | Obsah |
 |---|---|
 | `index.html` | kostra stránky, sekcie obrazoviek, načítanie skriptov |
-| `data.js` | pevné zoznamy: zručnosti (`GROUPS`), úrovne, hodiny, dni, časy, odvetvia, typy brigád, záložky docku |
+| `data.js` | pevné zoznamy: zručnosti (`GROUPS`), úrovne, hodiny, dni, časy, odvetvia, typy brigád, záložky; **ikony** (`ICONS` + `icon()`, jedna sada pre celú appku) a farby log firiem |
 | `config.js` | adresa Supabase + verejný kľúč |
 | `styles.css` | vzhľad (farby ako premenné, tmavý režim cez `.theme-dark`) |
 | `admin.html` | admin panel → [[Admin panel]] |

@@ -17,6 +17,7 @@ const initialState = () => ({
   blockNames: {},                                          // blocked id → name, for the „Odblokovať“ list in the profile
   // student
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
+  skillsOpen: [],                                          // skill groups showing all their chips (registration step 2)
   profEdit: false, birth: '', bio: '', obTerms: false,
   cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
@@ -148,7 +149,7 @@ function colorFor(name) {                                  // deterministic logo
   return LOGO_COLORS[h % LOGO_COLORS.length];
 }
 const firmIni = name => (name || 'F')[0].toUpperCase();   // company logo placeholder letter
-const candGrad = name => `linear-gradient(135deg, ${colorFor(name)}, #9F8FF2)`;   // student avatar without a photo (company side)
+const candGrad = name => colorFor(name);                  // student avatar without a photo (company side) — same calm palette as company logos
 const plural = (n, one, few, many) => n === 1 ? one : n > 1 && n < 5 ? few : many;   // Slovak: 1 kandidát · 2–4 kandidáti · 5+ kandidátov
 function ago(ts) {                                         // "pred 2 dňami" etc.
   const s = (Date.now() - new Date(ts)) / 1000;
@@ -503,6 +504,7 @@ const go = {
     if (error) fail(error);
   },
   goPonuky:    () => { state.ftab = 2; },
+  goTab:       el => switchTab(+el.dataset.tab),          // top-bar tabs on desktop
   // gate — l.1444–1446
   gateClose:   () => { state.gate = false; state.pendingJob = null; },
   gateLogin:   () => { state.gate = false; state.screen = 'login'; },
@@ -692,7 +694,7 @@ function render() {
   // Login screen is dark on phones: page background + Safari bar colour follow it
   const dark = state.screen === 'login' && matchMedia('(max-width: 640px)').matches;
   document.documentElement.classList.toggle('dark', dark);
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#120d2b' : isDarkTheme() ? '#110D24' : '#EEEBF7');
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#120d2b' : isDarkTheme() ? '#0F0F13' : '#F6F6F8');
   if (state.screen === 'pick') {
     const note = document.getElementById('pick-note');
     note.hidden = !state.oauth;
@@ -735,7 +737,7 @@ function renderHeader() {                                  // l.342–372
   const r = document.getElementById('a-hdr-right');
   if (!state.authed) {
     r.innerHTML = `<div class="a-guest">
-      <button class="a-pill-ghost theme-btn" data-go="menuTheme" aria-label="Tmavý režim" title="Tmavý režim">◐</button>
+      <button class="a-pill-ghost theme-btn" data-go="menuTheme" aria-label="Tmavý režim" title="Tmavý režim">${icon('moon', 16)}</button>
       <button class="a-pill-ghost" data-go="goLogin">Prihlásiť sa</button>
       <button class="a-pill" data-go="goSignup">Vytvoriť účet</button></div>`;
     return;
@@ -744,19 +746,23 @@ function renderHeader() {                                  // l.342–372
   const menu = !state.accMenu ? '' : `
     <div class="a-menu" data-go="menuToggle">
       <div class="name">${esc(menuName())}</div><hr>
-      <button data-go="menuProfile"><span class="ic">◔</span>Môj profil</button>
-      <button class="notif" data-go="menuTheme"><span style="display:flex;align-items:center;gap:10px"><span class="ic">◐</span>Tmavý režim</span>
+      <button data-go="menuProfile">${icon('user', 16)}Môj profil</button>
+      <button class="notif" data-go="menuTheme"><span style="display:flex;align-items:center;gap:10px">${icon('moon', 16)}Tmavý režim</span>
         <span class="st" style="color:${isDarkTheme() ? 'var(--ok)' : 'var(--muted)'}">${isDarkTheme() ? 'Zap.' : 'Vyp.'}</span></button>
-      <button data-go="menuHelp"><span class="ic">?</span>Pomoc a podpora</button>
-      <button data-go="menuTerms"><span class="ic">§</span>Podmienky a ochrana údajov</button>
-      ${state.isAdmin ? `<hr><button data-go="menuStats"><span class="ic">▤</span>Štatistika Robiq</button>` : ''}<hr>
-      <button class="out" data-go="logout"><span class="ic">→</span>Odhlásiť sa</button>
-      <button class="del" data-go="askDeleteAccount"><span class="ic">✕</span>Zmazať účet</button>
+      <button data-go="menuHelp">${icon('help', 16)}Pomoc a podpora</button>
+      <button data-go="menuTerms">${icon('file', 16)}Podmienky a ochrana údajov</button>
+      ${state.isAdmin ? `<hr><button data-go="menuStats">${icon('chart', 16)}Štatistika Robiq</button>` : ''}<hr>
+      <button class="out" data-go="logout">${icon('logout', 16)}Odhlásiť sa</button>
+      <button class="del" data-go="askDeleteAccount">${icon('trash', 16)}Zmazať účet</button>
     </div>`;
   const photo = isStudent() ? avatarUrl(state.avatarPath) : state.fpLogo;
   const ava = photo ? `<button class="a-ava has-img" aria-label="Účet" data-go="menuToggle" style="background-image:url('${photo}')"></button>`
                     : `<button class="a-ava" aria-label="Účet" data-go="menuToggle">${avaInit()}</button>`;
-  r.innerHTML = `${nova}<div class="a-acc">${ava}${menu}</div>`;
+  // Desktop: the tabs live here in the top bar (CSS hides this on phones, where the bottom dock is used instead).
+  const tabs = isStudent() ? STUDENT_TABS : FIRM_TABS, active = activeTab();
+  const nav = `<nav class="a-nav" aria-label="Navigácia">${tabs.map(([label, glyph], i) =>
+    `<button class="${i === active ? 'on' : ''}" data-go="goTab" data-tab="${i}"${i === active ? ' aria-current="page"' : ''}>${glyph}${label}</button>`).join('')}</nav>`;
+  r.innerHTML = `${nav}${nova}<div class="a-acc">${ava}${menu}</div>`;
 }
 function menuName() { return isStudent() ? (state.obName || 'Študent') : state.fpName; }
 function avaInit() { return isStudent() ? initials() : (initialsOf(state.fpName) || 'F'); }
@@ -819,7 +825,7 @@ function feed() {                                          // l.408–475
   const ai = viewed >= 2 ? aiJob() : null;
   const tip = !ai ? '' : `
     <div class="ai-tip">
-      <div class="eb">✦ Toto by ti sedelo</div>
+      <div class="eb">${icon('sparkles', 14)}Toto by ti sedelo</div>
       <div class="mid"><div class="lg" style="${logoStyle(ai)}">${logoText(ai)}</div>
         <div><div class="t">${esc(ai.t)}</div><div class="f">${esc(ai.f)} · <b>${esc(ai.pay)}/hod</b></div></div></div>
       <button data-go="aiOpen">Pozrieť detail</button>
@@ -863,7 +869,7 @@ function jobCard(j) {                                      // l.425–463
   // Compact layout: logo · title/company · pay in one row, then one quiet meta line (place · posted · ⋯), occupancy as a thin bar.
   const meta = [placeTxt(j), j.posted].filter(Boolean).map(esc).join(' · ');
   return `<div class="job ${invited ? 'invited' : ''}">
-    ${invited ? `<div class="invite-badge">✦ Firma ťa oslovila — sedíš na túto pozíciu</div>` : ''}
+    ${invited ? `<div class="invite-badge">${icon('sparkles', 14)}Firma ťa oslovila — sedíš na túto pozíciu</div>` : ''}
     <div class="who" data-job="${j.id}" data-act="open">
       <div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
       <div class="name"><div class="t">${esc(j.t)}</div>
@@ -871,12 +877,12 @@ function jobCard(j) {                                      // l.425–463
       <div class="pay">${esc(j.pay)}<small>/ hod</small></div>
     </div>
     <div class="meta"><span>${meta}</span>
-      <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-job="${j.id}" data-act="menu">⋯</button>${menu}</div></div>
+      <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-job="${j.id}" data-act="menu">${icon('more')}</button>${menu}</div></div>
     <div class="need"><span>${needTxt(j)}</span><span class="bar"><i style="width:${pct}%"></i></span></div>
     ${j.tags.length ? `<div class="tags">${j.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
     ${liked ? `<div class="sent">✓ Záujem odoslaný</div>` : `
-    <div class="act"><button class="like" data-job="${j.id}" data-act="like">♥ Mám záujem</button>
-      <button class="skip" aria-label="Preskočiť" data-job="${j.id}" data-act="skip">✕</button></div>`}
+    <div class="act"><button class="like" data-job="${j.id}" data-act="like">${icon('heart', 16)}Mám záujem</button>
+      <button class="skip" aria-label="Preskočiť" data-job="${j.id}" data-act="skip">${icon('x')}</button></div>`}
   </div>`;
 }
 
@@ -963,7 +969,7 @@ function chatUI(list, active, isFirm) {
     <div class="chat-head">${face(cur)}
       <div style="flex:1;min-width:0"><div class="n">${esc(cur.name)}</div>
         <div class="j ${isFirm ? 'firm' : ''}">${isFirm ? 'Uchádzač · ' : '✓ Zhoda · '}${esc(cur.job)}</div></div>
-      <button class="chat-report" data-go="reportChat" title="Nahlásiť">⚑ Nahlásiť</button></div>`;
+      <button class="chat-report" data-go="reportChat" title="Nahlásiť">${icon('flag', 14)}Nahlásiť</button></div>`;
   const msgs = (cur ? cur.msgs : []).map(m => `<div class="msg ${m.me ? 'me' : 'them'}">${esc(m.txt)}</div>`).join('');
   if (!list.length) return `<div class="p-empty">${isFirm
     ? 'Zatiaľ žiadne konverzácie. Chat vznikne, keď o kandidáta prejavíte záujem a on oň prejavil záujem tiež.'
@@ -995,7 +1001,7 @@ function fspravy() {                                       // l.708–743
 function brig() {
   const s = state;
   let body;
-  if (!s.authed) body = `<div class="gate-card"><div class="ic">◎</div>
+  if (!s.authed) body = `<div class="gate-card"><div class="ic">${icon('lock', 24)}</div>
       <div class="h">Profily brigádnikov sú len pre prihlásené firmy</div>
       <div class="p">Chránime súkromie ľudí — ich profily uvidíte po prihlásení firemného účtu.</div>
       <div class="col"><button data-go="goSignup" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:13px;padding:13px 0;font-size:14px;font-weight:700;cursor:pointer">Vytvoriť firemný účet</button>
@@ -1015,7 +1021,7 @@ function brig() {
         <div class="cgroup-head"><div class="t">${esc(o.t)}</div>${count ? `<span class="c">${count}</span>` : ''}</div>
         ${cands.length ? `<div class="cards">${cands.map(candCard).join('')}</div>` : ''}
         ${sugg.length ? `
-          <div class="sugg-head"><span class="eb">✦ Navrhovaní kandidáti</span><span class="s">Sedia na inzerát podľa zručností a dostupnosti. Meno a fotku uvidíte, keď prejavia záujem.</span></div>
+          <div class="sugg-head"><span class="eb">${icon('sparkles', 14)}Navrhovaní kandidáti</span><span class="s">Sedia na inzerát podľa zručností a dostupnosti. Meno a fotku uvidíte, keď prejavia záujem.</span></div>
           <div class="cards">${sugg.map(r => suggCard(o, r)).join('')}</div>` : ''}
       </div>`;
     }).join('');
@@ -1040,7 +1046,7 @@ function suggCard(o, r) {
       <div><div class="n">Brigádnik</div><div class="s">${esc(HOURS[r.hours] || '')}${r.score ? ` · zhoda ${r.score} %` : ''}</div><div class="s">${esc(avail)}</div>${place ? `<div class="s">${esc(place)}</div>` : ''}</div>
     </div>
     ${(r.skills || []).length ? `<div class="skills">${r.skills.map(k => `<span>${esc(k)}</span>`).join('')}</div>` : ''}
-    ${done ? `<div class="sent">✓ Oslovený — čaká sa na odpoveď</div>` : `<button class="contact" data-sugg="${key}" data-act="invite">✦ Osloviť</button>`}
+    ${done ? `<div class="sent">✓ Oslovený — čaká sa na odpoveď</div>` : `<button class="contact" data-sugg="${key}" data-act="invite">${icon('sparkles', 16)}Osloviť</button>`}
   </div>`;
 }
 function candCard(c) {                                     // l.674–699
@@ -1053,10 +1059,10 @@ function candCard(c) {                                     // l.674–699
     <div class="top">
       ${c.photo ? `<div class="av has-img" style="background-image:url('${c.photo}')"></div>` : `<div class="av" style="background:${c.g}"><span>${c.ini}</span></div>`}
       <div><div class="n">${esc(c.n)}</div><div class="s">${esc(c.hrs)}</div></div>
-      <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-cand="${key}" data-act="menu">⋯</button>${menu}</div>
+      <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-cand="${key}" data-act="menu">${icon('more')}</button>${menu}</div>
     </div>
     ${c.skills.length ? `<div class="skills">${c.skills.map(k => `<span>${esc(k)}</span>`).join('')}</div>` : ''}
-    ${done ? `<div class="sent">✓ Záujem odoslaný</div>` : `<button class="contact" data-cand="${key}" data-act="contact">♥ Prejaviť záujem</button>`}
+    ${done ? `<div class="sent">✓ Záujem odoslaný</div>` : `<button class="contact" data-cand="${key}" data-act="contact">${icon('heart', 16)}Prejaviť záujem</button>`}
   </div>`;
 }
 
@@ -1084,7 +1090,7 @@ function ponuky() {
       <div class="stat"><div class="n">${Math.min(o.m, o.need || 1)} / ${o.need || 1}</div><div class="l">obsadené</div></div>
       <span class="st ${o.on && !o.blocked ? 'on' : 'paused'}">${o.blocked ? 'Pozastavená Robiqom' : o.on ? 'Aktívna' : 'Pozastavená'}</span>
       <div class="act">${o.blocked ? '' : `<button class="tg" data-offer="${i}" data-act="toggle">${o.on ? 'Pozastaviť' : 'Aktivovať'}</button>`}
-        <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-offer="${i}" data-act="menu">⋯</button>${menu}</div></div>
+        <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-offer="${i}" data-act="menu">${icon('more')}</button>${menu}</div></div>
     </div>`;
   }).join('');
   return `<div class="off-wrap">
@@ -1125,7 +1131,7 @@ function nova() {
         <div class="tchips">${TYPES.map(t => `<button class="tchip ${s.fTypes.includes(t) ? 'on' : ''}" data-type="${t}" data-act="type">${t}</button>`).join('')}</div></div>
       <div><div class="label" style="margin-bottom:4px">Popis práce</div>
         <textarea id="f-desc" rows="3" maxlength="1500" placeholder="Čo bude brigádnik robiť, kde a od kedy.">${esc(s.fDesc)}</textarea></div>
-      <div><div class="label" style="margin-bottom:4px">✦ Koho hľadáte</div>
+      <div><div class="label" style="margin-bottom:4px">${icon('sparkles', 14)} Koho hľadáte</div>
         <textarea id="f-ai" rows="2" placeholder="Zručnosti a povaha práce — podľa toho zoradíme kandidátov. Nie vek, pohlavie či zdravie.">${esc(s.aiNote)}</textarea></div>
       <div><div class="label" style="margin-bottom:4px">Fotky „deň v práci“</div>
         ${photoGrid(s.fPhotos.map(p => p.url), 'f-photo', 'f-photo-rm', 'data-act="fphoto-rm"')}</div>
@@ -1137,7 +1143,7 @@ function nova() {
 const MAX_PHOTOS = 3;
 function photoGrid(urls, inputId, rmAttr, rmExtra = '') {
   return `<div class="photo-grid">
-    ${urls.map((u, i) => `<div class="ph" style="background-image:url('${esc(u)}')"><button type="button" class="rm" ${rmExtra} data-${rmAttr}="${i}" aria-label="Odstrániť">✕</button></div>`).join('')}
+    ${urls.map((u, i) => `<div class="ph" style="background-image:url('${esc(u)}')"><button type="button" class="rm" ${rmExtra} data-${rmAttr}="${i}" aria-label="Odstrániť">${icon('x', 14)}</button></div>`).join('')}
     ${urls.length < MAX_PHOTOS ? `<label class="ph add">＋ Pridať fotku<input type="file" accept="image/*" multiple id="${inputId}" hidden></label>` : ''}
   </div>`;
 }
@@ -1167,7 +1173,7 @@ function fprofil() {
         <label class="fp-logo" id="fp-logo" title="Zmeniť logo" style="background-image:${s.fpLogo ? `url('${s.fpLogo}')` : 'none'}">
           <span style="display:${s.fpLogo ? 'none' : 'block'}">${avaInit()}</span><input type="file" accept="image/*" id="fp-file"></label>
         <div style="flex:1;min-width:0"><div class="p-name">${esc(s.fpName)}</div>
-          <div class="fp-badges">${s.fpVerified ? '<span class="badge-ok">✓ Overená firma</span>' : '<span class="badge-pending">◷ Neoverená firma</span>'}</div></div>
+          <div class="fp-badges">${s.fpVerified ? '<span class="badge-ok">✓ Overená firma</span>' : `<span class="badge-pending">${icon('clock', 13)} Neoverená firma</span>`}</div></div>
       </div>
       <div class="fp-fields">
         <div><div class="label">Oficiálny názov</div>
@@ -1338,7 +1344,7 @@ function updateDock() {
       <div class="tabs">${tabs.map(([label, glyph], i) => `
         <button data-tab="${i}"><span class="glyph">${glyph}</span><span class="lbl">${label}</span></button>`).join('')}</div></div>`;
   }
-  const active = isStudent() ? state.tab : (state.ftab === 9 ? 2 : state.ftab);
+  const active = activeTab();
   const w = host.querySelector('.dock').offsetWidth || DOCK_W;   // narrower on small phones
   const notchLeft = ((active * 2 + 1) / (2 * tabs.length) * w - DOCK_R).toFixed(1) + 'px';
   const bg = host.querySelector('.bg');
@@ -1349,15 +1355,16 @@ function updateDock() {
 window.addEventListener('resize', () => { if (state.screen === 'app' && state.authed) updateDock(); });
 document.getElementById('a-dock').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
-  if (!b) return;
-  const i = +b.dataset.tab;
-  const active = isStudent() ? state.tab : (state.ftab === 9 ? 2 : state.ftab);
-  if (i === active) return;
+  if (b) switchTab(+b.dataset.tab);
+});
+const activeTab = () => isStudent() ? state.tab : (state.ftab === 9 ? 2 : state.ftab);   // "Nový inzerát" (9) belongs to Inzeráty
+function switchTab(i) {                                    // bottom dock (phones) and the top-bar tabs (desktop)
+  if (i === activeTab()) return;
   if (isStudent()) state.tab = i; else state.ftab = i;
   state.rowMenu = null; state.accMenu = false;
   render();                                                // data is already in memory — no fake loading
   window.scrollTo(0, 0);
-});
+}
 
 function layers() {                                        // banner l.946, toast l.954, delete l.957, gate l.972, detail l.988
   let h = '';
@@ -1376,7 +1383,7 @@ function layers() {                                        // banner l.946, toas
       : 'Natrvalo sa zmaže profil firmy, všetky inzeráty, zhody aj správy s uchádzačmi. Toto sa nedá vrátiť.'}</div>
     <div class="col"><button class="b1" data-go="delAccountConfirm">Zmazať natrvalo</button><button class="b2" data-go="delAccountCancel">Zrušiť</button></div></div></div>`;
   if (state.gate) h += `<div class="overlay" data-go="gateClose"><div class="gate" data-go="noop">
-    <div class="ic">♥</div>
+    <div class="ic">${icon('heart', 24)}</div>
     <div class="h">Ešte krôčik — potrebujeme vedieť, kto si</div>
     <div class="p">Bez účtu nevieme komu ponuku priradiť. Registrácia trvá pár sekúnd a tvoj záujem odošleme hneď po nej.</div>
     <div class="col"><button class="b1" data-go="gateSignup">Vytvoriť účet</button>
@@ -1387,7 +1394,7 @@ function layers() {                                        // banner l.946, toas
     <div class="top"><div class="who"><div class="lg" style="${logoStyle(d)}">${logoText(d)}</div>
       <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)}${placeTxt(d) ? ` · ${esc(placeTxt(d))}` : ''}</div>
         ${d.legal && d.legal !== d.f ? `<div class="legal">✓ ${esc(d.legal)} — podľa Registra právnických osôb</div>` : ''}</div></div>
-      <button class="x" data-go="closeDetail">✕</button></div>
+      <button class="x" data-go="closeDetail" aria-label="Zavrieť">${icon('x')}</button></div>
     ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
     ${d.remote ? '' : d.address || d.city ? `<div class="addr">${esc([d.address, d.city].filter(Boolean).join(', '))}
@@ -1396,8 +1403,8 @@ function layers() {                                        // banner l.946, toas
     ${d.photos.length ? `<div class="sec">Deň v práci</div>
     <div class="day">${d.photos.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" class="ph" style="background-image:url('${esc(u)}')"></a>`).join('')}</div>` : ''}
     ${state.likedIds.includes(d.id) ? `<div class="sent">✓ Záujem odoslaný</div>` : `
-    <div class="act"><button class="like" data-go="detailLike">♥ Mám záujem</button><button class="skip" data-go="detailSkip">✕ Preskočiť</button></div>`}
-    ${(state.authed && !isStudent() && d.companyId === state.uid) ? '' : `<div class="report-row"><button class="link" data-go="reportPosting">⚑ Nahlásiť inzerát</button></div>`}
+    <div class="act"><button class="like" data-go="detailLike">${icon('heart', 16)}Mám záujem</button><button class="skip" data-go="detailSkip">${icon('x', 16)}Preskočiť</button></div>`}
+    ${(state.authed && !isStudent() && d.companyId === state.uid) ? '' : `<div class="report-row"><button class="link" data-go="reportPosting">${icon('flag', 14)}Nahlásiť inzerát</button></div>`}
   </div></div>`;
   // Photos of an existing posting (row menu ⋯ → Fotky)
   const pe = state.photoEdit;
@@ -1588,6 +1595,7 @@ function obStep3() {                                       // l.166–188
 }
 
 // ─── Shared editors: onboarding steps 2–3 and the profile in edit mode ───
+const SKILLS_SHOWN = 6;
 function skillsEditor() {                                  // l.126–162, logic l.1256–1296
   const selNames = state.obSkills.map(x => x.n);
   const rows = state.obSkills.map((x, i) => {
@@ -1595,14 +1603,19 @@ function skillsEditor() {                                  // l.126–162, logic
     const lvls = (isLang ? LANG_LVLS : LVLS).map((L, li) => `<button type="button" class="${x.lvl === li + 1 ? 'on' : ''}" data-lvl="${i}:${li + 1}">${L}</button>`).join('');
     return `<div class="sel-row"><div class="sel-name">${esc(x.n)}</div>
       <button type="button" class="speak ${speakOn ? 'on' : ''}" data-speak="${i}" style="display:${isLang ? 'inline-block' : 'none'}">${speakOn ? '✓ Rozprávam' : 'Rozprávam'}</button>
-      <div class="lvls">${lvls}</div><button type="button" class="remove" aria-label="Odstrániť" data-remove="${i}">✕</button></div>`;
+      <div class="lvls">${lvls}</div><button type="button" class="remove" aria-label="Odstrániť" data-remove="${i}">${icon('x', 14)}</button></div>`;
   }).join('');
   const groups = GROUPS.map(gr => {
     const sugg = [];
     state.obSkills.forEach(x => { if (!gr.items.includes(x.n)) return;
       (RELATED[x.n] || []).forEach(r => { if (!selNames.includes(r) && !SKILLS.includes(r) && !sugg.includes(r)) sugg.push(r); }); });
-    const chips = gr.items.filter(n => !selNames.includes(n)).map(n => `<button type="button" class="chip" data-add="${esc(n)}">＋ ${esc(n)}</button>`)
-      .concat(sugg.map(n => `<button type="button" class="chip sugg" data-add="${esc(n)}">✦ ${esc(n)}</button>`));
+    // A group shows its first SKILLS_SHOWN skills; the rest is one tap away ("Ďalšie") — ~50 chips at once was a wall.
+    const left = gr.items.filter(n => !selNames.includes(n)), open = state.skillsOpen.includes(gr.g);
+    const shown = open ? left : left.slice(0, SKILLS_SHOWN), hidden = left.length - shown.length;
+    const chips = shown.map(n => `<button type="button" class="chip" data-add="${esc(n)}">＋ ${esc(n)}</button>`)
+      .concat(sugg.map(n => `<button type="button" class="chip sugg" data-add="${esc(n)}">${icon('sparkles', 13)}${esc(n)}</button>`))
+      .concat(hidden ? [`<button type="button" class="chip more" data-more="${esc(gr.g)}">Ďalšie (${hidden})</button>`]
+            : open && left.length > SKILLS_SHOWN ? [`<button type="button" class="chip more" data-more="${esc(gr.g)}">Menej</button>`] : []);
     return chips.length ? `<div><div class="group-title">${gr.g}</div><div class="chips">${chips.join('')}</div></div>` : '';
   }).join('');
   return `${rows ? `<div class="sel-list">${rows}</div>` : ''}
@@ -1631,6 +1644,7 @@ function availabilityEditor() {                            // l.169–188, logic
 }
 function editorClick(el) {                                 // returns true when it handled the click
   if (el.dataset.add)    { addSkill(el.dataset.add); return true; }
+  if (el.dataset.more)   { toggleInList(state.skillsOpen, el.dataset.more); render(); return true; }
   if (el.dataset.remove) { state.obSkills.splice(+el.dataset.remove, 1); render(); return true; }
   if (el.dataset.speak)  { const s = state.obSkills[+el.dataset.speak]; s.speak = !(s.speak !== false); render(); return true; }
   if (el.dataset.lvl)    { const [i, l] = el.dataset.lvl.split(':'); state.obSkills[+i].lvl = +l; render(); return true; }

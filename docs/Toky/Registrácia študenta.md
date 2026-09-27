@@ -27,6 +27,7 @@ flowchart TD
 - **Obsadený e-mail** sa zisťuje hneď v kroku 1 (`email_taken`), lebo Supabase pri zapnutom potvrdzovaní chybu nevráti.
 - **Mesto je povinné** (kvôli párovaniu podľa miesta). Starší používatelia bez mesta vidia v Objavuj prúžok „Doplň si mesto".
 - Fotka vybraná v kroku 1 sa nahrá až po vzniku účtu (bucket `avatars`).
+- **Krok 2** ukazuje z každej skupiny zručností len prvých 6; zvyšok je za „Ďalšie (n)" — celá ponuka (~50) naraz bola stena. Rovnako sa správa editor zručností v profile.
 
 ## Nedokončená registrácia
 Ak účet existuje, ale chýba profil alebo zručnosti (napr. prihlásenie cez Google, prerušená registrácia),
