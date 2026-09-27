@@ -40,6 +40,7 @@ flowchart LR
 - [[Registrácia firmy a overenie IČO]]
 - [[Prihlásenie a obnova hesla]]
 - [[Záujem, zhoda a chat]] — jadro celej appky
+- [[Upozornenia]] — push na telefón (a e-mail) pri novej zhode a správe
 - [[Návrhy kandidátov (párovanie)]]
 - [[Nahlásenia a moderovanie]]
 - [[Zmazanie účtu]]

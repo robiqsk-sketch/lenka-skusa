@@ -143,6 +143,66 @@ function track(name, props) {
   sb.from('events').insert({ name, role, props: props || {} }).then(({ error }) => { if (error) console.warn('track', name, error.message); });
 }
 
+// ═══════════ Push notifications (sw.js + Supabase function `notify`) ═══════════
+// The device subscribes once (user taps "Zapnúť"); its subscription is stored for whoever is signed in on it.
+// The sender's app then calls `notify` with the new message / match — the function tells the other side.
+// iPhone: push works only in the app added to the home screen (iOS 16.4+), not in a Safari tab.
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const PUSH_NUDGE_KEY = 'robiq_push_nudge';                 // "✕" on the nudge — per device
+let swReg = null, pushOn = false;                          // pushOn: this device gets notifications (for the signed-in account)
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js')
+  .then(async r => { swReg = r; pushOn = await currentPushSub() !== null && Notification.permission === 'granted'; render(); })
+  .catch(e => console.warn('sw', e.message));
+async function currentPushSub() { try { return swReg && pushSupported() ? await swReg.pushManager.getSubscription() : null; } catch { return null; } }
+const b64uBytes = s => Uint8Array.from(atob((s + '='.repeat((4 - s.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+async function savePushSub(sub) {                          // (re)assign this device to the signed-in account
+  const j = sub.toJSON();
+  const { error } = await sb.rpc('save_push_subscription', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+  if (error) throw error;
+}
+async function enablePush() {
+  if (!pushSupported() || !swReg) {
+    showToast(isIOS && !isStandalone() ? 'Na iPhone pridaj Robiq na plochu (Zdieľať → Pridať na plochu) a upozornenia zapni tam.' : 'Tento prehliadač upozornenia nepodporuje.');
+    return;
+  }
+  const perm = await Notification.requestPermission();   // first await — still inside the tap, as iOS requires
+  if (perm !== 'granted') { showToast('Upozornenia sú zablokované v nastaveniach telefónu / prehliadača.'); return; }
+  try {
+    const sub = await currentPushSub() || await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uBytes(CFG.vapidPublicKey) });
+    await savePushSub(sub);
+    pushOn = true; showToast('Upozornenia sú zapnuté. ✓'); track('push', { on: true });
+  } catch (e) { fail(e); }
+}
+async function disablePush() {                             // also on logout: this device stops getting the account's notifications
+  const sub = await currentPushSub();
+  if (sub) { await sb.rpc('delete_push_subscription', { p_endpoint: sub.endpoint }); await sub.unsubscribe().catch(() => {}); }
+  pushOn = false;
+}
+function notifyOther(body) {                               // fire-and-forget: { message_id } or { match_id }
+  sb.functions.invoke('notify', { body }).then(({ error }) => { if (error) console.warn('notify', error.message); });
+}
+function pushNudge() {                                     // one-line invitation above the feed / candidates
+  if (!state.authed || pushOn) return '';
+  try { if (localStorage.getItem(PUSH_NUDGE_KEY)) return ''; } catch {}
+  const ios = isIOS && !isStandalone();
+  if (!ios && !pushSupported()) return '';
+  return `<div class="push-nudge">${icon('message', 18)}<span>${ios
+      ? '<b>Chceš vedieť o novej zhode a správe hneď?</b> Pridaj si Robiq na plochu (Zdieľať → Pridať na plochu) a zapni upozornenia tam.'
+      : '<b>Nezmeškaj zhodu ani správu.</b> Zapni si upozornenia — dáme ti vedieť, aj keď appku nemáš otvorenú.'}</span>
+    ${ios ? '' : '<button class="on" data-go="pushOn">Zapnúť</button>'}
+    <button class="x" data-go="pushNudgeClose" aria-label="Zavrieť">${icon('x', 16)}</button></div>`;
+}
+// Opened from a notification (#spravy): go straight to the chats.
+function openFromNotification(url) {
+  if (!String(url || location.hash).includes('#spravy') || !state.authed) return;
+  if (isStudent()) state.tab = 1; else state.ftab = 1;
+  if (location.hash) history.replaceState(null, '', location.pathname);
+  render();
+}
+navigator.serviceWorker?.addEventListener('message', e => { if (e.data?.type === 'open') openFromNotification(e.data.url); });
+
 // ═══════════ Data: reading ═══════════
 function colorFor(name) {                                  // deterministic logo colour from the palette
   let h = 0; for (const ch of name || '') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -388,6 +448,7 @@ function showToast(msg) {                                  // l.1148–1152
 function fail(e) { console.error(e); showToast(e.message || 'Niečo sa nepodarilo.'); }
 
 async function resetToGuest() {                            // l.1506–1514: sign out → clean guest view (logout, account deletion)
+  if (pushOn) await disablePush().catch(() => {});        // this device stops getting the signed-out account's notifications
   await sb.auth.signOut();
   state = initialState(); order = [];
   subscribe();
@@ -403,7 +464,9 @@ async function removeFolder(bucket, folder) {              // deletes the files 
 const myChats = () => isStudent() ? state.matches : state.fchats;
 async function checkMatch(postingId, studentId) {          // after a like / invite: did it just become a match?
   const { data: m } = await sb.from('matches').select('id').eq('posting_id', postingId).eq('student_id', studentId).maybeSingle();
-  if (m) await onNewMatch(m.id);
+  if (!m) return;
+  notifyOther({ match_id: m.id });                         // my action made the match → tell the other side
+  await onNewMatch(m.id);
 }
 async function reachOut(studentId, postingId) {            // company → student interest (candidate card or anonymous suggestion)
   const { error } = await sb.from('company_interests').insert({ company_id: state.uid, student_id: studentId, posting_id: +postingId });
@@ -441,6 +504,7 @@ async function enterApp(extra) {                           // after sign-in / re
   state.loading = true; render();
   try { await loadMe(); await loadPostings(); } catch (e) { fail(e); }
   state.loading = false;
+  if (state.authed && pushOn) { const sub = await currentPushSub(); if (sub) savePushSub(sub).catch(e => console.warn('push', e.message)); }   // device → newly signed-in account
   if (state.authed && !isStudent()) state.ftab = 0;
   if (state.oauth) resumeOnboarding();                     // signed in, but the registration steps are not done yet
   subscribe();
@@ -505,6 +569,9 @@ const go = {
   },
   goPonuky:    () => { state.ftab = 2; },
   goTab:       el => switchTab(+el.dataset.tab),          // top-bar tabs on desktop
+  menuPush:    async () => { state.accMenu = false; if (pushOn) { await disablePush(); showToast('Upozornenia sú vypnuté.'); track('push', { on: false }); } else await enablePush(); },
+  pushOn:      () => enablePush(),                        // the nudge above the feed / candidates
+  pushNudgeClose: () => { try { localStorage.setItem(PUSH_NUDGE_KEY, '1'); } catch {} },
   // gate — l.1444–1446
   gateClose:   () => { state.gate = false; state.pendingJob = null; },
   gateLogin:   () => { state.gate = false; state.screen = 'login'; },
@@ -641,6 +708,7 @@ async function sendMsg(listKey, idxKey, draftKey) {
     if (error) throw error;
     if (!chat.msgs.some(m => m.id === data.id)) chat.msgs.push({ id: data.id, me: true, txt: data.body });
     render();
+    notifyOther({ message_id: data.id });                  // push / e-mail to the other side
   } catch (e) { fail(e); }
 }
 
@@ -747,6 +815,8 @@ function renderHeader() {                                  // l.342–372
     <div class="a-menu" data-go="menuToggle">
       <div class="name">${esc(menuName())}</div><hr>
       <button data-go="menuProfile">${icon('user', 16)}Môj profil</button>
+      <button class="notif" data-go="menuPush"><span style="display:flex;align-items:center;gap:10px">${icon('message', 16)}Upozornenia</span>
+        <span class="st" style="color:${pushOn ? 'var(--ok)' : 'var(--muted)'}">${pushOn ? 'Zap.' : 'Vyp.'}</span></button>
       <button class="notif" data-go="menuTheme"><span style="display:flex;align-items:center;gap:10px">${icon('moon', 16)}Tmavý režim</span>
         <span class="st" style="color:${isDarkTheme() ? 'var(--ok)' : 'var(--muted)'}">${isDarkTheme() ? 'Zap.' : 'Vyp.'}</span></button>
       <button data-go="menuHelp">${icon('help', 16)}Pomoc a podpora</button>
@@ -850,7 +920,7 @@ function feed() {                                          // l.408–475
       <button data-go="goProfileEdit">Doplniť</button></div>` : '';
   return `<div class="a-wrap">
     <div class="a-title"><h2>Ponuky <b>pre teba</b></h2></div>
-    ${noCity}${state.postings.length ? filterBar() : ''}${tip}${cards}</div>`;
+    ${pushNudge()}${noCity}${state.postings.length ? filterBar() : ''}${tip}${cards}</div>`;
 }
 
 // "Trnava" · "Na diaľku" · "Trnava · 12 km od teba" (student with a city)
@@ -1035,7 +1105,7 @@ function brig() {
   }
   return `<div class="a-wrap">
     <div class="a-title" style="align-items:center"><h2>Ponuka <b>brigádnikov</b></h2></div>
-    ${body}</div>`;
+    ${pushNudge()}${body}</div>`;
 }
 // Anonymous suggestion card: no name, no photo — skills, hours, availability, match score, "Osloviť".
 function suggCard(o, r) {
@@ -1919,5 +1989,7 @@ document.getElementById('reset-form').addEventListener('submit', e => { e.preven
   if (fromLink) history.replaceState(null, '', location.pathname);
   if (isRecovery) state.screen = 'reset';
   render();
-  track('visit', isRecovery ? { via: 'password_reset' } : fromLink ? { via: 'google_return' } : {});
+  const fromPush = location.hash === '#spravy';
+  openFromNotification();                                  // opened from a notification → chats
+  track('visit', isRecovery ? { via: 'password_reset' } : fromLink ? { via: 'google_return' } : fromPush ? { via: 'notification' } : {});
 })();

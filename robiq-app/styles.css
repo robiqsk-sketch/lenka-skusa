@@ -8,8 +8,9 @@
   --chrome: #18181F;                                        /* bottom dock, avatar — neutral near-black instead of dark purple */
 }
 html.theme-dark {
-  --bg: #0F0F13; --card: #1A1A21; --ink: #FFFFFF; --ink2: #E9E9EF; --ink3: #F4F4F7; --muted: #B2B2BF;
-  --line: #2B2B35; --line2: #383844; --accent: #7B6BEE; --accent-ink: #CBC0FF; --accent-hi: #9385FF;
+  /* Cards and their borders carry a hint of the top bar's purple (#241D45) so they belong to it; the page stays near-black */
+  --bg: #0F0F13; --card: #1B1829; --ink: #FFFFFF; --ink2: #E9E9EF; --ink3: #F4F4F7; --muted: #B4B1C6;
+  --line: #2C2840; --line2: #3A3453; --accent: #7B6BEE; --accent-ink: #CBC0FF; --accent-hi: #9385FF;
   --fill: rgba(255,255,255,.08); --fill2: rgba(255,255,255,.06); --fill3: rgba(255,255,255,.05); --shadow: rgba(0,0,0,.55);
   --ok: #4ADE80; --bad: #F87171; --ink3-bg: #2A2A33;
   --chrome: #24242D;
@@ -762,6 +763,16 @@ html.dark, html.dark body { background: #120d2b; }
 .commute button { border: 1px solid var(--line); background: var(--card); color: var(--muted); border-radius: 12px; padding: 10px 6px; font-size: var(--text-sm); font-weight: 700; cursor: pointer; font-family: inherit; }
 .commute button.on { border-color: var(--accent); background: rgba(85,70,196,.1); color: var(--accent-ink); }
 @media (max-width: 480px) { .commute { grid-template-columns: repeat(2, 1fr); } }
+/* "Zapni si upozornenia" — above the feed / candidates until turned on or dismissed */
+.push-nudge { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line2); border-radius: 14px; padding: 10px 10px 10px 16px; margin-bottom: 16px; font-size: var(--text-sm); color: var(--ink2); line-height: 1.45; }
+.push-nudge > .i { color: var(--accent); }
+.push-nudge > span { flex: 1; min-width: 0; }
+.push-nudge b { color: var(--ink); }
+.push-nudge .on { flex-shrink: 0; min-height: 40px; background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 0 14px; font-size: var(--text-sm); font-weight: 700; cursor: pointer; font-family: inherit; }
+.push-nudge .on:hover { background: var(--accent-hi); }
+.push-nudge .x { flex-shrink: 0; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; }
+.push-nudge .x:hover { background: var(--fill); color: var(--ink); }
+@media (max-width: 480px) { .push-nudge { flex-wrap: wrap; } .push-nudge > span { flex-basis: calc(100% - 80px); } .push-nudge .on { order: 3; width: 100%; } }
 .city-nudge { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line2); border-radius: 14px; padding: 12px 16px; font-size: var(--text-sm); color: var(--ink2); margin-bottom: 18px; flex-wrap: wrap; }
 .city-nudge button { margin-left: auto; background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-size: var(--text-base); font-weight: 700; cursor: pointer; font-family: inherit; }
 .ob-age-note { font-size: var(--text-sm); color: var(--muted); }

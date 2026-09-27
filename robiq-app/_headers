@@ -5,6 +5,10 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
+# Service worker (push notifications): always fetch the latest version.
+/sw.js
+  Cache-Control: no-cache
+
 # The stats page is for admins only — keep it out of search engines.
 /admin.html
   X-Robots-Tag: noindex

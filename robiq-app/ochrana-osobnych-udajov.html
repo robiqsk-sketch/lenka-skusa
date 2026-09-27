@@ -217,6 +217,7 @@
 <li><strong>zhody</strong> – kedy vznikla zhoda, s ktorou firmou a na ktorý inzerát</li>
 <li><strong>správy</strong> – celý obsah chatu so zhodnutou firmou</li>
 <li><strong>zablokované firmy</strong> – ktoré firmy si skryl (ich ponuky už nevidíš) a kedy. Vidíš to len ty, firma sa o tom nedozvie, a zablokovanie môžeš v profile kedykoľvek zrušiť.</li>
+<li><strong>zariadenia s upozorneniami</strong> – len ak si zapneš upozornenia: technická adresa tvojho zariadenia u služby, ktorá doručuje upozornenia (Apple, Google alebo Mozilla podľa telefónu a prehliadača), a kľúč na šifrovanie ich obsahu. Vypneš ich v menu účtu → Upozornenia; mažú sa aj pri odhlásení a zmazaní účtu.</li>
 <li><strong>technické údaje účtu</strong> – čas vytvorenia účtu, časy prihlásení a IP adresa pri prihlásení. Tieto zaznamenáva prihlasovacia služba Supabase ako súčasť bezpečnostného protokolu.</li>
 <li><strong>technická kópia registračných údajov</strong> – prihlasovacia služba si popri profile drží aj kópiu údajov, ktoré si zadal pri registrácii a v onboardingu. Je to technické duplikovanie v rámci tej istej databázy, nie ďalší príjemca, a maže sa spolu s účtom.</li>
 </ul>
@@ -244,7 +245,7 @@
 </ul>
 <p><strong>Vzniká pri používaní aplikácie:</strong></p>
 <ul>
-<li>prejavené záujmy o konkrétnych brigádnikov, zhody, správy v chate, technické údaje účtu a technická kópia registračných údajov – rovnako ako pri brigádnikoch</li>
+<li>prejavené záujmy o konkrétnych brigádnikov, zhody, správy v chate, zariadenia s upozorneniami, technické údaje účtu a technická kópia registračných údajov – rovnako ako pri brigádnikoch</li>
 <li><strong>zablokovaní brigádnici</strong> – ktorých brigádnikov ste skryli medzi kandidátmi a kedy. Vidíte to len vy, brigádnik sa o tom nedozvie, a zablokovanie môžete vo firemnom profile kedykoľvek zrušiť.</li>
 <li><strong>príznak overenia firmy</strong> – pri registrácii a pri zmene IČO overíme, či firma s týmto IČO existuje v Registri právnických osôb (verejný register Štatistického úradu SR). Do registra sa posiela iba IČO; späť dostaneme názov, obec a to, či firma nie je zrušená. Ak sa IČO v registri nenájde alebo je firma zrušená, účet sa nedá vytvoriť.</li>
 </ul>
@@ -264,7 +265,7 @@
 <p>Ak ich tam niekto napriek tomu napíše, spracujeme ich len ako súčasť obsahu, ktorý sám zverejnil alebo odoslal druhej strane, a na požiadanie ich vymažeme. Zmazať ich môžeš aj sám – úpravou profilu alebo zmazaním účtu.</p>
 <p><strong>Chat nie je end-to-end šifrovaný.</strong> Správy sú uložené v našej databáze. Vidí ich druhá strana zhody a technicky k nim má prístup prevádzkovateľ ako správca databázy. Do chatu si dohodni stretnutie, ale neposielaj tam napríklad fotky dokladov.</p>
 <h3 id="sek-3-5-co-o-tebe-nezbierame">3.5 Čo o tebe nezbierame</h3>
-<p>Telefónne číslo, adresu bydliska, rodné číslo, číslo dokladu, údaje o polohe, platobné údaje, údaje zo sociálnych sietí, cookies, analytiku správania viazanú na osobu ani žiadne údaje o zariadení nad rámec bežných serverových protokolov. (Súhrnné počty používania bez identifikátorov – pozri 3.3.)</p>
+<p>Telefónne číslo, adresu bydliska, rodné číslo, číslo dokladu, údaje o polohe, platobné údaje, údaje zo sociálnych sietí, cookies, analytiku správania viazanú na osobu ani žiadne údaje o zariadení nad rámec bežných serverových protokolov (výnimkou je adresa zariadenia pre upozornenia – len ak si ich sám zapneš, pozri 3.1). (Súhrnné počty používania bez identifikátorov – pozri 3.3.)</p>
 <p>Ak niekedy pribudne pole, ktoré tu nie je uvedené (napríklad telefónne číslo), doplníme ho do tohto dokumentu <strong>skôr</strong>, než ho v aplikácii spustíme.</p>
 <hr />
 <h2 id="sek-4-na-co-udaje-pouzivame-a-na-akom-pravnom-zaklade">4. Na čo údaje používame a na akom právnom základe</h2>
@@ -322,6 +323,12 @@
 </tr>
 <tr>
 <td>8</td>
+<td><strong>Upozornenia na novú zhodu a správu</strong> – len ak si ich zapneš</td>
+<td>adresa zariadenia u doručovacej služby, meno druhej strany, názov pozície, začiatok správy</td>
+<td>čl. 6 ods. 1 písm. b) GDPR – plnenie zmluvy; funkciu si zapínaš a vypínaš sám</td>
+</tr>
+<tr>
+<td>9</td>
 <td><strong>Podpora a vybavovanie tvojich žiadostí</strong> (vrátane práv podľa kapitoly 11)</td>
 <td>e-mail a údaje potrebné na vybavenie</td>
 <td>čl. 6 ods. 1 písm. c) GDPR – plnenie zákonnej povinnosti</td>
@@ -392,6 +399,13 @@
 <td>svoje</td>
 <td>len na svoje inzeráty</td>
 <td>áno</td>
+</tr>
+<tr>
+<td>Adresa zariadenia pre upozornenia</td>
+<td>nie</td>
+<td>nie</td>
+<td>nie</td>
+<td>áno (technicky, na doručenie upozornenia)</td>
 </tr>
 <tr>
 <td>Zablokovania (koho si skryl)</td>
@@ -475,6 +489,11 @@
 <td>globálna sieť serverov; pri tomto poskytovateľovi nevieme vylúčiť, že obsah doručí server mimo EÚ</td>
 </tr>
 <tr>
+<td><strong>Služby na doručovanie upozornení</strong> – Apple Push Notification service (iPhone), Google Firebase Cloud Messaging (Android, Chrome), Mozilla Push Service (Firefox); podľa toho, aké zariadenie a prehliadač používaš</td>
+<td>adresu tvojho zariadenia a upozornenie na novú zhodu alebo správu</td>
+<td>len ak si zapneš upozornenia. Obsah upozornenia je <strong>šifrovaný</strong> tak, že ho doručovacia služba nevie prečítať – rozšifruje ho až tvoje zariadenie. Tieto služby môžu byť mimo EÚ (USA)</td>
+</tr>
+<tr>
 <td><strong>Štatistický úrad SR</strong> – Register právnických osôb (verejné API)</td>
 <td>IČO firmy pri registrácii firemného účtu a pri zmene IČO</td>
 <td>slúži na overenie, že firma existuje; posiela ho náš server, nie tvoj prehliadač; IČO je verejný údaj o firme</td>
@@ -490,7 +509,13 @@
 <hr />
 <h2 id="sek-7-co-si-ukladame-do-tvojho-zariadenia">7. Čo si ukladáme do tvojho zariadenia</h2>
 <p><strong>Aplikácia Robiq nepoužíva cookies.</strong> Nemáme analytické skripty tretích strán ani reklamné skripty, nesledujeme, odkiaľ prichádzaš, a nespájame tvoje správanie naprieč webmi. Súhrnné počty používania (3.3) sa ukladajú bez akéhokoľvek identifikátora v tvojom zariadení.</p>
-<p>Do pamäte tvojho prehliadača (localStorage) ukladáme jedinú vec: <strong>prihlasovací token</strong>, vďaka ktorému zostaneš prihlásený a nemusíš zadávať heslo pri každom otvorení aplikácie. Je to podľa § 109 ods. 8 zákona č. 452/2021 Z. z. údaj nevyhnutne potrebný na poskytnutie služby, ktorú si výslovne vyžiadal, a preto naň nepotrebujeme tvoj súhlas. Token zmizne, keď sa odhlásiš alebo vymažeš údaje stránky v prehliadači.</p>
+<p>Do pamäte tvojho prehliadača (localStorage) ukladáme:</p>
+<ul>
+<li><strong>prihlasovací token</strong>, vďaka ktorému zostaneš prihlásený a nemusíš zadávať heslo pri každom otvorení aplikácie. Zmizne, keď sa odhlásiš alebo vymažeš údaje stránky v prehliadači.</li>
+<li><strong>tvoje nastavenia zobrazenia</strong> – či chceš svetlý alebo tmavý režim a ktoré jednorazové upozornenia v aplikácii si už zavrel (napr. o šifrovaní chatu alebo o zapnutí upozornení). Neobsahujú žiadny identifikátor.</li>
+</ul>
+<p>Ak si zapneš upozornenia, prehliadač si navyše uloží malý program aplikácie (service worker), ktorý upozornenie zobrazí aj vtedy, keď Robiq nemáš otvorený, a prihlásenie k odberu u doručovacej služby (kapitola 6). Obe zmiznú, keď upozornenia vypneš alebo sa odhlásiš.</p>
+<p>Všetko uvedené je podľa § 109 ods. 8 zákona č. 452/2021 Z. z. nevyhnutne potrebné na poskytnutie služby alebo funkcie, ktorú si výslovne vyžiadal, a preto na to nepotrebujeme tvoj súhlas.</p>
 <hr />
 <h2 id="sek-8-ako-dlho-udaje-uchovavame">8. Ako dlho údaje uchovávame</h2>
 <div class="tablewrap"><table>
@@ -508,6 +533,10 @@
 <tr>
 <td>Všetko uvedené vyššie po zmazaní účtu</td>
 <td>okamžite sa maže z databázy; zo záložných kópií poskytovateľa sa odstráni najneskôr do 30 dní</td>
+</tr>
+<tr>
+<td>Zariadenia s upozorneniami</td>
+<td>kým upozornenia nevypneš, neodhlásiš sa na danom zariadení alebo kým doručovacia služba nenahlási, že adresa už neplatí – potom sa hneď mažú</td>
 </tr>
 <tr>
 <td>Protokoly prihlásení a IP adresy v systéme Supabase Auth</td>
