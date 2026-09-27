@@ -34,8 +34,8 @@
     .chart .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; height: 100%; position: relative; min-width: 0; }
     .chart .col .v { background: #40319F; border-radius: 4px 4px 0 0; min-height: 2px; }
     .chart .col .v.b { background: #15803D; opacity: .8; margin-top: 2px; border-radius: 0; }
-    .chart .col .d { font-size: 10px; color: #6E688C; text-align: center; margin-top: 4px; white-space: nowrap; overflow: hidden; }
-    .chart .col .tip { position: absolute; top: -14px; left: 0; right: 0; text-align: center; font-size: 10px; font-weight: 700; color: #40319F; }
+    .chart .col .d { font-size: 11px; color: #6E688C; text-align: center; margin-top: 4px; white-space: nowrap; overflow: hidden; }
+    .chart .col .tip { position: absolute; top: -15px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 700; color: #40319F; }
     .legend { font-size: 12px; color: #6E688C; margin-top: 8px; } .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin: 0 4px 0 10px; }
     .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 13px; } .kv b { color: #40319F; }
     .login { max-width: 360px; margin: 60px auto; }
@@ -44,7 +44,12 @@
     .btn.ghost { background: transparent; color: #6E688C; width: auto; padding: 6px 10px; font-size: 12.5px; }
     .err { color: #DC2626; font-size: 12.5px; font-weight: 700; min-height: 16px; margin: 4px 0 8px; }
     .muted { color: #6E688C; font-size: 12.5px; }
-    @media (max-width: 640px) { .funnel { grid-template-columns: 1fr; } .chart .col:nth-child(even) .d { visibility: hidden; } }
+    @media (max-width: 640px) {
+      .funnel { grid-template-columns: 1fr; } .chart .col:nth-child(even) .d { visibility: hidden; }
+      /* 30 / 90 days on a phone: numbers above the bars ran together — hide them, show every 5th date */
+      .chart.dense .col .tip { display: none; }
+      .chart.dense .col .d { visibility: hidden; } .chart.dense .col:nth-child(5n+1) .d { visibility: visible; overflow: visible; }
+    }
     /* tabs + tables (Firmy / Inzeráty) */
     .tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
     .tabs button { border: 1px solid #DEDBEC; background: #fff; color: #6E688C; font: inherit; font-weight: 700; font-size: 13px; padding: 8px 16px; border-radius: 99px; cursor: pointer; }
@@ -53,12 +58,12 @@
     .tools .input { margin: 0; width: auto; flex: 1; min-width: 180px; padding: 9px 12px; font-size: 13px; }
     .tools label { font-size: 12.5px; color: #6E688C; display: flex; align-items: center; gap: 6px; }
     .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .tbl th { text-align: left; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #6E688C; padding: 8px 10px; border-bottom: 1px solid #DEDBEC; white-space: nowrap; }
+    .tbl th { text-align: left; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #6E688C; padding: 8px 10px; border-bottom: 1px solid #DEDBEC; white-space: nowrap; }
     .tbl td { padding: 10px; border-bottom: 1px solid #EEEBF7; vertical-align: top; }
     .tbl tr:last-child td { border-bottom: none; }
     .tbl .num { text-align: right; white-space: nowrap; }
     .tbl .sub { color: #6E688C; font-size: 11.5px; }
-    .tag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+    .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
     .tag.ok { background: rgba(21,128,61,.12); color: #15803D; }
     .tag.warn { background: rgba(180,83,9,.12); color: #B45309; }
     .tag.err { background: rgba(220,38,38,.12); color: #DC2626; }
@@ -230,7 +235,7 @@
           </div></div>
 
         <div class="card"><p class="sec">Po dňoch — otvorenia appky (fialová) a „Mám záujem“ (zelená)</p>
-          <div class="chart">${daily.map(x => `<div class="col" title="${fmtDay(x.day)}: ${x.visits} otvorení, ${x.interests} záujmov, ${x.new_users} nových účtov, ${x.matches} zhôd">
+          <div class="chart${daily.length > 10 ? ' dense' : ''}">${daily.map(x => `<div class="col" title="${fmtDay(x.day)}: ${x.visits} otvorení, ${x.interests} záujmov, ${x.new_users} nových účtov, ${x.matches} zhôd">
             ${x.visits + x.interests ? `<div class="tip">${x.visits}</div>` : ''}
             <div class="v" style="height:${x.visits / maxV * 100}%"></div><div class="v b" style="height:${x.interests / maxV * 100}%"></div>
             <div class="d">${fmtDay(x.day)}</div></div>`).join('')}</div>
@@ -248,7 +253,7 @@
             <b>${t.postings_active || 0}</b><span>aktívnych inzerátov</span>
             <b>${t.matches || 0}</b><span>zhôd od začiatku</span>
           </div></div>
-        <p class="muted">Štatistika je anonymná: ukladá sa len názov udalosti, rola a čas — bez ID používateľa, relácie či cookies.</p>`;
+        <p class="muted">Štatistika je anonymná: ukladá sa len názov udalosti, rola, čas a drobný doplnkový údaj (napr. filter, krok registrácie) — bez ID používateľa, relácie či cookies.</p>`;
     }
 
     // ─── Firmy ───

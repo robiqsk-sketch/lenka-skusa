@@ -28,6 +28,9 @@ používateľ smie čítať alebo meniť. Keďže appka nemá vlastný server, *
 - **Správu** môže poslať len účastník zhody a len pod vlastným menom.
 - Pomocné funkcie `owns_posting`, `has_interest`, `is_my_candidate`, `is_match_party` bežia ako `security definer`, aby sa pravidlá neodkazovali navzájom do kruhu.
 - Funkcie len pre prihlásených majú výslovne odobraté právo pre `anon` (Supabase ho inak dáva automaticky).
+- **Interné funkcie triggerov** (`handle_new_user`, `on_interest`, `try_match`, `sync_taken`) sa nedajú zavolať zvonka vôbec — spúšťa ich len databáza. Overené: zhoda pri obojstrannom záujme vzniká ďalej, priame volanie je zamietnuté.
+- Pravidlá používajú `(select auth.uid())` namiesto `auth.uid()` — databáza zistí prihláseného raz za dotaz, nie pre každý riadok (rýchlejšie pri väčšom počte dát; kto čo vidí, sa tým nemení).
+- **Ochrana pred uniknutými heslami** (kontrola cez HaveIBeenPwned) sa zapína v Supabase → Authentication → Settings — treba ju zapnúť ručne.
 
 ## Admin
 Admin = e-mail v tabuľke `admins`. Každá admin funkcia si to overí (`is_admin` / `assert_admin`). → [[Admin panel]]

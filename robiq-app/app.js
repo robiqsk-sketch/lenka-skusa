@@ -781,7 +781,11 @@ function skeleton() {                                      // l.377–403
 }
 
 // l.1313
-const needTxt = j => { const free = Math.max(0, j.need - (j.taken || 0)); return `Voľné ${free} / ${j.need} ${j.need === 1 ? 'pozície' : 'pozícií'}`; };
+// "1 voľné miesto z 2" · "3 voľné miesta z 5" · "6 voľných miest z 8" · "Obsadené (2 z 2)"
+const needTxt = j => {
+  const need = j.need || 1, free = Math.max(0, need - (j.taken || 0));
+  return free ? `${free} ${plural(free, 'voľné miesto', 'voľné miesta', 'voľných miest')} z ${need}` : `Obsadené (${need} z ${need})`;
+};
 const logoStyle = j => j.logo ? `background:url('${j.logo}') center/cover` : `background:${j.lg}`;
 const logoText  = j => j.logo ? '' : j.ini;
 

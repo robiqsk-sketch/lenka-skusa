@@ -334,45 +334,45 @@ alter table public.messages          enable row level security;
 alter table public.blocks            enable row level security;
 
 -- profiles: len vlastný riadok
-create policy "profiles: own read"   on public.profiles for select using (auth.uid() = id);
-create policy "profiles: own insert" on public.profiles for insert with check (auth.uid() = id);
+create policy "profiles: own read"   on public.profiles for select using ((select auth.uid()) = id);
+create policy "profiles: own insert" on public.profiles for insert with check ((select auth.uid()) = id);
 
 -- students: len vlastný riadok. Firma kandidátov vidí cez funkciu candidate_profiles (nižšie) — bez dátumu narodenia a bia.
-create policy "students: own"  on public.students for all using (auth.uid() = id) with check (auth.uid() = id);
+create policy "students: own"  on public.students for all using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
 
 -- companies: verejne čitateľné (meno firmy na karte ponuky), upravuje len vlastník
 create policy "companies: public read" on public.companies for select using (true);
-create policy "companies: own insert"  on public.companies for insert with check (auth.uid() = id);
-create policy "companies: own update"  on public.companies for update using (auth.uid() = id) with check (auth.uid() = id);
+create policy "companies: own insert"  on public.companies for insert with check ((select auth.uid()) = id);
+create policy "companies: own update"  on public.companies for update using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
 
 -- postings: aktívne vidí každý (guest-first feed), firma spravuje svoje
 create policy "postings: public read active" on public.postings for select using (
-  (active and not blocked) or company_id = auth.uid() or public.has_interest(id)   -- pozastavený inzerát stále vidí ten, kto dal záujem
+  (active and not blocked) or company_id = (select auth.uid()) or public.has_interest(id)   -- pozastavený inzerát stále vidí ten, kto dal záujem
 );
-create policy "postings: own write"          on public.postings for insert with check (company_id = auth.uid());
-create policy "postings: own update"         on public.postings for update using (company_id = auth.uid()) with check (company_id = auth.uid());
-create policy "postings: own delete"         on public.postings for delete using (company_id = auth.uid());
+create policy "postings: own write"          on public.postings for insert with check (company_id = (select auth.uid()));
+create policy "postings: own update"         on public.postings for update using (company_id = (select auth.uid())) with check (company_id = (select auth.uid()));
+create policy "postings: own delete"         on public.postings for delete using (company_id = (select auth.uid()));
 
 -- interests: študent svoje; firma tie, ktoré patria k jej inzerátom
-create policy "interests: student own" on public.interests for all using (student_id = auth.uid()) with check (student_id = auth.uid());
+create policy "interests: student own" on public.interests for all using (student_id = (select auth.uid())) with check (student_id = (select auth.uid()));
 create policy "interests: firm reads own postings" on public.interests for select using (public.owns_posting(posting_id));
 
 -- skips: len študent
-create policy "skips: student own" on public.skips for all using (student_id = auth.uid()) with check (student_id = auth.uid());
+create policy "skips: student own" on public.skips for all using (student_id = (select auth.uid())) with check (student_id = (select auth.uid()));
 
 -- company_interests: firma svoje; študent vidí, kto má o neho záujem
-create policy "company_interests: firm own"     on public.company_interests for all using (company_id = auth.uid()) with check (company_id = auth.uid());
-create policy "company_interests: student read" on public.company_interests for select using (student_id = auth.uid());
+create policy "company_interests: firm own"     on public.company_interests for all using (company_id = (select auth.uid())) with check (company_id = (select auth.uid()));
+create policy "company_interests: student read" on public.company_interests for select using (student_id = (select auth.uid()));
 
 -- matches: obe strany čítajú; vkladá len trigger (security definer)
-create policy "matches: parties read" on public.matches for select using (student_id = auth.uid() or company_id = auth.uid());
+create policy "matches: parties read" on public.matches for select using (student_id = (select auth.uid()) or company_id = (select auth.uid()));
 
 -- messages: obe strany zhody čítajú a píšu
 create policy "messages: parties read"  on public.messages for select using (public.is_match_party(match_id));
-create policy "messages: parties write" on public.messages for insert with check (sender_id = auth.uid() and public.is_match_party(match_id));
+create policy "messages: parties write" on public.messages for insert with check (sender_id = (select auth.uid()) and public.is_match_party(match_id));
 
 -- blocks: len ten, kto blokoval
-create policy "blocks: own" on public.blocks for all using (blocker_id = auth.uid()) with check (blocker_id = auth.uid());
+create policy "blocks: own" on public.blocks for all using (blocker_id = (select auth.uid())) with check (blocker_id = (select auth.uid()));
 
 -- Zobrazenia inzerátu: +1 pri otvorení detailu (aj hosť); vlastné inzeráty firmy sa nepočítajú.
 create or replace function public.count_view(p_posting bigint) returns void
@@ -418,7 +418,7 @@ create or replace function public.norm(t text) returns text            -- malé 
 language sql immutable set search_path = public, extensions as $$ select lower(extensions.unaccent(coalesce(t, ''))) $$;
 
 create or replace function public.field_skills(fields text[]) returns text[]   -- odvetvie firmy → zručnosti (plán §2)
-language sql immutable as $$
+language sql immutable set search_path = public as $$
   select coalesce(array_agg(distinct s), '{}') from unnest(fields) f cross join lateral unnest(case f
     when 'Gastro'            then array['Barista','Čašník / Servírka','Kuchyňa','Pokladňa']
     when 'Retail'            then array['Predaj','Pokladňa']
@@ -758,7 +758,7 @@ create table public.reports (
 create index reports_status_idx on public.reports (status, created_at desc);
 alter table public.reports enable row level security;
 create policy "reports: anyone inserts" on public.reports for insert to anon, authenticated
-  with check (reporter_id is null or reporter_id = auth.uid());
+  with check (reporter_id is null or reporter_id = (select auth.uid()));
 
 create or replace function public.admin_reports()
 returns table (id bigint, target_type text, target_id text, target_label text, target_blocked boolean, reason text, note text,
@@ -824,3 +824,24 @@ revoke execute on function public.admin_open_reports_count()               from 
 alter publication supabase_realtime add table public.messages;
 alter publication supabase_realtime add table public.matches;
 alter publication supabase_realtime add table public.company_interests;   -- „Firma ťa oslovila" bez obnovenia
+
+-- ─────────────────────────── Bezpečnosť a výkon (Supabase Advisors) ───────────────────────────
+-- Funkcie, ktoré spúšťa len databáza (triggery), nemá kto volať zvonka cez API. Trigger ich spustí aj bez tohto práva.
+-- has_interest / owns_posting / is_match_party / is_my_candidate ostávajú — používajú ich pravidlá prístupu.
+revoke execute on function public.handle_new_user()       from public, anon, authenticated;
+revoke execute on function public.on_interest()           from public, anon, authenticated;
+revoke execute on function public.sync_taken()            from public, anon, authenticated;
+revoke execute on function public.try_match(bigint, uuid) from public, anon, authenticated;
+
+-- Indexy pre cudzie kľúče (spojenia tabuliek a mazanie účtu bez prechádzania celej tabuľky).
+create index if not exists blocks_target_id_idx             on public.blocks (target_id);
+create index if not exists companies_city_id_idx            on public.companies (city_id);
+create index if not exists company_interests_company_id_idx on public.company_interests (company_id);
+create index if not exists company_interests_student_id_idx on public.company_interests (student_id);
+create index if not exists interests_student_id_idx         on public.interests (student_id);
+create index if not exists messages_sender_id_idx           on public.messages (sender_id);
+create index if not exists postings_city_id_idx             on public.postings (city_id);
+create index if not exists reports_reporter_id_idx          on public.reports (reporter_id);
+create index if not exists skips_student_id_idx             on public.skips (student_id);
+create index if not exists students_city_id_idx             on public.students (city_id);
+-- Pravidlá prístupu používajú (select auth.uid()) namiesto auth.uid() — vyhodnotí sa raz za dotaz, nie pre každý riadok.

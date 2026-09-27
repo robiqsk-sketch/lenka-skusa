@@ -10,7 +10,12 @@ Sem si zapisuj veci, ktoré nesedia alebo treba doriešiť. Keď sa niečo vyrie
 ## Treba urobiť
 - [ ] **Nástup brigády** — firma ho pri inzeráte nevie zadať (v databáze je všade „ihneď"), preto sa na kartách zatiaľ nezobrazuje. Ak ho chceme ukazovať, treba pridať pole do formulára Nový inzerát.
 - [ ] **Notifikácie** — appka zatiaľ žiadne neposiela (prepínač v menu bol len atrapa, odstránený 26. 9.).
-- [ ] **Dokument o ochrane osobných údajov** (`robiq-app/ochrana-osobnych-udajov.html`) doplniť o nové údaje: zablokovania (`blocks`) a počítanie zobrazení inzerátu. Podklad je v `supabase/UDAJE-INVENTAR.md` (§3.11).
+- [ ] **Ochrana pred uniknutými heslami** — zapnúť ručne v Supabase → Authentication → Settings (kontrola hesiel cez HaveIBeenPwned).
+- [ ] **Upozornenia** (e-mail / push) na novú zhodu a správu — dnes sa ich človek dozvie, len keď má appku otvorenú.
+
+## Vyriešené 27. 9. 2026
+- [x] Dokument o ochrane osobných údajov doplnený o zablokovania (3.1, 3.2, 4, 5, 8) a presnejší popis štatistiky používania; opravený odkaz na kapitolu s právami (11, nie 12). Zobrazenia inzerátu tam už boli.
+- [x] Supabase Advisors: interné funkcie triggerov nedostupné zvonka, 10 indexov, rýchlejšie pravidlá prístupu (migrácia `advisors`).
 
 ## Vyriešené 26. 9. 2026
 - [x] Pri registrácii firmy sa občas ukazovalo „Register je teraz nedostupný" → pomalý register narazil na 3 s limit databázy; limit zvýšený, appka skúša znova.

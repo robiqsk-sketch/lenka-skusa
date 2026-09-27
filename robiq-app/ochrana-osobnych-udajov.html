@@ -110,7 +110,7 @@
   <header class="top">
     <p class="eyebrow">Aplikácia Robiq · Verzia 1.0</p>
     <h1>Ochrana <b>osobných údajov</b></h1>
-    <p class="meta">Posledná aktualizácia 20. 9. 2026</p>
+    <p class="meta">Posledná aktualizácia 27. 9. 2026</p>
     <p class="lede">Tu nájdeš, aké údaje o tebe spracúvame, prečo, kto sa k nim dostane a ako ich máš pod kontrolou. Bez právnickej hmly — píšeme to tak, aby to dávalo zmysel.</p>
   </header>
 
@@ -216,6 +216,7 @@
 <li><strong>záujem firiem o teba</strong> – ktorá firma o teba prejavila záujem a kedy</li>
 <li><strong>zhody</strong> – kedy vznikla zhoda, s ktorou firmou a na ktorý inzerát</li>
 <li><strong>správy</strong> – celý obsah chatu so zhodnutou firmou</li>
+<li><strong>zablokované firmy</strong> – ktoré firmy si skryl (ich ponuky už nevidíš) a kedy. Vidíš to len ty, firma sa o tom nedozvie, a zablokovanie môžeš v profile kedykoľvek zrušiť.</li>
 <li><strong>technické údaje účtu</strong> – čas vytvorenia účtu, časy prihlásení a IP adresa pri prihlásení. Tieto zaznamenáva prihlasovacia služba Supabase ako súčasť bezpečnostného protokolu.</li>
 <li><strong>technická kópia registračných údajov</strong> – prihlasovacia služba si popri profile drží aj kópiu údajov, ktoré si zadal pri registrácii a v onboardingu. Je to technické duplikovanie v rámci tej istej databázy, nie ďalší príjemca, a maže sa spolu s účtom.</li>
 </ul>
@@ -244,11 +245,12 @@
 <p><strong>Vzniká pri používaní aplikácie:</strong></p>
 <ul>
 <li>prejavené záujmy o konkrétnych brigádnikov, zhody, správy v chate, technické údaje účtu a technická kópia registračných údajov – rovnako ako pri brigádnikoch</li>
+<li><strong>zablokovaní brigádnici</strong> – ktorých brigádnikov ste skryli medzi kandidátmi a kedy. Vidíte to len vy, brigádnik sa o tom nedozvie, a zablokovanie môžete vo firemnom profile kedykoľvek zrušiť.</li>
 <li><strong>príznak overenia firmy</strong> – pri registrácii a pri zmene IČO overíme, či firma s týmto IČO existuje v Registri právnických osôb (verejný register Štatistického úradu SR). Do registra sa posiela iba IČO; späť dostaneme názov, obec a to, či firma nie je zrušená. Ak sa IČO v registri nenájde alebo je firma zrušená, účet sa nedá vytvoriť.</li>
 </ul>
 <h3 id="sek-3-3-ak-si-stranku-len-prezeras-bez-uctu">3.3 Ak si stránku len prezeráš bez účtu</h3>
 <p>Bez prihlásenia si môžeš pozrieť zoznam ponúk. <strong>Do našej databázy sa o tebe neuloží nič, čo by sa dalo spojiť s tebou</strong> – nevytvárame ti žiadny záznam, nesledujeme ťa, nemáme reklamné skripty ani analytiku tretích strán.</p>
-<p>Vedieme si len <strong>súhrnné počty používania</strong>: napríklad koľkokrát za deň niekto otvoril aplikáciu, začal registráciu alebo klikol na „Mám záujem“. Pri takomto zázname sa uloží iba názov udalosti, typ účtu (bez účtu / brigádnik / firma) a čas – <strong>žiadne ID používateľa, ID relácie, IP adresa ani cookie</strong>. Z týchto počtov sa nedá zistiť, kto čo urobil; slúžia nám len na to, aby sme videli, či aplikácia funguje a kde ľudia vypadávajú.</p>
+<p>Vedieme si len <strong>súhrnné počty používania</strong>: napríklad koľkokrát za deň niekto otvoril aplikáciu, začal registráciu alebo klikol na „Mám záujem“. Pri takomto zázname sa uloží iba názov udalosti, typ účtu (bez účtu / brigádnik / firma), čas a pri niektorých udalostiach drobný doplnkový údaj, ktorý sa netýka tvojej osoby – napríklad ktorý filter ponúk bol zapnutý, v ktorom kroku registrácie sa niekto nachádza alebo prečo registrácia neprešla. <strong>Žiadne ID používateľa, ID relácie, IP adresa ani cookie.</strong> Z týchto počtov sa nedá zistiť, kto čo urobil; slúžia nám len na to, aby sme videli, či aplikácia funguje a kde ľudia vypadávajú.</p>
 <p>Tvoj prehliadač však pri načítaní stránky sám pošle svoju IP adresu a hlavičky (typ prehliadača, jazyk) serverom, z ktorých sa načítava aplikácia a jej súčasti – pozri kapitolu 6.</p>
 <h3 id="sek-3-4-volne-texty-a-spravy-dolezite-upozornenie">3.4 Voľné texty a správy – dôležité upozornenie</h3>
 <p>Niektoré polia sú voľný text, do ktorého môžeš napísať čokoľvek:</p>
@@ -314,7 +316,13 @@
 </tr>
 <tr>
 <td>7</td>
-<td><strong>Podpora a vybavovanie tvojich žiadostí</strong> (vrátane práv podľa kapitoly 12)</td>
+<td><strong>Skrytie firmy alebo brigádnika (zablokovanie)</strong> – aby si nevidel ponuky firmy, ktorú si skryl, a firma nevidela brigádnika, ktorého skryla</td>
+<td>kto koho zablokoval a kedy</td>
+<td>čl. 6 ods. 1 písm. b) GDPR – plnenie zmluvy; funkciu si zapínaš sám</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Podpora a vybavovanie tvojich žiadostí</strong> (vrátane práv podľa kapitoly 11)</td>
 <td>e-mail a údaje potrebné na vybavenie</td>
 <td>čl. 6 ods. 1 písm. c) GDPR – plnenie zákonnej povinnosti</td>
 </tr>
@@ -383,6 +391,13 @@
 <td>nie</td>
 <td>svoje</td>
 <td>len na svoje inzeráty</td>
+<td>áno</td>
+</tr>
+<tr>
+<td>Zablokovania (koho si skryl)</td>
+<td>nie</td>
+<td>len svoje</td>
+<td>len svoje</td>
 <td>áno</td>
 </tr>
 <tr>
@@ -487,7 +502,7 @@
 </thead>
 <tbody>
 <tr>
-<td>Účet, profil, profilová fotka, inzeráty, záujmy, zhody, správy, logo firmy</td>
+<td>Účet, profil, profilová fotka, inzeráty, záujmy, zhody, správy, zablokovania, logo firmy</td>
 <td>po celý čas, čo máš účet</td>
 </tr>
 <tr>
@@ -509,7 +524,7 @@
 </tbody>
 </table></div>
 <h3 id="sek-zmazanie-uctu">Zmazanie účtu</h3>
-<p>Účet si môžeš <strong>zmazať sám kedykoľvek</strong>: menu účtu → <strong>Zmazať účet</strong> → potvrdenie. Zmaže sa účet, profil, profilová fotka, inzeráty, prejavené záujmy, zhody, správy aj logo firmy. Nepotrebuješ na to nás a nemusíš to nijako odôvodňovať.</p>
+<p>Účet si môžeš <strong>zmazať sám kedykoľvek</strong>: menu účtu → <strong>Zmazať účet</strong> → potvrdenie. Zmaže sa účet, profil, profilová fotka, inzeráty, prejavené záujmy, zhody, správy, zablokovania (tvoje aj tie, v ktorých si ty ten zablokovaný) aj logo firmy. Nepotrebuješ na to nás a nemusíš to nijako odôvodňovať.</p>
 <p>Ak sa do účtu neprihlásiš viac ako 24 mesiacov, môžeme ho po predchádzajúcom upozornení na tvoj e-mail zmazať, aby sme nedržali údaje, ktoré už nikto nepotrebuje.</p>
 <p><strong>Čo zmazanie účtu neovplyvní:</strong> správy, ktoré si už odoslal druhej strane, zostanú v jej schránke – rovnako ako pri e-maile. Rovnako nevieme zmazať údaje, ktoré si firme oznámil mimo Robiqu (napr. telefonicky alebo e-mailom); tam už je prevádzkovateľom daná firma a so žiadosťou sa treba obrátiť na ňu.</p>
 <hr />

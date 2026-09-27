@@ -390,12 +390,12 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 .chat-warn button { flex-shrink: 0; border: 1px solid rgba(180,83,9,.4); background: var(--card); color: #B45309; border-radius: 9px; padding: 6px 10px; font-size: var(--text-sm); font-weight: 700; cursor: pointer; font-family: inherit; }
 .chat-msgs { flex: 1; overflow: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
 .msg { max-width: 70%; padding: 10px 15px; font-size: var(--text-base); line-height: 1.5; }
-.msg.me { align-self: flex-end; background: #144F9E; color: #fff; border-radius: 16px 16px 4px 16px; }
+.msg.me { align-self: flex-end; background: var(--accent); color: #fff; border-radius: 16px 16px 4px 16px; }
 .msg.them { align-self: flex-start; background: var(--fill); border-radius: 16px 16px 16px 4px; color: var(--ink); }
 .chat-input { padding: 14px 16px; border-top: 1px solid var(--fill); display: flex; gap: 10px; }
 .chat-input input { flex: 1; min-width: 0; background: var(--fill2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: var(--text-base); color: var(--ink); }
-.chat-input button { background: #144F9E; color: #fff; border: none; border-radius: 12px; padding: 0 22px; font-size: var(--text-base); font-weight: 700; cursor: pointer; }
-.chat-input button:hover { background: #1B6AD1; }
+.chat-input button { background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 0 22px; font-size: var(--text-base); font-weight: 700; cursor: pointer; }   /* app purple, like every other send/primary action */
+.chat-input button:hover { background: var(--accent-hi); }
 
 /* ═══════════ BRIGÁDNICI — l.637–706 ═══════════ */
 .gate-card { background: var(--card); border: 1px solid var(--line2); box-shadow: 0 12px 34px -12px var(--shadow); border-radius: 20px; padding: 44px 38px; text-align: center; max-width: 520px; margin: 20px auto 0; }
