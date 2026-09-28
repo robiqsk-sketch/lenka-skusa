@@ -12,17 +12,18 @@ používateľ smie čítať alebo meniť. Keďže appka nemá vlastný server, *
 
 | Údaj | Hosť | Študent | Firma | Admin |
 |---|---|---|---|---|
-| aktívne inzeráty + názov, popis, logo firmy | ✓ | ✓ | ✓ | ✓ |
+| aktívne inzeráty + názov, oficiálny názov, IČO, popis, logo firmy | ✓ | ✓ | ✓ | ✓ |
 | profil študenta (meno, zručnosti, hodiny, mesto, fotka) | – | svoj | **len ak dal záujem o jej inzerát** | cez admin funkcie |
 | anonymný návrh študenta (zručnosti, dostupnosť, skóre — bez mena) | – | – | pre svoje inzeráty | – |
 | dátum narodenia, bio študenta | – | svoj | **nikdy** | – |
-| IČO, kontaktná osoba firmy | – | – | svoje | ✓ |
+| meno kontaktnej osoby firmy | – | – | **nie** (len ho zapisuje) | cez `admin_companies` |
 | správy | – | vo svojich zhodách | vo svojich zhodách | – |
 | zablokovania | – | svoje | svoje | – |
 | štatistika, nahlásenia | – | – | – | ✓ |
 
 ## Kľúčové pravidlá
 - **Firma nemá priamy prístup k tabuľke `students`.** Kandidátov číta len cez funkciu `candidate_profiles`, ktorá vráti meno, zručnosti, hodiny, fotku a mesto — a len tých, čo dali záujem o jej inzerát (`is_my_candidate`).
+- **Tabuľka `companies` je čitateľná len po stĺpcoch.** Riadky sú verejné (firmy sa ukazujú pri inzerátoch), ale `contact_name` nečíta z klienta nikto. RLS stráži riadky, nie stĺpce — preto `grant select (…)` na vymenované stĺpce. Nový stĺpec treba do grantu doplniť. Upsert firmy nesmie obsahovať `contact_name` (ON CONFLICT by ho musel čítať). Migrácia `contact-private`.
 - **Zhodu nevie vytvoriť klient**, len trigger v databáze → nikto si nemôže „vyrobiť" chat.
 - **Pozastavený inzerát** (`active = false` alebo `blocked`) vidí stále firma a študent, ktorý o neho dal záujem.
 - **Správu** môže poslať len účastník zhody a len pod vlastným menom.

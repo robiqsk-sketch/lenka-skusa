@@ -329,7 +329,7 @@ async function loadStudent() {
 
 async function loadCompany() {
   const [{ data: c }, { data: posts }, { data: cints }, blocks] = await Promise.all([
-    sb.from('companies').select('*').eq('id', state.uid).single(),
+    sb.from('companies').select('name, legal_name, description, logo_url, ico, verified, city_id').eq('id', state.uid).single(),   // contact_name is not readable (migration contact-private)
     sb.from('postings').select('*, interests(count), matches(count)').eq('company_id', state.uid).order('created_at', { ascending: false }),
     sb.from('company_interests').select('student_id, posting_id').eq('company_id', state.uid),
     loadBlocks(),
@@ -1842,8 +1842,10 @@ async function registerCompany() {
   const btn = document.getElementById('fob-next'); btn.disabled = true; setErr('fob-err', '');
   if (state.oauth) {                                       // account exists (Google) — create the profile rows directly
     const p = await sb.from('profiles').upsert({ id: state.uid, role: 'firm' }, { onConflict: 'id', ignoreDuplicates: true });
-    const c = p.error ? p : await sb.from('companies').upsert({ id: state.uid, name: state.fobName.trim(), ico: state.fobIco.trim(),
-      fields: state.fobFields, contact_name: state.fobContact.trim() });
+    let c = p.error ? p : await sb.from('companies').upsert({ id: state.uid, name: state.fobName.trim(), ico: state.fobIco.trim(),
+      fields: state.fobFields });
+    // contact_name separately: an upsert reads the column back (ON CONFLICT … excluded), which clients may not do
+    if (!c.error && state.fobContact.trim()) c = await sb.from('companies').update({ contact_name: state.fobContact.trim() }).eq('id', state.uid);
     btn.disabled = false;
     if (c.error) { setErr('fob-err', c.error.message); return; }
     await finishCompanyReg();

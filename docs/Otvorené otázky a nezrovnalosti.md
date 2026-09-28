@@ -8,6 +8,8 @@ tags: [robiq, todo]
 Sem si zapisuj veci, ktoré nesedia alebo treba doriešiť. Keď sa niečo vyrieši, odškrtni to alebo riadok zmaž.
 
 ## Treba urobiť
+- [ ] **Meno kontaktnej osoby firmy bolo verejné** (ktokoľvek s verejným kľúčom ho vedel prečítať). Oprava vo vetve `launch-pravne-texty`: najprv nasadiť `app.js` (zapisuje `contact_name` samostatne, nečíta `*`), **potom** spustiť migráciu `contact-private`. Opačné poradie rozbije registráciu firmy cez Google.
+- [ ] **Launch verzia Podmienok a Ochrany údajov (v2.0)** je vo vetve `launch-pravne-texty`. Opisuje stav pri spustení (platby cez Stripe, odomknutie kontaktu pri zhode, telefón brigádnika, s.r.o., app.robiq.sk, písma a supabase-js hostované v projekte). Do `main` až keď to naozaj platí a po kontrole advokátom — push do `main` = nasadenie.
 - [ ] **Nástup brigády** — firma ho pri inzeráte nevie zadať (v databáze je všade „ihneď"), preto sa na kartách zatiaľ nezobrazuje. Ak ho chceme ukazovať, treba pridať pole do formulára Nový inzerát.
 - [ ] **Notifikácie** — appka zatiaľ žiadne neposiela (prepínač v menu bol len atrapa, odstránený 26. 9.).
 - [ ] **Ochrana pred uniknutými heslami** — zapnúť ručne v Supabase → Authentication → Settings (kontrola hesiel cez HaveIBeenPwned).

@@ -342,6 +342,11 @@ create policy "students: own"  on public.students for all using ((select auth.ui
 
 -- companies: verejne čitateľné (meno firmy na karte ponuky), upravuje len vlastník
 create policy "companies: public read" on public.companies for select using (true);
+-- Riadky sú verejné, stĺpce nie všetky: contact_name klient nečíta (migrácia contact-private).
+-- Nový stĺpec companies treba doplniť sem, inak ho appka neprečíta.
+revoke select on public.companies from anon, authenticated;
+grant select (id, name, legal_name, ico, fields, description, logo_url, city_id, verified, updated_at)
+  on public.companies to anon, authenticated;
 create policy "companies: own insert"  on public.companies for insert with check ((select auth.uid()) = id);
 create policy "companies: own update"  on public.companies for update using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
 
