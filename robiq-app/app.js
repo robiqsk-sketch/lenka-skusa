@@ -788,6 +788,16 @@ document.addEventListener('pointerdown', e => {
   if (e.target.closest('[data-rowmenu]')) return;
   state.rowMenu = null; render();
 }, true);
+// Escape closes the topmost window (report above detail, like the layers stack), then menus.
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || state.screen !== 'app') return;
+  const close = [['report', () => { state.report = null; }], ['photoEdit', () => { state.photoEdit = null; }],
+    ['delAccount', () => { state.delAccount = false; }], ['delIdx', () => { state.delIdx = null; }],
+    ['gate', () => { state.gate = false; state.pendingJob = null; }], ['detail', () => { state.detail = null; }],
+    ['accMenu', () => { state.accMenu = false; }], ['rowMenu', () => { state.rowMenu = null; }]]
+    .find(([k]) => state[k] !== null && state[k] !== false);
+  if (close) { close[1](); render(); }
+});
 document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); go.doLogin(); });
 // Report form: reason buttons (inside the overlay, before the body's data-go handler)
 document.getElementById('a-layers').addEventListener('click', e => {
