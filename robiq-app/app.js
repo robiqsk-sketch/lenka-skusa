@@ -870,6 +870,9 @@ const needTxt = j => {
   const need = j.need || 1, free = Math.max(0, need - (j.taken || 0));
   return free ? `${free} ${plural(free, 'voľné miesto', 'voľné miesta', 'voľných miest')} z ${need}` : `Obsadené (${need} z ${need})`;
 };
+const isFull = j => (j.taken || 0) >= (j.need || 1);
+// The type 'Remote' stays in the data (postings.tags, filters); people see it as „Na diaľku", like the switch in Nový inzerát.
+const typeLabel = t => t === 'Remote' ? 'Na diaľku' : t;
 const logoStyle = j => j.logo ? `background:url('${j.logo}') center/cover` : `background:${j.lg}`;
 const logoText  = j => j.logo ? '' : j.ini;
 
@@ -886,10 +889,11 @@ function remaining() {                                     // l.1243–1245
   const inv = id => state.invitedPostingIds.includes(id) ? 1 : 0, near = j => inReach(j) ? 1 : 0;
   return state.postings
     .filter(j => !state.skippedIds.includes(j.id) && !state.blockedFirms.includes(j.companyId) && (!j.only18 || adult) && matchesFilters(j))
-    .sort(state.authed ? (a, b) => (inv(b) - inv(a)) || (near(b) - near(a)) || (b.id - a.id)   // invitations, then within reach, then newest
-                       : (a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+    .sort((a, b) => (isFull(a) - isFull(b)) || (state.authed   // full postings last
+      ? (inv(b) - inv(a)) || (near(b) - near(a)) || (b.id - a.id)   // invitations, then within reach, then newest
+      : order.indexOf(a.id) - order.indexOf(b.id)));
 }
-function aiJob() { return remaining().find(j => !state.likedIds.includes(j.id)) || null; }
+function aiJob() { return remaining().find(j => !state.likedIds.includes(j.id) && !isFull(j)) || null; }
 
 // Feed filters: "V mojom okolí" (student with a city) AND any of the chosen types ("Víkendy" or "Remote" …).
 const canFilterNear = () => state.authed && isStudent() && !!state.cityId;
@@ -900,7 +904,7 @@ function matchesFilters(j) {
   return !types.length || types.some(t => j.tags.includes(t) || (t === 'Remote' && j.remote));
 }
 function filterBar() {
-  const chips = [...(canFilterNear() ? [['near', 'V mojom okolí']] : []), ...TYPES.map(t => [t, t])];
+  const chips = [...(canFilterNear() ? [['near', 'V mojom okolí']] : []), ...TYPES.map(t => [t, typeLabel(t)])];
   return `<div class="filters" role="group" aria-label="Filtre">
     ${chips.map(([k, l]) => `<button type="button" class="${state.filters.includes(k) ? 'on' : ''}" data-act="filter" data-f="${esc(k)}" aria-pressed="${state.filters.includes(k)}">${esc(l)}</button>`).join('')}
     ${state.filters.length ? '<button type="button" class="clear" data-act="filter-clear">Zrušiť</button>' : ''}
@@ -956,7 +960,8 @@ function jobCard(j) {                                      // l.425–463
   const invited = state.invitedPostingIds.includes(j.id) && !liked;
   // Compact layout: logo · title/company · pay in one row, then one quiet meta line (place · posted · ⋯), occupancy as a thin bar.
   const meta = [placeTxt(j), j.posted].filter(Boolean).map(esc).join(' · ');
-  return `<div class="job ${invited ? 'invited' : ''}">
+  const full = isFull(j) && !liked;
+  return `<div class="job ${invited ? 'invited' : ''} ${full ? 'full' : ''}">
     ${invited ? `<div class="invite-badge">${icon('sparkles', 14)}Firma ťa oslovila — sedíš na túto pozíciu</div>` : ''}
     <div class="who" data-job="${j.id}" data-act="open">
       <div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
@@ -967,10 +972,10 @@ function jobCard(j) {                                      // l.425–463
     <div class="meta"><span>${meta}</span>
       <div class="more"><button class="dots-btn" data-rowmenu="1" aria-label="Ďalšie možnosti" data-job="${j.id}" data-act="menu">${icon('more')}</button>${menu}</div></div>
     <div class="need"><span>${needTxt(j)}</span><span class="bar"><i style="width:${pct}%"></i></span></div>
-    ${j.tags.length ? `<div class="tags">${j.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
-    ${liked ? `<div class="sent">✓ Záujem odoslaný</div>` : `
+    ${j.tags.length ? `<div class="tags">${j.tags.map(t => `<span>${esc(typeLabel(t))}</span>`).join('')}</div>` : ''}
+    ${liked ? `<div class="sent">✓ Záujem odoslaný</div>` : full ? `<div class="act"><button class="like" disabled>Obsadené</button></div>` : `
     <div class="act"><button class="like" data-job="${j.id}" data-act="like">${icon('heart', 16)}Mám záujem</button>
-      <button class="skip" aria-label="Preskočiť" data-job="${j.id}" data-act="skip">${icon('x')}</button></div>`}
+      ${state.authed ? `<button class="skip" aria-label="Nezaujíma ma" title="Nezaujíma ma" data-job="${j.id}" data-act="skip">${icon('x')}</button>` : ''}</div>`}
   </div>`;
 }
 
@@ -1216,7 +1221,7 @@ function nova() {
       <div><div class="label">Vek kandidátov</div>
         <div class="seg"><button class="${s.only18 ? '' : 'on'}" data-go="set18All">Bez obmedzenia</button><button class="${s.only18 ? 'on' : ''}" data-go="set18Only">Len 18+</button></div></div>
       <div><div class="label" style="margin-bottom:10px">Typ brigády</div>
-        <div class="tchips">${TYPES.map(t => `<button class="tchip ${s.fTypes.includes(t) ? 'on' : ''}" data-type="${t}" data-act="type">${t}</button>`).join('')}</div></div>
+        <div class="tchips">${TYPES.filter(t => t !== 'Remote').map(t => `<button class="tchip ${s.fTypes.includes(t) ? 'on' : ''}" data-type="${t}" data-act="type">${typeLabel(t)}</button>`).join('')}</div></div>
       <div><div class="label" style="margin-bottom:4px">Popis práce</div>
         <textarea id="f-desc" rows="3" maxlength="1500" placeholder="Čo bude brigádnik robiť, kde a od kedy.">${esc(s.fDesc)}</textarea></div>
       <div><div class="label" style="margin-bottom:4px">${icon('sparkles', 14)} Koho hľadáte</div>
@@ -1413,7 +1418,7 @@ document.getElementById('a-main').addEventListener('click', async e => {
   else if (a === 'filter') { toggleInList(state.filters, d.f); render(); track('filter', { f: d.f, on: state.filters.includes(d.f) }); }
   else if (a === 'filter-clear') { state.filters = []; render(); }
   else if (a === 'type') { toggleInList(state.fTypes, d.type); render(); }
-  else if (a === 'remote') { state.fRemote = !state.fRemote; if (state.fRemote && !state.fTypes.includes('Remote')) state.fTypes.push('Remote'); render(); }
+  else if (a === 'remote') { state.fRemote = !state.fRemote; state.fTypes = state.fTypes.filter(t => t !== 'Remote').concat(state.fRemote ? ['Remote'] : []); render(); }
   else if (a === 'fphoto-rm') {                            // new posting form: remove a preview
     const p = state.fPhotos.splice(+d.fPhotoRm, 1)[0]; if (p) URL.revokeObjectURL(p.url); render();
   }
@@ -1483,15 +1488,15 @@ function layers() {                                        // banner l.946, toas
       <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)}${placeTxt(d) ? ` · ${esc(placeTxt(d))}` : ''}</div>
         ${d.legal && d.legal !== d.f ? `<div class="legal">✓ ${esc(d.legal)} — podľa Registra právnických osôb</div>` : ''}</div></div>
       <button class="x" data-go="closeDetail" aria-label="Zavrieť">${icon('x')}</button></div>
-    ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+    ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(typeLabel(t))}</span>`).join('')}</div>` : ''}
     <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
     ${d.remote ? '' : d.address || d.city ? `<div class="addr">${esc([d.address, d.city].filter(Boolean).join(', '))}
       ${d.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([d.address, d.city].filter(Boolean).join(', '))}" target="_blank" rel="noopener">mapa ↗</a>` : ''}</div>` : ''}
     ${d.desc ? `<p>${esc(d.desc)}</p>` : ''}
     ${d.photos.length ? `<div class="sec">Deň v práci</div>
     <div class="day">${d.photos.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" class="ph" style="background-image:url('${esc(u)}')"></a>`).join('')}</div>` : ''}
-    ${state.likedIds.includes(d.id) ? `<div class="sent">✓ Záujem odoslaný</div>` : `
-    <div class="act"><button class="like" data-go="detailLike">${icon('heart', 16)}Mám záujem</button><button class="skip" data-go="detailSkip">${icon('x', 16)}Preskočiť</button></div>`}
+    ${state.likedIds.includes(d.id) ? `<div class="sent">✓ Záujem odoslaný</div>` : isFull(d) ? `<div class="act"><button class="like" disabled>Obsadené</button></div>` : `
+    <div class="act"><button class="like" data-go="detailLike">${icon('heart', 16)}Mám záujem</button>${state.authed ? `<button class="skip" data-go="detailSkip">${icon('x', 16)}Nezaujíma ma</button>` : ''}</div>`}
     ${(state.authed && !isStudent() && d.companyId === state.uid) ? '' : `<div class="report-row"><button class="link" data-go="reportPosting">${icon('flag', 14)}Nahlásiť inzerát</button></div>`}
   </div></div>`;
   // Photos of an existing posting (row menu ⋯ → Fotky)

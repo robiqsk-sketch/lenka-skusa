@@ -287,8 +287,10 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 .job .act { display: flex; gap: 8px; }
 .job .like { flex: 1; background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 12px 0; font-size: var(--text-md); font-weight: 700; cursor: pointer; }
 .job .like:hover { background: var(--accent-hi); }
-.job .skip { background: rgba(220,38,38,.08); color: var(--bad); border: none; border-radius: 12px; padding: 12px 18px; font-size: var(--text-lg); cursor: pointer; }
-.job .skip:hover { background: rgba(220,38,38,.16); }
+.job .skip { background: rgba(220,38,38,.14); color: var(--bad); border: none; border-radius: 12px; padding: 12px 18px; font-size: var(--text-lg); cursor: pointer; }
+.job .skip:hover { background: rgba(220,38,38,.24); }
+.job.full { opacity: .6; }                                 /* full posting: still visible, clearly not the next step */
+.job .like:disabled, .dmodal .like:disabled { background: var(--fill); color: var(--muted); cursor: default; }
 .job .sent { border: 1px solid rgba(21,128,61,.3); color: var(--ok); border-radius: 12px; padding: 12px 0; font-size: var(--text-md); font-weight: 700; text-align: center; background: rgba(21,128,61,.08); }
 
 .deck-empty { border-radius: 20px; border: 1px dashed var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 60px 30px; }
@@ -305,7 +307,8 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 .filters button:hover { border-color: var(--accent); }
 .filters button.on { background: var(--ink); border-color: var(--ink); color: var(--card); }   /* selected = dark, like Airbnb; purple stays for actions */
 .filters button.clear { border-color: transparent; background: transparent; color: var(--accent); }
-@media (max-width: 640px) { .filters { margin: 0 -16px 14px; padding: 0 16px; } }   /* chips run to the screen edge */
+@media (max-width: 640px) { .filters { margin: 0 -16px 14px; padding: 0 16px;   /* chips run to the screen edge */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }   /* fade on the right: there is more to scroll */
 .deck-empty button { background: transparent; color: var(--ink2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 22px; font-size: var(--text-sm); cursor: pointer; }
 .deck-empty button:hover { color: var(--ink); border-color: var(--accent); }
 
