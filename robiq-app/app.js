@@ -1059,7 +1059,7 @@ function chatUI(list, active, isFirm) {
     : 'Zatiaľ žiadne zhody. Chat vznikne, keď o teba prejaví záujem firma, ktorej si dal „Mám záujem".'}</div>`;
   // One-time notice (per browser): the chat is not end-to-end encrypted — privacy policy §3.4, terms §8.
   let warn = '';
-  try { if (!localStorage.getItem('robiq_chat_warn')) warn = `<div class="chat-warn">Chat nie je šifrovaný medzi zariadeniami — neposielaj sem fotky dokladov, rodné číslo ani platobné údaje. Správy vidí druhá strana a technicky aj Robiq.
+  try { if (!localStorage.getItem('robiq_chat_warn')) warn = `<div class="chat-warn">Chat nie je šifrovaný medzi zariadeniami — neposielaj sem fotky dokladov, rodné číslo ani platobné údaje.
       <button data-go="chatWarnOk">Rozumiem</button></div>`; } catch {}
   return `<div class="chat">
     <div class="chat-list">${items}</div>
