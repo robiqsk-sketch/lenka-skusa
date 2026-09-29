@@ -138,7 +138,10 @@ const isStudent = () => state.role === 'student';
 // ═══════════ Usage statistics (table `events`, read only by admin.html) ═══════════
 // Deliberately anonymous: event name + role + time. No user id, no session id, no cookies —
 // the privacy policy (§3.3, §7) promises visitors are not tracked. Fire-and-forget.
+// Our own accounts (table `stats_excluded`) mark the device once signed in — from then on it sends nothing, even signed out.
+const NO_STATS_KEY = 'robiq_no_stats';
 function track(name, props) {
+  try { if (localStorage.getItem(NO_STATS_KEY)) return; } catch {}
   const role = state.authed ? state.role : 'guest';
   sb.from('events').insert({ name, role, props: props || {} }).then(({ error }) => { if (error) console.warn('track', name, error.message); });
 }
@@ -270,6 +273,8 @@ async function loadMe() {                                  // who is signed in, 
   if (prof.role === 'student') await loadStudent(); else await loadCompany();
   const { data: admin } = await sb.rpc('is_admin');       // admins get a „Štatistika" item in the account menu (admin.html)
   state.isAdmin = admin === true;
+  const { data: noStats } = await sb.rpc('is_stats_excluded');
+  if (noStats === true) try { localStorage.setItem(NO_STATS_KEY, '1'); } catch {}
 }
 async function profileUnfinished(role) {                   // true → the role row is missing or has no skills yet
   if (role === 'student') {

@@ -34,3 +34,4 @@ Každá zmena sa zároveň zapíše ako samostatná migrácia `supabase/migratio
 | 27. 9. | `push` | upozornenia: tabuľka `push_subscriptions`, `notified_at` pri správach a zhodách, `notify_secret` (trezor) | [[Upozornenia]] |
 | 27. 9. | `advisors` | interné funkcie (triggery) nedostupné zvonka, 10 indexov, pravidlá prístupu s `(select auth.uid())` — rýchlejšie, kto čo vidí sa nemení | [[Prístupy a bezpečnosť (RLS)]] |
 | 26. 9. | `rpo-timeout` | limit príkazu pre neprihlásených (anon) 3 s → 10 s, aby pomalý register nekončil „nedostupný" | [[Registrácia firmy a overenie IČO]] |
+| 29. 9. | `stats-excluded` | tabuľka `stats_excluded` + `is_stats_excluded`; `analytics_summary` nezarátava vlastné účty (Lenka, Robiq) | [[Štatistika používania]] |
