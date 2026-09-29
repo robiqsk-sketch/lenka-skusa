@@ -30,6 +30,7 @@ const initialState = () => ({
   invitedPostingIds: [],                                   // student: postings whose company reached out first
   fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fCityId: null, fRemote: false, fAddress: '', fpCityId: null,
   fPhotos: [],                                             // new posting: [{ file, url }] previews, max 3
+  fEditId: null,                                           // posting being edited in the same form (null = new posting)
   photoEdit: null,                                         // existing posting: { offerId, photos: [url] } overlay
 });
 let state = initialState();
@@ -451,7 +452,25 @@ function showToast(msg) {                                  // l.1148–1152
   state.rowMenu = null; state.toast = msg; render();
   toastT = setTimeout(() => { state.toast = ''; render(); }, 2600);
 }
-function fail(e) { console.error(e); showToast(e.message || 'Niečo sa nepodarilo.'); }
+function fail(e) { console.error(e); showToast(skError(e)); }
+// Supabase and the browser report errors in English. The ones people can actually hit get a Slovak sentence;
+// our own database messages (Slovak, with diacritics) pass through; anything else → a general one.
+const ERR_SK = [
+  [/invalid login credentials/i, 'Nesprávny e-mail alebo heslo.'],
+  [/email not confirmed/i, 'E-mail ešte nie je potvrdený — potvrdzovací odkaz je v schránke (pozri aj spam).'],
+  [/rate limit|too many requests|for security purposes/i, 'Príliš veľa pokusov za sebou. O chvíľu to pôjde znova.'],
+  [/different from the old/i, 'Nové heslo musí byť iné ako staré.'],
+  [/password should|weak password|password is known/i, 'Heslo je príliš slabé — aspoň 6 znakov, nie bežné heslo.'],
+  [/invalid.*email|email.*invalid|unable to validate email/i, 'Tento e-mail nevyzerá správne.'],
+  [/already registered|already exists/i, 'Tento e-mail už má účet.'],
+  [/jwt expired|session.*(missing|expired)|not authenticated/i, 'Prihlásenie vypršalo. Obnov stránku a prihlás sa znova.'],
+  [/failed to fetch|networkerror|load failed|network request failed|timeout|timed out/i, 'Nepodarilo sa spojiť so serverom. Skontroluj internet a skús znova.'],
+];
+function skError(e) {
+  const m = (e && (e.message || e.error_description)) || String(e || '');
+  for (const [re, sk] of ERR_SK) if (re.test(m)) return sk;
+  return /[áäčďéíĺľňóôŕšťúýž]/i.test(m) ? m : 'Niečo sa nepodarilo. Skús to znova.';
+}
 
 async function resetToGuest() {                            // l.1506–1514: sign out → clean guest view (logout, account deletion)
   if (pushOn) await disablePush().catch(() => {});        // this device stops getting the signed-out account's notifications
@@ -530,7 +549,7 @@ const go = {
     const btn = document.getElementById('login-btn'); btn.disabled = true;
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     btn.disabled = false;
-    if (error) { setErr('login-err', error.message === 'Invalid login credentials' ? 'Nesprávny e-mail alebo heslo.' : error.message); return; }
+    if (error) { setErr('login-err', skError(error)); return; }
     document.getElementById('login-pass').value = '';
     await enterApp();
     track('login', { via: 'email' });
@@ -543,7 +562,7 @@ const go = {
     const btn = document.getElementById('forgot-btn'); btn.disabled = true;
     const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
     btn.disabled = false;
-    if (error) { setErr('login-err', error.message); return; }
+    if (error) { setErr('login-err', skError(error)); return; }
     setErr('login-err', 'Ak tento e-mail má účet, poslali sme naň odkaz na nastavenie nového hesla. Pozri aj spam.');
     track('password_reset_sent');
   },
@@ -555,7 +574,7 @@ const go = {
     const btn = document.getElementById('reset-btn'); btn.disabled = true;
     const { error } = await sb.auth.updateUser({ password: p1 });
     btn.disabled = false;
-    if (error) { setErr('reset-err', error.message.includes('different from the old') ? 'Nové heslo musí byť iné ako staré.' : error.message); return; }
+    if (error) { setErr('reset-err', skError(error)); return; }
     document.getElementById('reset-pass').value = ''; document.getElementById('reset-pass2').value = '';
     await enterApp();
     showToast('Heslo je zmenené. ✓');
@@ -573,7 +592,7 @@ const go = {
     const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
     if (error) fail(error);
   },
-  goPonuky:    () => { state.ftab = 2; },
+  goPonuky:    () => { if (state.fEditId) clearNova(); state.ftab = 2; },
   goTab:       el => switchTab(+el.dataset.tab),          // top-bar tabs on desktop
   menuPush:    async () => { state.accMenu = false; if (pushOn) { await disablePush(); showToast('Upozornenia sú vypnuté.'); track('push', { on: false }); } else await enablePush(); },
   pushOn:      () => enablePush(),                        // the nudge above the feed / candidates
@@ -598,7 +617,7 @@ const go = {
   menuStats:   () => { state.accMenu = false; location.href = 'admin.html'; },   // admin only — the session is shared, no second sign-in
   menuTheme:   () => { try { localStorage.setItem(THEME_KEY, isDarkTheme() ? 'light' : 'dark'); } catch {} applyTheme(); state.accMenu = true; track('theme', { dark: isDarkTheme() }); },
   logout: async () => { clearTimeout(bannerT); await resetToGuest(); },
-  goNova:      () => { state.ftab = 9; if (!state.fCityId) state.fCityId = state.fpCityId; },   // the company's seat prefills the place
+  goNova:      () => { if (state.fEditId) clearNova(); state.ftab = 9; if (!state.fCityId) state.fCityId = state.fpCityId; },   // the company's seat prefills the place
   // feed — l.1577–1591
   resetDeck: async () => {
     try { await sb.from('skips').delete().eq('student_id', state.uid); state.skippedIds = []; } catch (e) { fail(e); }
@@ -624,7 +643,7 @@ const go = {
     const btn = document.getElementById('report-send'); btn.disabled = true;
     const { error } = await sb.from('reports').insert({ reporter_id: state.authed ? state.uid : null, target_type: r.type, target_id: r.id, reason: r.reason, note: r.note });
     btn.disabled = false;
-    if (error) { setErr('report-err', error.message); return; }
+    if (error) { setErr('report-err', skError(error)); return; }
     state.report = null; showToast('Ďakujeme, nahlásenie sme dostali. Pozrieme sa na to.');
     track('report', { type: r.type, reason: r.reason });
   },
@@ -649,11 +668,19 @@ const go = {
   set18All:  () => { state.only18 = false; },
   set18Only: () => { state.only18 = true; },
   publish: async () => {
-    if (!novaCanPublish()) { showToast(!state.fT.trim() ? 'Zadajte názov pozície.' : 'Vyberte miesto výkonu zo zoznamu, alebo označte „Na diaľku“.'); return; }
+    if (!novaCanPublish()) { showToast(!state.fT.trim() ? 'Zadajte názov pozície.' : parsePay(state.fPay) === null ? `Zadajte hodinovú sadzbu v eurách, od ${PAY_MIN} do ${PAY_MAX} € (napr. 8,50).` : 'Vyberte miesto výkonu zo zoznamu, alebo označte „Na diaľku“.'); return; }
     try {
-      const rec = { company_id: state.uid, title: state.fT.trim(), pay: state.fPay.trim() || '8',
+      const rec = { title: state.fT.trim(), pay: parsePay(state.fPay),
         need: Math.max(1, parseInt(state.fNeed, 10) || 1), types: state.fTypes, only18: state.only18, ai_note: state.aiNote, description: state.fDesc.trim(),
         city_id: state.fRemote ? null : state.fCityId, remote: state.fRemote, address: state.fRemote ? '' : state.fAddress.trim() };
+      if (state.fEditId) {                                 // edit: same form, update instead of insert (photos: row menu → Fotky)
+        const { error } = await sb.from('postings').update(rec).eq('id', state.fEditId);
+        if (error) throw error;
+        clearNova(); state.ftab = 2;
+        await reloadCompany(); showToast('Zmeny sú uložené.');
+        return;
+      }
+      rec.company_id = state.uid;
       const { data: row, error } = await sb.from('postings').insert(rec).select('id').single();
       if (error) throw error;
       if (state.fPhotos.length) {                          // the row exists now → upload the photos under its id
@@ -662,7 +689,7 @@ const go = {
         if (urls.length) await sb.from('postings').update({ photos: urls }).eq('id', row.id);
         if (urls.length < state.fPhotos.length) showToast('Niektoré fotky sa nepodarilo nahrať.');
       }
-      Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fPhotos: [], fCityId: state.fpCityId, fRemote: false, fAddress: '', ftab: 0 });   // straight to candidates
+      clearNova(); state.ftab = 0;                         // straight to candidates
       await reloadCompany();
       const n = Object.values(state.suggestions)[0]?.length ?? 0;
       const first = state.offers[0] && state.suggestions[state.offers[0].id] ? state.suggestions[state.offers[0].id].length : n;
@@ -721,7 +748,7 @@ async function sendMsg(listKey, idxKey, draftKey) {
     if (!chat.msgs.some(m => m.id === data.id)) chat.msgs.push({ id: data.id, me: true, txt: data.body });
     render();
     notifyOther({ message_id: data.id });                  // push / e-mail to the other side
-  } catch (e) { fail(e); }
+  } catch (e) { if (!state[draftKey]) state[draftKey] = t; render(); fail(e); }   // not sent → the text goes back into the field
 }
 
 async function saveStudent() {
@@ -861,7 +888,7 @@ function skeleton() {                                      // l.377–403
     <div class="sk" style="height:44px;border-radius:12px"></div></div>`;
   return `<div class="a-wrap" aria-busy="true">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px"><div class="sk" style="width:236px;height:26px;border-radius:8px"></div><div class="sk" style="width:132px;height:13px;border-radius:99px"></div></div>
-    <div class="cards" style="grid-template-columns:repeat(2,1fr);gap:20px">${card.repeat(4)}</div></div>`;
+    <div class="cards">${card.repeat(4)}</div></div>`;
 }
 
 // l.1313
@@ -1171,6 +1198,7 @@ function ponuky() {
   const rows = state.offers.map((o, i) => {
     const menu = state.rowMenu !== 'o' + i ? '' : `
       <div class="row-menu w186" data-rowmenu="1">
+        <button data-offer="${i}" data-act="edit">Upraviť</button>
         <button data-offer="${i}" data-act="photos">Fotky „deň v práci“${o.photos.length ? ` (${o.photos.length})` : ''}</button>
         <button data-offer="${i}" data-act="dup">Duplikovať</button>
         <button class="danger" data-offer="${i}" data-act="askDel">Zmazať inzerát</button></div>`;
@@ -1202,16 +1230,28 @@ function ponuky() {
 }
 
 // ─── Nová ponuka — l.793–828 ───
-const novaCanPublish = () => !!state.fT.trim() && (state.fRemote || !!state.fCityId);   // title + a place (city or remote)
+// Hourly pay: typed as "8" / "8,50" / "8.5" → stored as text like the cards show it ("8" · "8,50"); null = not a sensible number.
+const PAY_MIN = 1, PAY_MAX = 100;
+function parsePay(txt) {
+  const t = String(txt || '').trim().replace(/\s|€/g, '').replace(',', '.');
+  if (!/^\d{1,3}(\.\d{1,2})?$/.test(t)) return null;
+  const n = +t; if (n < PAY_MIN || n > PAY_MAX) return null;
+  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ',');
+}
+function clearNova() {                                     // empty "Nový inzerát" form (after publishing / leaving an edit)
+  for (const p of state.fPhotos) URL.revokeObjectURL(p.url);
+  Object.assign(state, { fT: '', fPay: '', fNeed: '', fTypes: [], aiNote: '', only18: false, fDesc: '', fPhotos: [], fCityId: state.fpCityId, fRemote: false, fAddress: '', fEditId: null });
+}
+const novaCanPublish = () => !!state.fT.trim() && (state.fRemote || !!state.fCityId) && parsePay(state.fPay) !== null;   // title + place + pay
 function nova() {
   const s = state;
   return `<div class="nova-wrap">
     <button class="back back-top" data-go="goPonuky">← Späť na inzeráty</button>
-    <h2>Nový <b>inzerát</b></h2>
+    <h2>${s.fEditId ? 'Upraviť' : 'Nový'} <b>inzerát</b></h2>
     <div class="form-card">
       <div><div class="label">Názov pozície <b class="req">*</b></div><input class="input" id="f-t" placeholder="napr. Barista — víkendy" value="${esc(s.fT)}"></div>
       <div class="two">
-        <div><div class="label">Hodinová sadzba (€)</div><input class="input" id="f-pay" placeholder="napr. 8,50" value="${esc(s.fPay)}"></div>
+        <div><div class="label">Hodinová sadzba (€) <b class="req">*</b></div><input class="input" id="f-pay" placeholder="napr. 8,50" inputmode="decimal" maxlength="7" value="${esc(s.fPay)}"></div>
         <div><div class="label">Počet ľudí</div><input class="input" id="f-need" type="number" min="1" placeholder="1" value="${esc(s.fNeed)}"></div>
       </div>
       <div><div class="label">Miesto <b class="req">*</b></div>
@@ -1226,9 +1266,9 @@ function nova() {
         <textarea id="f-desc" rows="3" maxlength="1500" placeholder="Čo bude brigádnik robiť, kde a od kedy.">${esc(s.fDesc)}</textarea></div>
       <div><div class="label" style="margin-bottom:4px">${icon('sparkles', 14)} Koho hľadáte</div>
         <textarea id="f-ai" rows="2" placeholder="Zručnosti a povaha práce — podľa toho zoradíme kandidátov. Nie vek, pohlavie či zdravie.">${esc(s.aiNote)}</textarea></div>
-      <div><div class="label" style="margin-bottom:4px">Fotky „deň v práci“</div>
-        ${photoGrid(s.fPhotos.map(p => p.url), 'f-photo', 'f-photo-rm', 'data-act="fphoto-rm"')}</div>
-      <button class="publish" id="f-publish" data-go="publish" style="opacity:${novaCanPublish() ? 1 : .45}">Zverejniť ponuku</button>
+      ${s.fEditId ? '' : `<div><div class="label" style="margin-bottom:4px">Fotky „deň v práci“</div>
+        ${photoGrid(s.fPhotos.map(p => p.url), 'f-photo', 'f-photo-rm', 'data-act="fphoto-rm"')}</div>`}
+      <button class="publish" id="f-publish" data-go="publish" style="opacity:${novaCanPublish() ? 1 : .45}">${s.fEditId ? 'Uložiť zmeny' : 'Zverejniť ponuku'}</button>
     </div></div>`;
 }
 
@@ -1298,7 +1338,7 @@ function bindAppInputs() {
   });
   on('chat-msgs', el => { el.scrollTop = el.scrollHeight; });                 // l.1598
   on('f-t',    el => el.addEventListener('input', () => { state.fT = el.value; document.getElementById('f-publish').style.opacity = novaCanPublish() ? 1 : .45; }));
-  on('f-pay',  el => el.addEventListener('input', () => { state.fPay = el.value; }));
+  on('f-pay',  el => el.addEventListener('input', () => { state.fPay = el.value; document.getElementById('f-publish').style.opacity = novaCanPublish() ? 1 : .45; }));
   on('f-need', el => el.addEventListener('input', () => { state.fNeed = el.value; }));
   on('f-ai',   el => el.addEventListener('input', () => { state.aiNote = el.value; }));
   on('fp-name', el => { el.addEventListener('input', () => { state.fpName = el.value; });
@@ -1411,6 +1451,14 @@ document.getElementById('a-main').addEventListener('click', async e => {
         }
         await reloadCompany(); showToast('Inzerát zduplikovaný.');
       }
+      if (a === 'edit')   {                              // load the posting into the "Nový inzerát" form
+        const { data: src, error } = await sb.from('postings').select('*').eq('id', o.id).single();
+        if (error) throw error;
+        clearNova();
+        Object.assign(state, { fEditId: src.id, fT: src.title, fPay: src.pay, fNeed: String(src.need), fTypes: [...(src.types || [])], aiNote: src.ai_note || '',
+          only18: src.only18, fDesc: src.description || '', fCityId: src.city_id, fRemote: !!src.remote, fAddress: src.address || '', ftab: 9, rowMenu: null });
+        render(); window.scrollTo(0, 0);
+      }
       if (a === 'askDel') { state.rowMenu = null; state.delIdx = i; render(); }
       if (a === 'photos') { state.rowMenu = null; state.photoEdit = { offerId: o.id, title: o.t, photos: [...o.photos] }; render(); }
     } catch (err) { fail(err); }
@@ -1462,7 +1510,7 @@ function switchTab(i) {                                    // bottom dock (phone
 function layers() {                                        // banner l.946, toast l.954, delete l.957, gate l.972, detail l.988
   let h = '';
   if (state.banner) h += `<div class="banner" role="status"><div class="ok">✓</div>
-    <div><b>Máte zhodu!</b><span class="s">${esc(state.bannerName)} má o teba záujem.</span></div>
+    <div><b>Máš zhodu!</b><span class="s">${esc(state.bannerName)} má o teba záujem.</span></div>
     <button data-go="bannerGo">Napísať správu</button></div>`;
   if (state.toast) h += `<div class="toast">${esc(state.toast)}</div>`;
   if (state.delIdx !== null && state.offers[state.delIdx]) h += `<div class="overlay del" data-go="delCancel"><div class="delm" data-go="noop">
@@ -1590,7 +1638,7 @@ async function registerStudent() {
     const s = p.error ? p : await sb.from('students').upsert({ id: state.uid, name: state.obName.trim(), birth: state.birth || null,
       skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute });
     btn.disabled = false;
-    if (s.error) { setErr('ob-err', s.error.message); return; }
+    if (s.error) { setErr('ob-err', skError(s.error)); return; }
     await finishStudentReg();
     track('reg_done', { role: 'student', via: 'google' });
     return;
@@ -1599,7 +1647,7 @@ async function registerStudent() {
     options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute } } });
   btn.disabled = false;
   if (signUpTaken(data, error)) { state.obStep = 1; render(); setErr('ob-err', EMAIL_TAKEN_S); return; }   // back to the e-mail field
-  if (error) { setErr('ob-err', error.message); return; }
+  if (error) { setErr('ob-err', skError(error)); return; }
   track('reg_done', { role: 'student', via: 'email' });
   if (!data.session) {                                    // e-mail confirmation is on
     state.screen = 'login'; render();
@@ -1855,7 +1903,7 @@ async function registerCompany() {
     const c = p.error ? p : await sb.from('companies').upsert({ id: state.uid, name: state.fobName.trim(), ico: state.fobIco.trim(),
       fields: state.fobFields, contact_name: state.fobContact.trim() });
     btn.disabled = false;
-    if (c.error) { setErr('fob-err', c.error.message); return; }
+    if (c.error) { setErr('fob-err', skError(c.error)); return; }
     await finishCompanyReg();
     track('reg_done', { role: 'firm', via: 'google' });
     return;
@@ -1864,7 +1912,7 @@ async function registerCompany() {
     options: { data: { role: 'firm', name: state.fobName.trim(), ico: state.fobIco.trim(), fields: state.fobFields, contact_name: state.fobContact.trim() } } });
   btn.disabled = false;
   if (signUpTaken(data, error)) { setErr('fob-err', EMAIL_TAKEN_F); return; }
-  if (error) { setErr('fob-err', error.message); return; }
+  if (error) { setErr('fob-err', skError(error)); return; }
   track('reg_done', { role: 'firm', via: 'email' });
   if (!data.session) {
     state.screen = 'login'; render();

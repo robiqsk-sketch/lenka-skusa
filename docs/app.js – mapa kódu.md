@@ -54,3 +54,5 @@ flowchart LR
 | `admin.html` | admin panel → [[Admin panel]] |
 | `_headers` | bezpečnostné hlavičky (Cloudflare) |
 | `manifest.webmanifest`, `icons/` | inštalácia ako appka na mobile (PWA) |
+
+- **Chybové hlášky** — `skError` preloží anglické chyby zo Supabase a prehliadača (zlé heslo, nepotvrdený e-mail, veľa pokusov, výpadok siete…) do slovenčiny. Naše vlastné slovenské hlášky z databázy prejdú bez zmeny, ostatné nahradí všeobecná veta.

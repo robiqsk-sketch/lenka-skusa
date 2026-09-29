@@ -18,11 +18,11 @@ Chat so zhodami (rovnaký ako u študenta). → [[Záujem, zhoda a chat]]
 
 ## Inzeráty (`ponuky`)
 - Súhrn: aktívne inzeráty, zobrazenia, záujmy, zhody.
-- Riadok inzerátu: zobrazenia, záujmy, zhody, obsadené; zapnúť/pozastaviť; menu ⋯ (fotky „deň v práci", duplikovať — skopíruje aj miesto a fotky, zmazať).
+- Riadok inzerátu: zobrazenia, záujmy, zhody, obsadené; zapnúť/pozastaviť; menu ⋯ (**upraviť** — otvorí ten istý formulár ako Nový inzerát s vyplnenými údajmi, fotky sa menia cez „Fotky"; fotky „deň v práci", duplikovať — skopíruje aj miesto a fotky, zmazať).
 - Inzerát **pozastavený Robiqom** má značku a dôvod; firma ho nevie zapnúť. → [[Nahlásenia a moderovanie]]
 
 ## Nový inzerát (`nova`)
-Názov pozície · hodinová sadzba · počet ľudí · **miesto** (mesto zo zoznamu, alebo „Na diaľku") + adresa · vek kandidátov (všetci / len 18+) ·
+Názov pozície · **hodinová sadzba** (povinná, číslo od 1 do 100 €, napr. 8,50 — ukladá sa ako „8,50") · počet ľudí · **miesto** (mesto zo zoznamu, alebo „Na diaľku") + adresa · vek kandidátov (všetci / len 18+) ·
 typ brigády · popis práce · **✦ Koho hľadáte** (text pre párovanie — zručnosti, nie vek/pohlavie/zdravie) · fotky (max. 3).
 Po zverejnení appka prepne na Ponuku a ukáže, koľko kandidátov sedí.
 
