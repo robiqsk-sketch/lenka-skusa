@@ -913,7 +913,7 @@ function feed() {                                          // l.408–475
   const ai = viewed >= 2 ? aiJob() : null;
   const tip = !ai ? '' : `
     <div class="ai-tip">
-      <div class="eb">${icon('sparkles', 14)}Toto by ti sedelo</div>
+      <div class="eb">Toto by ti sedelo</div>
       <div class="mid"><div class="lg" style="${logoStyle(ai)}">${logoText(ai)}</div>
         <div><div class="t">${esc(ai.t)}</div><div class="f">${esc(ai.f)} · <b>${esc(ai.pay)}/hod</b></div></div></div>
       <button data-go="aiOpen">Pozrieť detail</button>
