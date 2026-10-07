@@ -728,9 +728,9 @@ html.dark, html.dark body { background: #0F0830; }
 #scr-pick { padding: calc(40px + env(safe-area-inset-top, 0px)) 24px calc(40px + env(safe-area-inset-bottom, 0px)); }
 #scr-pick .card { padding-bottom: 32px; }
 #scr-pick .logo span { font-size: var(--text-2xl); letter-spacing: 0; }
-#scr-pick .tagline { margin-bottom: 26px; }
+#scr-pick .logo { margin-bottom: 26px; }
 .choices { display: flex; flex-direction: column; gap: 12px; }
-.choice { display: flex; gap: 16px; align-items: flex-start; text-align: left; width: 100%; background: rgba(36,27,69,.03); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; cursor: pointer; transition: border-color .15s, background .15s; }
+.choice { display: flex; gap: 16px; align-items: center; text-align: left; width: 100%; background: rgba(36,27,69,.03); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; cursor: pointer; transition: border-color .15s, background .15s; }
 .choice:hover { border-color: var(--accent); background: rgba(var(--tint),.07); }
 .choice .icon { width: 42px; height: 42px; flex-shrink: 0; border-radius: 13px; background: var(--fill); color: var(--ink2); display: flex; align-items: center; justify-content: center; font-size: var(--text-lg); }
 .choice .txt { display: flex; flex-direction: column; gap: 4px; }
