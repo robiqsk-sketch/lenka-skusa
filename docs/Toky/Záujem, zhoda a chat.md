@@ -36,6 +36,13 @@ Inzerát si appka zapamätá a po prihlásení záujem odošle sama.
 ## Realtime
 Appka počúva na nové riadky v `messages`, `matches` a `company_interests` — bez obnovenia stránky.
 
+Každý prihlásený počúva **len svoje** riadky — filter robí už server, nie appka:
+- `messages` — len zo svojich chatov (`match_id` v zozname svojich zhôd; pri viac ako 100 chatoch bez filtra, kvôli limitu Supabase),
+- `matches` — len kde je on študent / firma,
+- `company_interests` — len oslovenia jeho samého (študent).
+
+Prečo: predtým dostával každý všetky nové správy a zhody v appke a sám si vyberal svoje. Pri stovkách ľudí naraz by server kontroloval každú zmenu pre každého. Keď pribudne nová zhoda, appka si spojenie obnoví, aby chodili aj správy z nového chatu. Hostia (neprihlásení) nepočúvajú nič. Limit bezplatného plánu Supabase je **200 ľudí online naraz** — pozri [[Architektúra]].
+
 ## Chat
 - Zobrazený v záložke **Správy** (študent aj firma, spoločná funkcia `chatUI`).
 - Správa 1–2000 znakov; písať smie len účastník zhody.
