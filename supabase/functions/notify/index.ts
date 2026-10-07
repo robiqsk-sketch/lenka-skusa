@@ -86,8 +86,17 @@ Deno.serve(async (req) => {
         method: "POST", headers: { "api-key": brevoKey, "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           sender: { name: "Robiq", email: "ahoj@robiq.sk" }, to: [{ email: to.email }],   // the sender verified in Brevo
+          replyTo: { name: "Robiq", email: "ahoj@robiq.sk" },  // a real address to answer — Gmail files no-reply style mail as promotions more often
           subject: kind === "match" ? "Máte zhodu na Robiq" : `Nová správa: ${title}`,
-          textContent: `${kind === "match" ? title + "\n" : title + " ti napísal(a):\n"}${body}\n\nOtvor Robiq: ${APP_URL}#spravy`,
+          // plain, personal text without emoji (the push keeps „🎉") — reads less like a newsletter
+          textContent: [
+            kind === "match" ? `Máte zhodu. ${body}` : `${title} ti napísal(a):\n\n${body}`,
+            ``,
+            `Odpovedať môžeš v Robiq: ${APP_URL}#spravy`,
+            ``,
+            `Robiq`,
+            `E-maily z Robiq vypneš v appke: menu účtu → E-maily.`,
+          ].join("\n"),
         }),
       });
       emailed = r.ok; if (!r.ok) console.warn("email failed", r.status, await r.text());
