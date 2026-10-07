@@ -1005,7 +1005,7 @@ function jobCard(j) {                                      // l.425–463
     <div class="who" data-job="${j.id}" data-act="open">
       <div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
       <div class="name"><div class="t">${esc(j.t)}</div>
-        <div class="f">${esc(j.f)}${j.badges.length ? ` <span class="ok">✓ overená</span>` : ''}</div></div>
+        <div class="f">${esc(j.f)}${j.badges.length ? ` <span class="ok" title="Overená firma" aria-label="Overená firma">✓</span>` : ''}</div></div>
       <div class="pay">${esc(j.pay)}<small>/ hod</small></div>
     </div>
     <div class="meta"><span>${meta}</span>
@@ -1064,7 +1064,7 @@ function profile() {                                       // l.515–635
       </div>
     </div>
     <div class="pcard sm">
-      <div class="p-int-head"><div class="t">Moje <b>záujmy</b></div><span class="s">na čo si klikol „Mám záujem"</span></div>
+      <div class="p-int-head"><div class="t">Moje <b>záujmy</b></div></div>
       ${interests.length ? `<div class="p-int">${interests.map(it => `
         <div class="p-int-row"><div class="lg" style="background:${it.lg}">${it.ini}</div>
           <div style="flex:1;min-width:0"><div class="t">${esc(it.t)}</div><div class="f">${esc(it.f)} · <b>${esc(it.pay)}/hod</b></div></div>

@@ -11,7 +11,7 @@ Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 
 ## Objavuj (`feed`)
 - Nadpis „Ponuky **pre teba**", pod ním rad **filtrov**: „V mojom okolí" (len študent s mestom) a typy brigády (Víkendy, Poobede, Večery, Na diaľku, Flexibilné). Typ „Na diaľku" sa v dátach volá `Remote` — mení sa len to, čo ľudia vidia. Na mobile sa rad posúva do strany a pravý okraj jemne mizne, aby bolo jasné, že je tam viac. Vybrané typy platia ako „aspoň jeden z nich", okolie navyše; „Zrušiť" ich vypne. Filtre sa neukladajú — po obnovení stránky sú preč.
-- Kompaktné karty inzerátov: logo, názov, firma s „✓ overená" a plat/hod vpravo hore; pod tým mesto (a vzdialenosť) · kedy pridané · menu ⋯; obsadenosť miest (čiara = počet zhôd / počet ľudí), typy.
+- Kompaktné karty inzerátov: logo, názov, firma so zeleným ✓ (overená firma; text „Overená firma" sa ukáže po podržaní myši) a plat/hod vpravo hore; pod tým mesto (a vzdialenosť) · kedy pridané · menu ⋯; obsadenosť miest (čiara = počet zhôd / počet ľudí), typy.
 - Otvorenie detailu sa započíta do zobrazení inzerátu.
 - Tlačidlá **Mám záujem** / **✕ Nezaujíma ma** (= Preskočiť). Hosť vidí len „Mám záujem" — ✕ by mu nič nepovedalo. **Obsadená** ponuka (všetky miesta zabrané) je stlmená, je na konci zoznamu, namiesto tlačidiel má neaktívne „Obsadené" a neponúka sa v tipe „Toto by ti sedelo"; klik na kartu = **detail** (popis, fotky „deň v práci", adresa s odkazom na mapu, oficiálny názov firmy, nahlásenie).
 - Po 2 prezretých kartách sa hore ukáže tip **„✦ Toto by ti sedelo"** (prvý inzerát, o ktorý ešte nedal záujem).
