@@ -1674,9 +1674,8 @@ async function finishStudentReg() {                        // the account exists
   }
   await enterApp({ tab: 0 });
 }
-// Step number, progress dots and the "next" button of a 3-step registration (prefix 'ob' = student, 'fob' = company).
+// Progress dots and the "next" button of a 3-step registration (prefix 'ob' = student, 'fob' = company).
 function renderStepChrome(prefix, step, lastLabel, canContinue) {
-  document.getElementById(prefix + '-no').textContent = step;
   [...document.getElementById(prefix + '-dots').children].forEach((d, i) => d.classList.toggle('on', step >= i + 1));
   const next = document.getElementById(prefix + '-next');
   next.textContent = step === 3 ? lastLabel : 'Pokračovať';
@@ -1692,7 +1691,6 @@ const obEl = document.getElementById('ob-step');
 function obStep1() {                                       // l.111–119 + e-mail a heslo (nutné pre skutočný účet)
   obEl.innerHTML = `
     <h2>Ako sa <b>voláš?</b></h2>
-    <p class="desc" style="margin-bottom:26px">Žiadne CV, žiadny motivačný list. Stačí meno a e-mail.</p>
     <div class="s1-row">${avatarHtml('avatar', state.obPhotoPreview, initials(), ' id="avatar"')}
       <div class="col"><input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
         ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
@@ -1728,7 +1726,6 @@ const initials = () => initialsOf(state.obName.trim() || 'Tomáš Novák');   //
 function obStep2() {                                       // l.123–162
   obEl.innerHTML = `
     <h2>Čo ti <b>ide?</b></h2>
-    <p class="desc" style="margin-bottom:22px">Vyber si koľko chceš — a pri každej nastav, ako dobre ju ovládaš. Robiq sa učí z každého kliku.</p>
     ${skillsEditor()}`;
   obEl.onclick = e => { const el = e.target.closest('button'); if (el) editorClick(el); };
   bindEditors();
@@ -1736,7 +1733,6 @@ function obStep2() {                                       // l.123–162
 function obStep3() {                                       // l.166–188
   obEl.innerHTML = `
     <h2>Koľko hodín <b>máš?</b></h2>
-    <p class="desc" style="margin-bottom:30px">Ponuky uvidíš len podľa svojej reálnej dostupnosti.</p>
     <div class="hours-label" id="hours-label">${HOURS[state.obHours]}</div>
     ${availabilityEditor()}
     <div style="margin-top:22px">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`;
@@ -1947,7 +1943,6 @@ const fobEl = document.getElementById('fob-step');
 function fobStep1() {                                      // l.244–256
   fobEl.innerHTML = `
     <h2>Kto <b>ste?</b></h2>
-    <p class="desc" style="margin-bottom:24px">Overíme firmu podľa IČO — ľudia tak vedia, že píšu reálnemu zamestnávateľovi.</p>
     <div class="f1-row"><label class="flogo" id="flogo" title="Nahrať logo"><span id="flogo-init"></span><span class="tag">LOGO</span><input type="file" accept="image/*" id="flogo-file"></label>
       <div class="col">
         <input class="input" id="fob-ico" placeholder="IČO (8 číslic)" value="${esc(state.fobIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
@@ -1991,7 +1986,6 @@ function paintLogo() {                                     // l.1457–1459
 function fobStep2() {                                      // l.261–268
   fobEl.innerHTML = `
     <h2>Koho <b>hľadáte?</b></h2>
-    <p class="desc" style="margin-bottom:22px">Podľa toho vám Robiq predvyberie ľudí. Dá sa kedykoľvek zmeniť.</p>
     <div class="label" style="margin-bottom:11px">Odvetvie</div>
     <div class="fchips">${FIELDS.map(f => `<button type="button" class="fchip ${state.fobFields.includes(f) ? 'on' : ''}" data-field="${esc(f)}">${esc(f)}</button>`).join('')}</div>`;
   fobEl.onclick = e => { const el = e.target.closest('button[data-field]'); if (!el) return; toggleInList(state.fobFields, el.dataset.field); render(); };
@@ -1999,7 +1993,6 @@ function fobStep2() {                                      // l.261–268
 function fobStep3() {                                      // l.272–282
   fobEl.innerHTML = `
     <h2>Kontaktná <b>osoba</b></h2>
-    <p class="desc" style="margin-bottom:24px">Komu majú chodiť správy od záujemcov.</p>
     <div class="f3-col"><input class="input" id="fob-contact" placeholder="Meno a priezvisko" value="${esc(state.fobContact)}" autocomplete="name">
       ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
