@@ -854,7 +854,7 @@ function renderHeader() {                                  // l.342–372
   const r = document.getElementById('a-hdr-right');
   if (!state.authed) {
     r.innerHTML = `<div class="a-guest">
-      <button class="a-pill-ghost theme-btn" data-go="menuTheme" aria-label="Tmavý režim" title="Tmavý režim">${icon('moon', 16)}</button>
+      <button class="a-pill-ghost theme-btn" data-go="menuTheme" aria-label="Tmavý režim" title="Tmavý režim" aria-pressed="${isDarkTheme()}">${icon(isDarkTheme() ? 'moon' : 'sun', 16)}</button>
       <button class="a-pill-ghost" data-go="goLogin">Prihlásiť sa</button>
       <button class="a-pill" data-go="goSignup">Vytvoriť účet</button></div>`;
     return;
@@ -863,16 +863,17 @@ function renderHeader() {                                  // l.342–372
   const menu = !state.accMenu ? '' : `
     <div class="a-menu" data-go="menuToggle">
       <div class="name">${esc(menuName())}</div><hr>
-      <button data-go="menuProfile">${icon('user', 16)}Môj profil</button>
-      <button class="notif" data-go="menuPush"><span style="display:flex;align-items:center;gap:10px">${icon('message', 16)}Upozornenia</span>
-        <span class="st" style="color:${pushOn ? 'var(--ok)' : 'var(--muted)'}">${pushOn ? 'Zap.' : 'Vyp.'}</span></button>
-      <button class="notif" data-go="menuEmail"><span style="display:flex;align-items:center;gap:10px">${icon('mail', 16)}E-maily</span>
-        <span class="st" style="color:${state.emailNotify ? 'var(--ok)' : 'var(--muted)'}">${state.emailNotify ? 'Zap.' : 'Vyp.'}</span></button>
-      <button class="notif" data-go="menuTheme"><span style="display:flex;align-items:center;gap:10px">${icon('moon', 16)}Tmavý režim</span>
-        <span class="st" style="color:${isDarkTheme() ? 'var(--ok)' : 'var(--muted)'}">${isDarkTheme() ? 'Zap.' : 'Vyp.'}</span></button>
-      <button data-go="menuHelp">${icon('help', 16)}Pomoc a podpora</button>
-      <button data-go="menuTerms">${icon('file', 16)}Podmienky a ochrana údajov</button>
-      ${state.isAdmin ? `<hr><button data-go="menuStats">${icon('chart', 16)}Štatistika Robiq</button>` : ''}<hr>
+      <div class="a-menu-row">
+        ${menuTile('menuPush', 'bell', 'Upozornenia', pushOn)}
+        ${menuTile('menuEmail', 'mail', 'E-maily', state.emailNotify)}
+        ${menuTile('menuTheme', isDarkTheme() ? 'moon' : 'sun', isDarkTheme() ? 'Tmavý režim' : 'Svetlý režim', isDarkTheme())}
+      </div>
+      <div class="a-menu-row">
+        ${menuTile('menuProfile', 'user', 'Môj profil')}
+        ${menuTile('menuHelp', 'help', 'Pomoc a podpora')}
+        ${menuTile('menuTerms', 'file', 'Podmienky a ochrana údajov')}
+        ${state.isAdmin ? menuTile('menuStats', 'chart', 'Štatistika Robiq') : ''}
+      </div><hr>
       <button class="out" data-go="logout">${icon('logout', 16)}Odhlásiť sa</button>
       <button class="del" data-go="askDeleteAccount">${icon('trash', 16)}Zmazať účet</button>
     </div>`;
@@ -884,6 +885,11 @@ function renderHeader() {                                  // l.342–372
   const nav = `<nav class="a-nav" aria-label="Navigácia">${tabs.map(([label, glyph], i) =>
     `<button class="${i === active ? 'on' : ''}" data-go="goTab" data-tab="${i}"${i === active ? ' aria-current="page"' : ''}>${glyph}${label}</button>`).join('')}</nav>`;
   r.innerHTML = `${nav}${nova}<div class="a-acc">${ava}${menu}</div>`;
+}
+// Account menu: icon-only tile (iPhone-style); `on` given → a toggle, filled when on. The label is in title / aria-label.
+function menuTile(go, glyph, label, on) {
+  const toggle = on !== undefined;
+  return `<button class="tile${toggle && on ? ' on' : ''}" data-go="${go}" title="${label}" aria-label="${label}"${toggle ? ` aria-pressed="${!!on}"` : ''}>${icon(glyph, 20)}</button>`;
 }
 function menuName() { return isStudent() ? (state.obName || 'Študent') : state.fpName; }
 function avaInit() { return isStudent() ? initials() : (initialsOf(state.fpName) || 'F'); }
