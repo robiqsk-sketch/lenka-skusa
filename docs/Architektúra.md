@@ -55,10 +55,11 @@ flowchart TB
 ## Externé služby
 | Služba | Na čo |
 |---|---|
-| Supabase | databáza, prihlásenie, súbory, realtime |
+| Supabase | databáza, prihlásenie, súbory, realtime — bezplatný plán: 200 prihlásených online naraz, 500 MB databáza, 5 GB prenos/mesiac, uspí sa po 7 dňoch bez aktivity |
 | Google (OAuth) | prihlásenie cez Google |
 | api.statistics.sk (RPO) | overenie IČO firmy |
 | jsDelivr | knižnica supabase-js |
 | cdnfonts.com | písma Satoshi a Open Sauce One |
+| Brevo | e-maily (potvrdenie registrácie, obnova hesla, upozornenia, hlásenie o páde) — bezplatne **300 e-mailov denne spolu**; pri raste prvý limit, na ktorý appka narazí |
 
 Súvisí: [[app.js – mapa kódu]], [[Dátový model]]

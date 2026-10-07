@@ -98,7 +98,7 @@ async function loadCities() {
   if (error) { console.warn('cities', error.message); return; }
   CITIES = data || [];
 }
-let toastT, bannerT, rt;
+let toastT, bannerT, rt, rtKey = '';
 const avatarUrls = {};                                     // storage path → signed URL (bucket "avatars" is private)
 
 // ═══════════ Profile photos (private bucket) ═══════════
@@ -405,34 +405,43 @@ async function loadMatches() {
     for (const msg of msgs || []) { const m = list.find(x => x.id === msg.match_id); if (m) m.msgs.push({ id: msg.id, me: msg.sender_id === state.uid, txt: msg.body }); }
   }
   if (isStudent()) state.matches = list; else state.fchats = list;
+  subscribe();                                             // a new chat → its messages must come in live too
 }
 
 function initialsOf(name) { return (name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'; }
 
 // ═══════════ Realtime: new messages and matches ═══════════
+// Realtime: each signed-in user listens only to their own rows (server-side filters), not to every new message /
+// match in the app — with hundreds of people online the server would otherwise check each change for each of them.
+// Messages are filtered by the user's chats, so the channel is rebuilt whenever that list changes (loadMatches).
 function subscribe() {
-  if (rt) sb.removeChannel(rt);
+  const ids = state.authed ? myChats().map(m => m.id).sort((a, b) => a - b) : [];
+  const key = state.authed ? `${state.role}:${state.uid}:${ids.join(',')}` : '';
+  if (key === rtKey) return;                               // same user, same chats → keep the open channel
+  rtKey = key;
+  if (rt) { sb.removeChannel(rt); rt = null; }
   if (!state.authed) return;
-  rt = sb.channel('robiq')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, ({ new: msg }) => {
-      const list = myChats();
-      const m = list.find(x => x.id === msg.match_id);
-      if (!m || m.msgs.some(x => x.id === msg.id)) return;
-      m.msgs.push({ id: msg.id, me: msg.sender_id === state.uid, txt: msg.body });
-      render();
-    })
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matches' }, async ({ new: m }) => {
-      if (m.student_id !== state.uid && m.company_id !== state.uid) return;
-      await onNewMatch(m.id);
-    })
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'company_interests' }, ({ new: ci }) => {
-      if (!isStudent() || ci.student_id !== state.uid || state.invitedPostingIds.includes(ci.posting_id)) return;
-      state.invitedPostingIds.push(ci.posting_id);
-      const j = state.postings.find(p => p.id === ci.posting_id);
-      if (j && state.blockedFirms.includes(j.companyId)) return;   // hidden company — no toast
-      showToast(j ? `${j.f} ťa oslovila: ${j.t}` : 'Firma ťa oslovila — pozri Objavuj.');
-    })
-    .subscribe();
+  const ins = (table, filter) => ({ event: 'INSERT', schema: 'public', table, ...(filter ? { filter } : {}) });
+  let ch = sb.channel('robiq-' + Date.now());               // a fresh name: the old channel may still be closing
+  if (ids.length) ch = ch.on('postgres_changes', ins('messages', ids.length <= 100 ? `match_id=in.(${ids.join(',')})` : null), ({ new: msg }) => {
+    const list = myChats();
+    const m = list.find(x => x.id === msg.match_id);
+    if (!m || m.msgs.some(x => x.id === msg.id)) return;
+    m.msgs.push({ id: msg.id, me: msg.sender_id === state.uid, txt: msg.body });
+    render();
+  });   // > 100 chats: the filter has a 100-value limit → unfiltered (RLS still applies)
+  ch = ch.on('postgres_changes', ins('matches', `${isStudent() ? 'student_id' : 'company_id'}=eq.${state.uid}`), async ({ new: m }) => {
+    if (m.student_id !== state.uid && m.company_id !== state.uid) return;
+    await onNewMatch(m.id);
+  });
+  if (isStudent()) ch = ch.on('postgres_changes', ins('company_interests', `student_id=eq.${state.uid}`), ({ new: ci }) => {
+    if (!isStudent() || ci.student_id !== state.uid || state.invitedPostingIds.includes(ci.posting_id)) return;
+    state.invitedPostingIds.push(ci.posting_id);
+    const j = state.postings.find(p => p.id === ci.posting_id);
+    if (j && state.blockedFirms.includes(j.companyId)) return;   // hidden company — no toast
+    showToast(j ? `${j.f} ťa oslovila: ${j.t}` : 'Firma ťa oslovila — pozri Objavuj.');
+  });
+  rt = ch.subscribe();
 }
 async function onNewMatch(id) {                            // banner l.946–950
   const list = myChats();
@@ -1539,7 +1548,7 @@ function layers() {                                        // banner l.946, toas
       <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)}${placeTxt(d) ? ` · ${esc(placeTxt(d))}` : ''}</div>
         ${d.legal && d.legal !== d.f ? `<div class="legal">✓ ${esc(d.legal)} — podľa Registra právnických osôb</div>` : ''}</div></div>
       <button class="x" data-go="closeDetail" aria-label="Zavrieť">${icon('x')}</button></div>
-    ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(typeLabel(t))}</span>`).join('')}</div>` : ''}
+    ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(() => `<span class="badge" title="Overená firma" aria-label="Overená firma">✓</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(typeLabel(t))}</span>`).join('')}</div>` : ''}
     <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
     ${d.remote ? '' : d.address || d.city ? `<div class="addr">${esc([d.address, d.city].filter(Boolean).join(', '))}
       ${d.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([d.address, d.city].filter(Boolean).join(', '))}" target="_blank" rel="noopener">mapa ↗</a>` : ''}</div>` : ''}
