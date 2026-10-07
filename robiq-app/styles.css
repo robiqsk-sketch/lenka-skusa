@@ -718,6 +718,12 @@ html.dark, html.dark body { background: #0F0830; }
 }
 @media (max-width: 640px) { .login-card { padding: 32px 26px 28px; } }
 .fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+html.crashed .screen:not(#scr-crash) { display: none !important; }
+.crash { text-align: center; width: 380px; }
+.crash .logo { margin-bottom: 26px; }
+.crash-ico { width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%; background: rgba(var(--tint),.1); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+.crash .desc { margin-bottom: 24px; }
+.crash a.primary { display: block; text-decoration: none; }
 .primary { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 14px 0; font-size: var(--text-md); font-weight: 700; cursor: pointer; }
 .primary:hover { background: var(--accent-hi); }
 .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--ink2); font-size: var(--text-xs); letter-spacing: .14em; text-transform: uppercase; }

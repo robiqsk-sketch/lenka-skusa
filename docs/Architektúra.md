@@ -49,6 +49,7 @@ flowchart TB
 - Web beží na **Cloudflare** (projekt „robiq", Workers Builds). Pri každom pushi na GitHub Cloudflare spustí `wrangler`, ktorý podľa `wrangler.jsonc` nahrá statické súbory z `robiq-app/`. Bez tohto súboru build zlyhá („Missing entry-point… or assets directory").
 - Push do `main` = nasadenie na web; push do inej vetvy = len náhľadová verzia.
 - Bezpečnostné hlavičky sú v `robiq-app/_headers`.
+- Neexistujúca adresa → `robiq-app/404.html` (nastavenie `not_found_handling` vo `wrangler.jsonc`); appka, ktorá sa nevie spustiť, ukáže „Niečo sa pokazilo" — [[Chybové stránky]].
 - **Zmeny databázy sa nenasadzujú samy:** migráciu treba ručne spustiť v Supabase → SQL Editor → Run. Pozri [[Migrácie – história]].
 
 ## Externé služby

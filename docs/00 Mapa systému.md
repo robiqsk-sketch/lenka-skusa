@@ -50,6 +50,7 @@ flowchart LR
 - [[Obrazovky hosťa a študenta]]
 - [[Obrazovky firmy]]
 - [[Admin panel]]
+- [[Chybové stránky]] — „Niečo sa pokazilo" a „Táto stránka neexistuje"
 
 ### Ostatné
 - [[Slovník]] — pojmy (záujem, zhoda, oslovenie…)

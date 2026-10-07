@@ -4,6 +4,7 @@
   "name": "robiq",
   "compatibility_date": "2026-09-21",
   "assets": {
-    "directory": "./robiq-app"
+    "directory": "./robiq-app",
+    "not_found_handling": "404-page"                      // unknown address → robiq-app/404.html (with status 404)
   }
 }
