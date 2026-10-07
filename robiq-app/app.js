@@ -2047,7 +2047,7 @@ document.getElementById('reset-form').addEventListener('submit', e => { e.preven
   state.loading = true; render();
   try { await loadCities(); await loadMe(); await loadPostings(); }
   catch (e) {                                              // server unreachable → crash screen with „Skúsiť znova“; anything else → toast as before
-    if (/failed to fetch|networkerror|load failed|network request failed|timeout|timed out/i.test(e?.message || String(e))) { console.error(e); window.robiqCrash(); return; }
+    if (/failed to fetch|networkerror|load failed|network request failed|timeout|timed out/i.test(e?.message || String(e))) { console.error(e); window.robiqCrash('server', e?.message || String(e)); return; }
     fail(e);
   }
   state.loading = false;

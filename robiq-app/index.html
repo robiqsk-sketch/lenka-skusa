@@ -22,20 +22,38 @@
   <script>
     // Crash screen (#scr-crash): shown when the app cannot start — a script failed to load, an error during start-up,
     // or the server is unreachable (app.js calls robiqCrash). After a successful start (robiqReady) errors are only toasts.
-    window.robiqCrash = function () {
+    // Each crash (once per page load, not when offline) is reported to the Supabase function crash-report → e-mail to the admins.
+    window.robiqCrash = function (reason, message) {
       var c = document.getElementById('scr-crash'); if (!c) return;
       document.documentElement.classList.add('crashed');   // styles.css hides every other screen, even if something renders later
       var off = navigator.onLine === false;                 // the phone has no internet → not our fault, say so
       document.getElementById('crash-title').textContent = off ? 'Si offline' : 'Niečo sa pokazilo';
       document.getElementById('crash-msg').textContent = off ? 'Skontroluj pripojenie na internet a skús to znova.'
-        : 'Chyba je na našej strane — už pracujeme na tom, aby to čo najskôr fungovalo.';
+        : 'Už pracujeme na tom, aby to čo najskôr fungovalo.';
       c.hidden = false;
+      if (off || window.robiqReported) return;
+      window.robiqReported = true;
+      var send = function () {                              // config.js may load only after the crash → wait for the page
+        var cfg = window.ROBIQ_CONFIG; if (!cfg) return;
+        try {
+          fetch(cfg.supabaseUrl + '/functions/v1/crash-report', {
+            method: 'POST', keepalive: true,
+            headers: { 'Content-Type': 'application/json', apikey: cfg.supabaseAnonKey, Authorization: 'Bearer ' + cfg.supabaseAnonKey },
+            body: JSON.stringify({ reason: reason || 'error', message: String(message || ''), page: location.href })
+          }).catch(function () {});
+        } catch (e) {}
+      };
+      if (document.readyState === 'complete') send(); else window.addEventListener('load', send);
     };
     window.addEventListener('error', function (e) {
       var t = e.target;                                     // a failed <link>/<img> (fonts, avatars) is not a crash; a failed <script> is
-      if (!window.robiqReady && (t === window || !t || t.tagName === 'SCRIPT')) window.robiqCrash();
+      if (window.robiqReady) return;
+      if (t && t.tagName === 'SCRIPT') window.robiqCrash('script', 'nenačítal sa ' + t.src);
+      else if (t === window || !t) window.robiqCrash('error', e.message + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : ''));
     }, true);
-    window.addEventListener('unhandledrejection', function () { if (!window.robiqReady) window.robiqCrash(); });
+    window.addEventListener('unhandledrejection', function (e) {
+      if (!window.robiqReady) window.robiqCrash('rejection', e.reason && (e.reason.message || e.reason));
+    });
   </script>
 </head>
 
@@ -189,7 +207,7 @@
       <div class="logo"><span>Robiq<b>.</b></span></div>
       <div class="crash-ico" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
       <h2 id="crash-title">Niečo sa pokazilo</h2>
-      <p class="desc" id="crash-msg">Chyba je na našej strane — už pracujeme na tom, aby to čo najskôr fungovalo.</p>
+      <p class="desc" id="crash-msg">Už pracujeme na tom, aby to čo najskôr fungovalo.</p>
       <button class="primary" onclick="location.reload()">Skúsiť znova</button>
     </main>
   </section>
