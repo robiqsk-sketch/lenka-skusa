@@ -1984,7 +1984,7 @@ function fobStep2() {                                      // l.261–268
 }
 function fobStep3() {                                      // l.272–282
   fobEl.innerHTML = `
-    <p class="desc step-note">Kontaktná osoba — jej budú chodiť správy od uchádzačov.</p>
+    <p class="desc step-note">Kontaktná osoba</p>
     <div class="f3-col"><input class="input" id="fob-contact" placeholder="Meno a priezvisko" value="${esc(state.fobContact)}" autocomplete="name">
       ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
