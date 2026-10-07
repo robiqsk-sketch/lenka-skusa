@@ -73,12 +73,15 @@ input::placeholder, textarea::placeholder { color: var(--muted); }   /* examples
 @media (max-width: 640px) { .card { padding: 28px 22px 26px; } }
 .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
 .eyebrow { font-size: var(--text-xs); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
-.dots { display: flex; gap: 7px; }
-.dots span { width: 26px; height: 4px; border-radius: 99px; transition: background .2s; background: rgba(36,27,69,.12); }
+.dots { display: flex; align-items: center; gap: 6px; }   /* registration progress, in the footer between „Späť“ and „Pokračovať“ */
+.dots span { width: 8px; height: 8px; border-radius: 99px; background: var(--line2); transition: width .35s cubic-bezier(.2,.8,.2,1), background .25s; }
 .dots span.on { background: var(--accent); }
+.dots span.cur { width: 28px; }
 h2 { font-size: var(--text-3xl); font-weight: 700; margin: 0 0 6px; }
 h2 b { font-weight: 700; color: inherit; }                  /* was purple — headings stay one colour */
 .desc { color: var(--ink2); font-size: var(--text-base); margin: 0; }
+.desc.step-note { margin-bottom: 18px; }
+.desc.step-note.center { text-align: center; margin-bottom: 4px; }   /* above the big „10 h / týždeň“ */
 .label { font-size: var(--text-sm); font-weight: 700; color: var(--ink); margin-bottom: 9px; }
 .input {
   background: var(--fill2); border: 1px solid var(--line); border-radius: 12px;
@@ -87,7 +90,8 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 /* Pole, ktoré vypĺňa register, nie človek — vyzerá ako údaj, nie ako vstup. */
 .input.locked { background: var(--fill); color: var(--ink2); cursor: default; }
 .input.locked::placeholder { color: var(--muted); }
-.foot { display: flex; justify-content: space-between; align-items: center; }
+.foot { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; }
+.foot .back { justify-self: start; white-space: nowrap; } .foot .next { justify-self: end; white-space: nowrap; padding-left: 22px; padding-right: 22px; }
 .back { background: none; border: none; color: var(--ink2); font-size: var(--text-sm); cursor: pointer; padding: 10px 4px; }
 .back:hover { color: var(--ink); }
 .back-top { display: block; margin: -14px 0 6px -4px; padding: 6px 4px; }     /* top-left of a centred card */

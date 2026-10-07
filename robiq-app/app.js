@@ -1674,9 +1674,11 @@ async function finishStudentReg() {                        // the account exists
   }
   await enterApp({ tab: 0 });
 }
-// Progress dots and the "next" button of a 3-step registration (prefix 'ob' = student, 'fob' = company).
+// Progress dots (between „Späť“ and the "next" button; the current step is the long one) and the "next" button of a 3-step registration (prefix 'ob' = student, 'fob' = company).
 function renderStepChrome(prefix, step, lastLabel, canContinue) {
-  [...document.getElementById(prefix + '-dots').children].forEach((d, i) => d.classList.toggle('on', step >= i + 1));
+  const dots = document.getElementById(prefix + '-dots');
+  dots.setAttribute('aria-label', `Krok ${step} z 3`);
+  [...dots.children].forEach((d, i) => { d.classList.toggle('on', step >= i + 1); d.classList.toggle('cur', step === i + 1); });
   const next = document.getElementById(prefix + '-next');
   next.textContent = step === 3 ? lastLabel : 'Pokračovať';
   next.style.opacity = canContinue ? 1 : .45;
@@ -1730,6 +1732,7 @@ function obStep2() {                                       // l.123–162
 }
 function obStep3() {                                       // l.166–188
   obEl.innerHTML = `
+    <p class="desc step-note center">Koľko hodín týždenne môžeš pracovať?</p>
     <div class="hours-label" id="hours-label">${HOURS[state.obHours]}</div>
     ${availabilityEditor()}
     <div style="margin-top:22px">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`;
@@ -1987,6 +1990,7 @@ function fobStep2() {                                      // l.261–268
 }
 function fobStep3() {                                      // l.272–282
   fobEl.innerHTML = `
+    <p class="desc step-note">Kontaktná osoba — jej budú chodiť správy od uchádzačov.</p>
     <div class="f3-col"><input class="input" id="fob-contact" placeholder="Meno a priezvisko" value="${esc(state.fobContact)}" autocomplete="name">
       ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
