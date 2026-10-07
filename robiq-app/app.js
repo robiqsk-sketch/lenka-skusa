@@ -1005,7 +1005,7 @@ function jobCard(j) {                                      // l.425–463
     <div class="who" data-job="${j.id}" data-act="open">
       <div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
       <div class="name"><div class="t">${esc(j.t)}</div>
-        <div class="f">${esc(j.f)}${j.badges.length ? ` <span class="ok">✓ overená</span>` : ''}</div></div>
+        <div class="f">${esc(j.f)}${j.badges.length ? ` <span class="ok" title="Overená firma" aria-label="Overená firma">✓</span>` : ''}</div></div>
       <div class="pay">${esc(j.pay)}<small>/ hod</small></div>
     </div>
     <div class="meta"><span>${meta}</span>
