@@ -1122,7 +1122,6 @@ function zhody() {                                         // l.478–513
 }
 function fspravy() {                                       // l.708–743
   return `<div class="chat-wrap">
-    <div class="a-title"><h2>Vaše <b>správy</b></h2><span class="sub">konverzácie s uchádzačmi</span></div>
     ${chatUI(state.fchats, state.activeFChat, true)}</div>`;
 }
 
