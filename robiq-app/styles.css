@@ -2,7 +2,7 @@
 :root {
   /* Neutral greys for surfaces, lines and text — purple (--accent) is kept for primary actions and selected states only */
   --bg: #F6F6F8; --card: #FFFFFF; --ink: #000000; --ink2: #3F3F4B; --ink3: #18181F; --muted: #6B6B7A;
-  --line: #E3E3E9; --line2: #D4D4DC; --accent: #40319F; --accent-ink: #33277F; --accent-hi: #5546C4;
+  --line: #E3E3E9; --line2: #D4D4DC; --accent: #0b0424; --accent-ink: #33277F; --accent-hi: #5546C4;
   --fill: rgba(24,24,31,.06); --fill2: rgba(24,24,31,.045); --fill3: rgba(24,24,31,.035); --shadow: rgba(24,24,31,.16);
   --ok: #15803D; --bad: #DC2626; --ink3-bg: #18181F;
   --chrome: #18181F;                                        /* bottom dock, avatar — neutral near-black instead of dark purple */
