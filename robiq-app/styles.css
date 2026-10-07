@@ -181,13 +181,13 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 }
 .a-ava:hover { box-shadow: 0 0 0 3px rgba(203,192,255,.28); }
 /* Desktop: the tabs sit in the top bar (the bottom dock is a phone pattern) */
-.a-nav { display: none; gap: 4px; margin-right: 6px; }
+.a-nav { display: none; gap: 4px; margin-right: 6px; }    /* desktop tabs — same pill style as the phone dock */
 .a-nav button {
-  display: inline-flex; align-items: center; gap: 8px; min-width: 44px; min-height: 40px; padding: 0 12px; justify-content: center; border: none; border-radius: 99px;
-  background: transparent; color: rgba(255,255,255,.7); font-size: var(--text-base); font-weight: 600; cursor: pointer; transition: background .15s, color .15s;
+  display: inline-flex; align-items: center; gap: 0; min-width: 44px; min-height: 40px; padding: 0 11px; justify-content: center; border: none; border-radius: 99px;
+  background: transparent; color: rgba(255,255,255,.6); font-size: var(--text-base); font-weight: 600; cursor: pointer; transition: background .25s, color .25s, gap .35s;
 }
-.a-nav button:hover { color: #FFFFFF; background: rgba(159,143,242,.14); }
-.a-nav button.on { color: #FFFFFF; background: rgba(159,143,242,.24); }
+.a-nav button:hover { color: #FFFFFF; }
+.a-nav button.on { color: var(--bar); background: #FFFFFF; gap: 8px; padding: 0 16px 0 13px; }
 @media (min-width: 961px) {
   .a-nav { display: flex; }
   #a-dock { display: none; }
@@ -562,37 +562,38 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
   .off-stats > div:nth-child(even) { border-left: 1px solid var(--fill); padding-left: 16px; }
 }
 
-/* ═══════════ DOCK — l.929–941 ═══════════ */
-/* Smaller than the prototype (430×66 → 360×56); notch radius 37 → 31. Sizes are mirrored in app.js (DOCK_W, DOCK_R).
+/* ═══════════ DOCK (phones) ═══════════ */
+/* Dark pill bar; the active tab grows into a white pill with icon + name, the others are icons only.
    Fixed to the visual viewport bottom, above the phone's home indicator. */
 .dock {
   position: fixed; left: 50%; bottom: max(14px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
-  width: 360px; height: 56px; z-index: 40; filter: drop-shadow(0 10px 18px rgba(23,18,46,.22));
+  width: min(380px, calc(100% - 24px)); height: 60px; z-index: 40; padding: 6px;
+  background: var(--bar); border: 1px solid rgba(159,143,242,.22); border-radius: 99px; box-shadow: 0 12px 28px -8px rgba(23,18,46,.45);
 }
+.dock .tabs { display: flex; gap: 4px; height: 100%; }
+.dock .tabs button {
+  flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 10px;
+  border: none; border-radius: 99px; background: transparent; color: rgba(255,255,255,.6); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: flex-grow .35s cubic-bezier(.3,.7,.2,1), background .25s, color .25s;
+}
+.dock .tabs button.on { flex-grow: 2.2; background: #FFFFFF; color: var(--bar); }
+.dock .glyph { display: flex; flex-shrink: 0; }
+.dock .glyph svg { width: 22px; height: 22px; }
+.dock .tabs button.on .glyph svg { stroke-width: 2.4; }
+.dock .lbl, .a-nav .lbl {                                  /* the name shows only on the active tab */
+  max-width: 0; overflow: hidden; opacity: 0; white-space: nowrap; font-size: var(--text-base); font-weight: 700;
+  transition: max-width .35s cubic-bezier(.3,.7,.2,1), opacity .2s;
+}
+.dock .tabs button.on .lbl, .a-nav button.on .lbl { max-width: 120px; opacity: 1; }
+@media (max-width: 359px) {                                /* small phones with 4 tabs (company): „Inzeráty“ must still fit */
+  .dock .tabs button { padding: 0 6px; gap: 5px; }
+  .dock .tabs button.on { flex-grow: 2.8; }
+  .dock .lbl { font-size: var(--text-sm); }
+}
+
 @media (hover: none), (max-width: 960px) {
-  .dock { filter: none; }                                  /* filter on a fixed element repaints on every scroll frame */
-  .dock .bg { box-shadow: 0 10px 18px rgba(23,18,46,.22); }
   .seam { animation: none; }                               /* 16px blur pulsing on the login screen */
 }
-.dock .bg {
-  position: absolute; inset: 0; background: var(--bar); border: 1px solid rgba(159,143,242,.28); border-radius: 20px;
-  -webkit-mask: radial-gradient(circle 31px at 31px 31px, #000 0 99%, transparent 100%) no-repeat, linear-gradient(#000 0 0);
-          mask: radial-gradient(circle 31px at 31px 31px, #000 0 99%, transparent 100%) no-repeat, linear-gradient(#000 0 0);
-  -webkit-mask-size: 62px 62px, auto; mask-size: 62px 62px, auto;
-  -webkit-mask-composite: xor; mask-composite: exclude;
-  transition: -webkit-mask-position .38s cubic-bezier(.55,0,.3,1.4), mask-position .38s cubic-bezier(.55,0,.3,1.4);
-}
-.dock .tabs { position: absolute; inset: 0; display: flex; }
-.dock .tabs button { flex: 1 1 0; min-width: 0; height: 50px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; -webkit-tap-highlight-color: transparent; }
-.dock .glyph {
-  display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; font-size: var(--text-lg); color: #fff;
-  transition: transform .38s cubic-bezier(.55,0,.3,1.4), background .3s, color .3s; background: transparent;
-}
-/* Icons only (no labels): the round glyph keeps its full 42px — with a label under it the 50px button squashed it */
-.dock .glyph { flex-shrink: 0; }
-.dock .glyph svg { width: 22px; height: 22px; }
-.dock button:not(.on) .glyph { opacity: .75; }
-.dock button.on .glyph { transform: translateY(-25px); background: var(--accent); box-shadow: 0 10px 26px rgba(91,33,182,.35); }
 
 /* ═══════════ BANNER / TOAST — l.946–954 ═══════════ */
 .banner {
@@ -673,7 +674,6 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
   .a-hdr { padding: 0 8px 0 14px; gap: 8px; }
   .a-guest { gap: 6px; }
   .a-pill, .a-pill-ghost { padding: 0 12px; }
-  .dock { width: min(360px, calc(100% - 20px)); }
 }
 .a-pill, .a-pill-ghost { white-space: nowrap; }
 /* Very narrow phones (iPhone SE 1st gen, folded Galaxy Fold): the guest bar must still fit in one row.
