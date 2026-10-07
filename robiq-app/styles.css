@@ -73,13 +73,15 @@ input::placeholder, textarea::placeholder { color: var(--muted); }   /* examples
 @media (max-width: 640px) { .card { padding: 28px 22px 26px; } }
 .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
 .eyebrow { font-size: var(--text-xs); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
-.dots { display: flex; gap: 7px; }
-.dots span { width: 26px; height: 4px; border-radius: 99px; transition: background .2s; background: rgba(36,27,69,.12); }
+.dots { display: flex; align-items: center; gap: 6px; }   /* registration progress, in the footer between „Späť“ and „Pokračovať“ */
+.dots span { width: 8px; height: 8px; border-radius: 99px; background: var(--line2); transition: width .35s cubic-bezier(.2,.8,.2,1), background .25s; }
 .dots span.on { background: var(--accent); }
+.dots span.cur { width: 28px; }
 h2 { font-size: var(--text-3xl); font-weight: 700; margin: 0 0 6px; }
 h2 b { font-weight: 700; color: inherit; }                  /* was purple — headings stay one colour */
 .desc { color: var(--ink2); font-size: var(--text-base); margin: 0; }
-#ob-step > h2, #fob-step > h2 { margin-bottom: 24px; }   /* registration steps: heading only, no explanatory line */
+.desc.step-note { margin-bottom: 18px; }
+.desc.step-note.center { text-align: center; margin-bottom: 4px; }   /* above the big „10 h / týždeň“ */
 .label { font-size: var(--text-sm); font-weight: 700; color: var(--ink); margin-bottom: 9px; }
 .input {
   background: var(--fill2); border: 1px solid var(--line); border-radius: 12px;
@@ -88,7 +90,9 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 /* Pole, ktoré vypĺňa register, nie človek — vyzerá ako údaj, nie ako vstup. */
 .input.locked { background: var(--fill); color: var(--ink2); cursor: default; }
 .input.locked::placeholder { color: var(--muted); }
-.foot { display: flex; justify-content: space-between; align-items: center; }
+.foot { display: flex; gap: 12px; align-items: center; }
+.foot .dots { flex: 1; justify-content: center; }          /* centred in the gap between the two buttons */
+.foot .back, .foot .next { white-space: nowrap; } .foot .next { padding-left: 22px; padding-right: 22px; }
 .back { background: none; border: none; color: var(--ink2); font-size: var(--text-sm); cursor: pointer; padding: 10px 4px; }
 .back:hover { color: var(--ink); }
 .back-top { display: block; margin: -14px 0 6px -4px; padding: 6px 4px; }     /* top-left of a centred card */
@@ -742,10 +746,16 @@ html.dark, html.dark body { background: #0F0830; }
 /* ═══════════ OB — l.97–194 ═══════════ */
 .s1-row { display: flex; gap: 22px; align-items: center; margin-bottom: 26px; }
 .avatar { width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, var(--accent-hi), #9F8FF2); display: flex; align-items: center; justify-content: center; font-size: var(--text-3xl); font-weight: 700; }
+.avatar-pick { position: relative; flex-shrink: 0; cursor: pointer; border-radius: 50%; }
+.avatar-plus { position: absolute; right: 0; bottom: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--card); color: var(--accent); border: 1px solid var(--line2); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+.avatar-pick:hover .avatar-plus { border-color: var(--accent); }
+/* Registration: less on one screen — no hour ticks, no summary line, no city hint (the profile editor keeps them) */
+#scr-ob .ticks, #scr-ob .summary, #scr-ob #city-hint { display: none; }
+#scr-ob #hours { margin-bottom: 24px; }
 .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }   /* min-width 0: may shrink below its inputs' natural width (else the page scrolled sideways on phones) */
 @media (max-width: 480px) {                                /* registration step 1: photo above the fields, not beside them */
   .s1-row { flex-direction: column; align-items: stretch; gap: 16px; }
-  .s1-row > .avatar { align-self: center; }
+  .s1-row > .avatar-pick { align-self: center; }
 }
 /* Photo avatars: any round/rounded avatar shows the image instead of initials */
 .has-img { background-size: cover !important; background-position: center; background-repeat: no-repeat; color: transparent !important; }
@@ -786,6 +796,7 @@ html.dark, html.dark body { background: #0F0830; }
 .city-nudge { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line2); border-radius: 14px; padding: 12px 16px; font-size: var(--text-sm); color: var(--ink2); margin-bottom: 18px; flex-wrap: wrap; }
 .city-nudge button { margin-left: auto; background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-size: var(--text-base); font-weight: 700; cursor: pointer; font-family: inherit; }
 .ob-age-note { font-size: var(--text-sm); color: var(--muted); }
+.ob-age-note:empty { display: none; }
 .ob-age-note.err { color: var(--bad); font-weight: 700; }
 /* IČO lookup result (company registration step 1 + company profile) */
 .ico-note { font-size: var(--text-sm); color: var(--muted); min-height: 14px; }
@@ -855,12 +866,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer;
 .fchip.on { border: 1px solid var(--accent); background: rgba(var(--tint),.1); color: var(--accent); }
 .fchip:hover { filter: brightness(.95); }
 .f3-col { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-.terms { width: 100%; text-align: left; display: flex; gap: 12px; align-items: flex-start; background: var(--fill3); border: 1px solid var(--line); border-radius: 13px; padding: 14px 16px; cursor: pointer; margin-bottom: 22px; transition: border-color .15s; }
-.terms .box { width: 19px; height: 19px; flex-shrink: 0; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: #fff; font-size: var(--text-sm); display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+.terms { width: 100%; text-align: left; display: flex; gap: 10px; align-items: flex-start; background: var(--fill3); border: 1px solid var(--line); border-radius: 13px; padding: 10px 14px; cursor: pointer; margin-bottom: 22px; transition: border-color .15s; }
+.terms .box { width: 17px; height: 17px; flex-shrink: 0; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: #fff; font-size: var(--text-sm); display: flex; align-items: center; justify-content: center; margin-top: 1px; }
 .terms.on, .terms.on .box { border-color: var(--accent); }
 .terms.on .box { background: var(--accent); }
-.terms .txt { font-size: var(--text-base); line-height: 1.5; color: var(--ink2); }
-.terms .txt a { color: var(--accent); font-weight: 700; text-decoration: none; }
+.terms .txt { font-size: var(--text-xs); line-height: 1.45; color: var(--muted); }
+.terms .txt a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .terms .txt a:hover { color: var(--accent-hi); }
 /* Compact footer: one row on desktop (brand · links · contact), wraps on phones */
 .a-footer { margin: auto auto 0; padding: 14px 4px 0; font-size: var(--text-sm); gap: 8px 22px; align-items: center; width: 100%; }

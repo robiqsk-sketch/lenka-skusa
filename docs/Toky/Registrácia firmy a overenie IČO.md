@@ -27,7 +27,8 @@ flowchart TD
 - **Dva názvy:** `name` si firma volí sama (značka, napr. „Kaviareň Test"), `legal_name` je z registra a firma ho meniť nemôže.
 - `verified` si firma nevie nastaviť sama; **zmena IČO overenie zruší**.
 - Ak register nedostupný → firma zostane neoverená; pri ďalšom prihlásení (`loadCompany`) sa overenie skúsi znova. V profile je aj tlačidlo „Overiť znova".
-- Kroky sú bez vysvetľujúcich viet a bez nápisu „krok 1 / 3" — priebeh ukazujú len bodky hore.
+- Kroky sú bez nadpisov a nápisu „krok 1 / 3" — rovno polia; krok 3 má len nápis „Kontaktná osoba". Priebeh ukazujú bodky dole, vycentrované medzi „Späť" a „Vytvoriť účet / Pokračovať".
+- Krok 1 má len IČO a zobrazovaný názov — oficiálny názov z registra sa ukáže priamo pod IČO (✓ názov, mesto), samostatné pole naň nie je.
 - Admin môže firmu overiť aj ručne → [[Admin panel]].
 
 Súvisí: [[Registrácia študenta]], [[Obrazovky firmy]], [[Databázové funkcie]]
