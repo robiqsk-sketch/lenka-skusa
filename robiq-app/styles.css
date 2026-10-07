@@ -11,8 +11,8 @@
 html.theme-dark {
   /* Cards and their borders carry a hint of the top bar's purple (#241D45) so they belong to it; the page stays near-black */
   --bg: #0F0F13; --card: #1B1829; --ink: #FFFFFF; --ink2: #E9E9EF; --ink3: #F4F4F7; --muted: #B4B1C6;
-  --line: #2C2840; --line2: #3A3453; --accent: #7B6BEE; --accent-ink: #CBC0FF; --accent-hi: #9385FF;
-  --tint: 124,108,224; --bar: #241D45;
+  --line: #2C2840; --line2: #3A3453; --accent: #8170F8; --accent-ink: #D8CFFF; --accent-hi: #A194FF;   /* a touch more saturated and lighter than the first dark version */
+  --tint: 129,112,248; --bar: #271E53;
   --fill: rgba(255,255,255,.08); --fill2: rgba(255,255,255,.06); --fill3: rgba(255,255,255,.05); --shadow: rgba(0,0,0,.55);
   --ok: #4ADE80; --bad: #F87171; --ink3-bg: #2A2A33;
   --chrome: #24242D;
