@@ -13,6 +13,10 @@ Ukáže sa namiesto appky, keď sa appka **vôbec nespustí**:
 - pri štarte nastane chyba v kóde,
 - pri štarte sa nedá spojiť so serverom (Supabase nedostupný, výpadok internetu).
 
+Text podľa príčiny:
+- **zariadenie je offline** → „Si offline — skontroluj pripojenie na internet a skús to znova." (nie je to naša chyba),
+- **inak** → „Niečo sa pokazilo — chyba je na našej strane, už pracujeme na tom, aby to čo najskôr fungovalo."
+
 Tlačidlo **Skúsiť znova** obnoví stránku.
 
 Prečo len pri štarte: keď appka raz nabehne, chyby počas používania (napr. neodoslaná správa) ukazuje ako krátku bublinu dole a appka ide ďalej — celá obrazovka by používateľa zbytočne vyhodila z toho, čo robil. Chyby, ktoré nie sú výpadkom spojenia (napr. vypršané prihlásenie), sa pri štarte ukážu tiež len ako bublina.
