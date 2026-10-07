@@ -879,7 +879,7 @@ function renderHeader() {                                  // l.342–372
   // Desktop: the tabs live here in the top bar, icons only like the dock (CSS hides this on phones, where the bottom dock is used instead).
   const tabs = isStudent() ? STUDENT_TABS : FIRM_TABS, active = activeTab();
   const nav = `<nav class="a-nav" aria-label="Navigácia">${tabs.map(([label, glyph], i) =>
-    `<button class="${i === active ? 'on' : ''}" data-go="goTab" data-tab="${i}" aria-label="${label}" title="${label}"${i === active ? ' aria-current="page"' : ''}>${glyph}</button>`).join('')}</nav>`;
+    `<button class="${i === active ? 'on' : ''}" data-go="goTab" data-tab="${i}" aria-label="${label}" title="${label}"${i === active ? ' aria-current="page"' : ''}>${glyph}<span class="lbl">${label}</span></button>`).join('')}</nav>`;
   r.innerHTML = `${nav}${nova}<div class="a-acc">${ava}${menu}</div>`;
 }
 // Account menu row with an on/off switch on the right (instead of „Zap./Vyp.“ text).
@@ -1482,26 +1482,19 @@ document.getElementById('a-main').addEventListener('click', async e => {
   }
 });
 
-// Dock — l.929–941, logic l.1308–1326. Built once per role; afterwards only the active
-// tab and the notch position change, so the CSS transitions run instead of restarting.
-const DOCK_W = 360, DOCK_R = 31;                           // smaller than the prototype's 430 / 37
+// Dock (phones): a dark pill bar; the active tab is a white pill with icon + name, the others icons only.
+// Built once per role; afterwards only the active tab changes, so the CSS transitions run instead of restarting.
 function updateDock() {
   const host = document.getElementById('a-dock');
   if (!state.authed) { host.innerHTML = ''; host.dataset.role = ''; return; }
   const tabs = isStudent() ? STUDENT_TABS : FIRM_TABS;
-  if (host.dataset.role !== state.role) {
+  if (host.dataset.role !== state.role) {                  // built once per role, so the pill can slide between tabs
     host.dataset.role = state.role;
-    host.innerHTML = `<div class="dock"><div class="bg"></div>
-      <div class="tabs">${tabs.map(([label, glyph], i) => `
-        <button data-tab="${i}" aria-label="${label}" title="${label}"><span class="glyph">${glyph}</span></button>`).join('')}</div></div>`;   // icons only — the name is for screen readers / tooltip
+    host.innerHTML = `<nav class="dock" aria-label="Navigácia"><div class="tabs">${tabs.map(([label, glyph], i) => `
+      <button data-tab="${i}" aria-label="${label}" title="${label}"><span class="glyph">${glyph}</span><span class="lbl">${label}</span></button>`).join('')}</div></nav>`;
   }
   const active = activeTab();
-  const w = host.querySelector('.dock').offsetWidth || DOCK_W;   // narrower on small phones
-  const notchLeft = ((active * 2 + 1) / (2 * tabs.length) * w - DOCK_R).toFixed(1) + 'px';
-  const bg = host.querySelector('.bg');
-  bg.style.webkitMaskPosition = `${notchLeft} -${DOCK_R + 1}px, 0 0`;
-  bg.style.maskPosition = `${notchLeft} -${DOCK_R + 1}px, 0 0`;
-  host.querySelectorAll('[data-tab]').forEach((b, i) => b.classList.toggle('on', i === active));
+  host.querySelectorAll('[data-tab]').forEach((b, i) => { b.classList.toggle('on', i === active); b.toggleAttribute('aria-current', i === active); });
 }
 window.addEventListener('resize', () => { if (state.screen === 'app' && state.authed) updateDock(); });
 document.getElementById('a-dock').addEventListener('click', e => {
