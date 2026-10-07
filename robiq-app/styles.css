@@ -2,8 +2,8 @@
 :root {
   /* Neutral greys for surfaces, lines and text — purple (--accent) is kept for primary actions and selected states only */
   --bg: #F6F6F8; --card: #FFFFFF; --ink: #000000; --ink2: #3F3F4B; --ink3: #18181F; --muted: #6B6B7A;
-  --line: #E3E3E9; --line2: #D4D4DC; --accent: #0b0424; --accent-ink: #0b0424; --accent-hi: #2A2156;
-  --tint: 11,4,36; --bar: #0b0424;                           /* --tint: rgb of the accent for see-through highlights; --bar: top bar + dock */
+  --line: #E3E3E9; --line2: #D4D4DC; --accent: #3420B0; --accent-ink: #291A8C; --accent-hi: #4733D7;
+  --tint: 71,51,215; --bar: #20174B;                           /* --tint: rgb of the accent for see-through highlights; --bar: top bar + dock */
   --fill: rgba(24,24,31,.06); --fill2: rgba(24,24,31,.045); --fill3: rgba(24,24,31,.035); --shadow: rgba(24,24,31,.16);
   --ok: #15803D; --bad: #DC2626; --ink3-bg: #18181F;
   --chrome: #18181F;                                        /* bottom dock, avatar — neutral near-black instead of dark purple */
@@ -178,7 +178,7 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 /* Desktop: the tabs sit in the top bar (the bottom dock is a phone pattern) */
 .a-nav { display: none; gap: 4px; margin-right: 6px; }
 .a-nav button {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border: none; border-radius: 99px;
+  display: inline-flex; align-items: center; gap: 8px; min-width: 44px; min-height: 40px; padding: 0 12px; justify-content: center; border: none; border-radius: 99px;
   background: transparent; color: rgba(255,255,255,.7); font-size: var(--text-base); font-weight: 600; cursor: pointer; transition: background .15s, color .15s;
 }
 .a-nav button:hover { color: #FFFFFF; background: rgba(159,143,242,.14); }
@@ -684,13 +684,13 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 /* Phones: the dark panel fills the whole screen (no light frame, no rounded corners); page background goes dark too
    so Safari's bars and overscroll match — see html.dark below and the theme-color switch in app.js. */
 @media (max-width: 640px) {
-  #scr-login { background: #0b0424; padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)); min-height: 100vh; min-height: 100dvh; }
+  #scr-login { background: #0F0830; padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)); min-height: 100vh; min-height: 100dvh; }
   #scr-login .panel { inset: 0; border-radius: 0; }
   #scr-login .login-card { -webkit-mask: none; mask: none; }   /* concave sides only make sense inside the framed panel */
 }
-html.dark, html.dark body { background: #0b0424; }
+html.dark, html.dark body { background: #0F0830; }
 #scr-login input::placeholder { color: var(--ink); }
-.panel { position: absolute; inset: 22px; border-radius: 34px; overflow: hidden; pointer-events: none; background: radial-gradient(120% 120% at 50% 50%, #1a1245 0%, #0b0424 55%, #08050f 100%); }
+.panel { position: absolute; inset: 22px; border-radius: 34px; overflow: hidden; pointer-events: none; background: radial-gradient(120% 120% at 50% 50%, #180F46 0%, #0F0830 55%, #08050f 100%); }
 .ring { position: absolute; top: 50%; transform: translateY(-50%); width: 760px; height: 820px; border-radius: 50%; filter: blur(2px); }
 .ring.l { left: -560px;  border: 2px solid rgba(159,143,242,.10); }
 .ring.r { right: -560px; border: 2px solid rgba(203,192,255,.09); }
@@ -884,7 +884,7 @@ html.theme-dark .a-art { opacity: .25; }                   /* light strokes on a
 html.theme-dark .job .tags span { background: var(--fill); }   /* the light-mode tint is invisible on a dark card */
 html.theme-dark .sk, html.theme-dark .sk.lt, html.theme-dark .sk.xl { background: linear-gradient(90deg, #2A2350 25%, #372F5F 37%, #2A2350 63%); }
 html.theme-dark .ai-tip { background: linear-gradient(160deg, #15302A, #0F2A22); border-color: rgba(74,222,128,.25); }
-html.theme-dark #scr-login { background: #0b0424; }
+html.theme-dark #scr-login { background: #0F0830; }
 html.theme-dark .a-menu { background: var(--card); }
 html.theme-dark .tag, html.theme-dark .badge { background: var(--fill); }
 html.theme-dark .job, html.theme-dark .pcard, html.theme-dark .offer, html.theme-dark .cand, html.theme-dark .form-card, html.theme-dark .card, html.theme-dark .login-card, html.theme-dark .dmodal, html.theme-dark .delm, html.theme-dark .gate { box-shadow: 0 12px 34px -12px var(--shadow); }

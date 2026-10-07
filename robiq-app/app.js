@@ -811,7 +811,7 @@ function render() {
   // Login screen is dark on phones: page background + Safari bar colour follow it
   const dark = state.screen === 'login' && matchMedia('(max-width: 640px)').matches;
   document.documentElement.classList.toggle('dark', dark);
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0b0424' : isDarkTheme() ? '#0F0F13' : '#F6F6F8');
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0F0830' : isDarkTheme() ? '#0F0F13' : '#F6F6F8');
   if (state.screen === 'pick') {
     const note = document.getElementById('pick-note');
     note.hidden = !state.oauth;
@@ -880,10 +880,10 @@ function renderHeader() {                                  // l.342–372
   const photo = isStudent() ? avatarUrl(state.avatarPath) : state.fpLogo;
   const ava = photo ? `<button class="a-ava has-img" aria-label="Účet" data-go="menuToggle" style="background-image:url('${photo}')"></button>`
                     : `<button class="a-ava" aria-label="Účet" data-go="menuToggle">${avaInit()}</button>`;
-  // Desktop: the tabs live here in the top bar (CSS hides this on phones, where the bottom dock is used instead).
+  // Desktop: the tabs live here in the top bar, icons only like the dock (CSS hides this on phones, where the bottom dock is used instead).
   const tabs = isStudent() ? STUDENT_TABS : FIRM_TABS, active = activeTab();
   const nav = `<nav class="a-nav" aria-label="Navigácia">${tabs.map(([label, glyph], i) =>
-    `<button class="${i === active ? 'on' : ''}" data-go="goTab" data-tab="${i}"${i === active ? ' aria-current="page"' : ''}>${glyph}${label}</button>`).join('')}</nav>`;
+    `<button class="${i === active ? 'on' : ''}" data-go="goTab" data-tab="${i}" aria-label="${label}" title="${label}"${i === active ? ' aria-current="page"' : ''}>${glyph}</button>`).join('')}</nav>`;
   r.innerHTML = `${nav}${nova}<div class="a-acc">${ava}${menu}</div>`;
 }
 // Account menu: icon-only tile (iPhone-style); `on` given → a toggle, filled when on. The label is in title / aria-label.
@@ -2028,7 +2028,7 @@ function draw(cv, t, mirror) {
   const ctx = cv.getContext('2d');
   ctx.clearRect(0, 0, 900, 900);
   const g = ctx.createLinearGradient(mirror ? CX + R : CX - R, 0, mirror ? CX - R : CX + R, 0);
-  g.addColorStop(0, 'rgba(64,49,159,.55)'); g.addColorStop(.5, 'rgba(124,108,224,.8)'); g.addColorStop(1, 'rgba(203,192,255,.95)');
+  g.addColorStop(0, 'rgba(52,32,176,.55)'); g.addColorStop(.5, 'rgba(124,108,224,.8)'); g.addColorStop(1, 'rgba(203,192,255,.95)');
   ctx.strokeStyle = g;
   const T = t * 60;
   for (let k = 0; k < M; k++) {

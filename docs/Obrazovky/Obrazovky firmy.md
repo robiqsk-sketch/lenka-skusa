@@ -5,7 +5,7 @@ tags: [robiq, obrazovky, firma]
 
 ← [[00 Mapa systému]] · kód: `app.js` → `brig`, `suggCard`, `candCard`, `fspravy`, `ponuky`, `nova`, `fprofil`
 
-Firma má štyri záložky: **Ponuka · Správy · Inzeráty · Profil** (`FIRM_TABS` v `data.js`) — na mobile v docku dole, na počítači v hornej lište.
+Firma má štyri záložky: **Ponuka · Správy · Inzeráty · Profil** (`FIRM_TABS` v `data.js`) — na mobile v docku dole, na počítači v hornej lište — všade len ako ikony.
 Nový inzerát je samostatný pohľad (`ftab = 9`).
 
 ## Ponuka brigádnikov (`brig`)

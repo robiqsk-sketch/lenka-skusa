@@ -5,7 +5,7 @@ tags: [robiq, obrazovky, študent]
 
 ← [[00 Mapa systému]] · kód: `app.js` → `feed`, `jobCard`, `zhody`, `profile`
 
-Študent má tri záložky: **Objavuj · Správy · Profil** (`STUDENT_TABS` v `data.js`). Na mobile sú v plávajúcom **docku** dole (len ikony, názov záložky číta čítačka obrazovky), na počítači (šírka nad 960 px) v hornej lište vedľa loga aj s názvom — dock sa tam neukazuje.
+Študent má tri záložky: **Objavuj · Správy · Profil** (`STUDENT_TABS` v `data.js`). Na mobile sú v plávajúcom **docku** dole (len ikony, názov záložky číta čítačka obrazovky), na počítači (šírka nad 960 px) v hornej lište, tiež len ako ikony (názov sa ukáže po podržaní myši) — dock sa tam neukazuje.
 Hosť má v hornej lište tmavý režim · Prihlásiť sa · Vytvoriť účet. Na veľmi úzkych telefónoch (pod 380 px) sa prepínač režimu skryje, pod 320 px (zložený Galaxy Fold) aj „Prihlásiť sa" — prihlásenie ostáva cez „Vytvoriť účet" → „Už mám účet".
 Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 
