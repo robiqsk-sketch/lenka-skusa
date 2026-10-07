@@ -79,7 +79,6 @@ input::placeholder, textarea::placeholder { color: var(--muted); }   /* examples
 h2 { font-size: var(--text-3xl); font-weight: 700; margin: 0 0 6px; }
 h2 b { font-weight: 700; color: inherit; }                  /* was purple — headings stay one colour */
 .desc { color: var(--ink2); font-size: var(--text-base); margin: 0; }
-#ob-step > h2, #fob-step > h2 { margin-bottom: 24px; }   /* registration steps: heading only, no explanatory line */
 .label { font-size: var(--text-sm); font-weight: 700; color: var(--ink); margin-bottom: 9px; }
 .input {
   background: var(--fill2); border: 1px solid var(--line); border-radius: 12px;

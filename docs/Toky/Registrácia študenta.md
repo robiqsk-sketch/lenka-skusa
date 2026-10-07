@@ -28,7 +28,7 @@ flowchart TD
 - **Mesto je povinné** (kvôli párovaniu podľa miesta). Starší používatelia bez mesta vidia v Objavuj prúžok „Doplň si mesto".
 - Fotka vybraná v kroku 1 sa nahrá až po vzniku účtu (bucket `avatars`).
 - **Krok 2** ukazuje z každej skupiny zručností len prvých 6; zvyšok je za „Ďalšie (n)" — celá ponuka (~50) naraz bola stena. Rovnako sa správa editor zručností v profile.
-- Kroky (aj výber typu účtu) sú bez vysvetľujúcich viet a bez nápisu „Krok 1 / 3" — stačí nadpis a priebeh ukazujú len bodky hore.
+- Kroky (aj výber typu účtu) sú bez nadpisov, vysvetľujúcich viet aj nápisu „Krok 1 / 3" — rovno polia, priebeh ukazujú len bodky hore.
 
 ## Nedokončená registrácia
 Ak účet existuje, ale chýba profil alebo zručnosti (napr. prihlásenie cez Google, prerušená registrácia),

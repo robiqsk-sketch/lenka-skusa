@@ -1690,7 +1690,6 @@ function renderOb() {
 const obEl = document.getElementById('ob-step');
 function obStep1() {                                       // l.111–119 + e-mail a heslo (nutné pre skutočný účet)
   obEl.innerHTML = `
-    <h2>Ako sa <b>voláš?</b></h2>
     <div class="s1-row">${avatarHtml('avatar', state.obPhotoPreview, initials(), ' id="avatar"')}
       <div class="col"><input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
         ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
@@ -1725,14 +1724,12 @@ function obStep1() {                                       // l.111–119 + e-ma
 const initials = () => initialsOf(state.obName.trim() || 'Tomáš Novák');   // the student's own avatar — l.1247–1248
 function obStep2() {                                       // l.123–162
   obEl.innerHTML = `
-    <h2>Čo ti <b>ide?</b></h2>
     ${skillsEditor()}`;
   obEl.onclick = e => { const el = e.target.closest('button'); if (el) editorClick(el); };
   bindEditors();
 }
 function obStep3() {                                       // l.166–188
   obEl.innerHTML = `
-    <h2>Koľko hodín <b>máš?</b></h2>
     <div class="hours-label" id="hours-label">${HOURS[state.obHours]}</div>
     ${availabilityEditor()}
     <div style="margin-top:22px">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`;
@@ -1942,7 +1939,6 @@ function renderFob() {
 const fobEl = document.getElementById('fob-step');
 function fobStep1() {                                      // l.244–256
   fobEl.innerHTML = `
-    <h2>Kto <b>ste?</b></h2>
     <div class="f1-row"><label class="flogo" id="flogo" title="Nahrať logo"><span id="flogo-init"></span><span class="tag">LOGO</span><input type="file" accept="image/*" id="flogo-file"></label>
       <div class="col">
         <input class="input" id="fob-ico" placeholder="IČO (8 číslic)" value="${esc(state.fobIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
@@ -1985,14 +1981,12 @@ function paintLogo() {                                     // l.1457–1459
 }
 function fobStep2() {                                      // l.261–268
   fobEl.innerHTML = `
-    <h2>Koho <b>hľadáte?</b></h2>
     <div class="label" style="margin-bottom:11px">Odvetvie</div>
     <div class="fchips">${FIELDS.map(f => `<button type="button" class="fchip ${state.fobFields.includes(f) ? 'on' : ''}" data-field="${esc(f)}">${esc(f)}</button>`).join('')}</div>`;
   fobEl.onclick = e => { const el = e.target.closest('button[data-field]'); if (!el) return; toggleInList(state.fobFields, el.dataset.field); render(); };
 }
 function fobStep3() {                                      // l.272–282
   fobEl.innerHTML = `
-    <h2>Kontaktná <b>osoba</b></h2>
     <div class="f3-col"><input class="input" id="fob-contact" placeholder="Meno a priezvisko" value="${esc(state.fobContact)}" autocomplete="name">
       ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
       <input class="input" id="fob-email" type="email" placeholder="Pracovný e-mail" value="${esc(state.fobEmail)}" autocomplete="email">
