@@ -1617,7 +1617,7 @@ function obStep1Problem() {                                // why step 1 cannot 
 document.getElementById('ob-back').addEventListener('click', () => { if (state.obStep > 1) state.obStep--; else state.screen = 'pick'; render(); });
 document.getElementById('ob-next').addEventListener('click', async () => {           // l.1566–1570
   if (!obCanContinue()) {
-    if (state.obStep === 1) { setErr('ob-err', obStep1Problem()); if (state.birth && !isOldEnough()) track('reg_blocked', { reason: 'age' }); }
+    if (state.obStep === 1) { const pr = obStep1Problem(); setErr('ob-err', pr === AGE_BLOCKED ? '' : pr); if (state.birth && !isOldEnough()) track('reg_blocked', { reason: 'age' }); }
     if (state.obStep === 3) setErr('ob-err', !state.cityId ? 'Vyber svoje mesto zo zoznamu.' : 'Potvrď, že máš 16+ a súhlasíš s podmienkami.');
     return;
   }
@@ -1889,13 +1889,15 @@ async function verifyCompany() {                           // signed-in company:
 }
 document.getElementById('fob-back').addEventListener('click', () => { if (state.fobStep > 1) state.fobStep--; else state.screen = 'pick'; render(); });
 document.getElementById('fob-next').addEventListener('click', async () => {          // l.1480–1490
+  const icoShown = state.fobRpo?.ico === state.fobIco && !rpoOk(state.fobRpo) && state.fobRpo.reason !== 'unavailable';   // the line under IČO already shows the problem
+  if (state.fobStep === 1 && icoShown) { setErr('fob-err', ''); return; }   // one message at a time
   if (!fobCanContinue()) { if (state.fobStep === 1) setErr('fob-err', !ICO_RE.test(state.fobIco) ? 'IČO má 8 číslic.' : 'Zadajte zobrazovaný názov firmy.'); return; }
   if (state.fobStep === 1) {                               // the IČO must be a live company in the register
     const btn = document.getElementById('fob-next'); btn.disabled = true; setErr('fob-err', '');
     const r = state.fobRpo?.ico === state.fobIco ? state.fobRpo : await rpoLookup(state.fobIco);
     btn.disabled = false;
     if (!r) return;
-    if (!rpoOk(r) && r.reason !== 'unavailable') { render(); setErr('fob-err', 'S týmto IČO sa firma zaregistrovať nedá.'); track('reg_blocked', { reason: 'ico_' + (r.terminated ? 'terminated' : r.reason) }); return; }   // the reason is under the field
+    if (!rpoOk(r) && r.reason !== 'unavailable') { render(); track('reg_blocked', { reason: 'ico_' + (r.terminated ? 'terminated' : r.reason) }); return; }   // the reason is under the field
   }
   if (state.fobStep < 3) { state.fobStep++; render(); track('reg_step', { role: 'firm', step: state.fobStep }); return; }
   if (!state.oauth && await emailTaken(state.fobEmail, 'fob-err', 'fob-next', EMAIL_TAKEN_F)) { track('reg_blocked', { reason: 'email_taken' }); return; }   // e-mail is typed in step 3
