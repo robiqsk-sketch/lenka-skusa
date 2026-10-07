@@ -863,17 +863,13 @@ function renderHeader() {                                  // l.342–372
   const menu = !state.accMenu ? '' : `
     <div class="a-menu" data-go="menuToggle">
       <div class="name">${esc(menuName())}</div><hr>
-      <div class="a-menu-row">
-        ${menuTile('menuPush', 'bell', 'Upozornenia', pushOn)}
-        ${menuTile('menuEmail', 'mail', 'E-maily', state.emailNotify)}
-        ${menuTile('menuTheme', isDarkTheme() ? 'moon' : 'sun', isDarkTheme() ? 'Tmavý režim' : 'Svetlý režim', isDarkTheme())}
-      </div>
-      <div class="a-menu-row">
-        ${menuTile('menuProfile', 'user', 'Môj profil')}
-        ${menuTile('menuHelp', 'help', 'Pomoc a podpora')}
-        ${menuTile('menuTerms', 'file', 'Podmienky a ochrana údajov')}
-        ${state.isAdmin ? menuTile('menuStats', 'chart', 'Štatistika Robiq') : ''}
-      </div><hr>
+      <button data-go="menuProfile">${icon('user', 16)}Môj profil</button>
+      ${menuSwitch('menuPush', 'bell', 'Upozornenia', pushOn)}
+      ${menuSwitch('menuEmail', 'mail', 'E-maily', state.emailNotify)}
+      ${menuSwitch('menuTheme', 'moon', 'Tmavý režim', isDarkTheme())}
+      <button data-go="menuHelp">${icon('help', 16)}Pomoc a podpora</button>
+      <button data-go="menuTerms">${icon('file', 16)}Podmienky a ochrana údajov</button>
+      ${state.isAdmin ? `<hr><button data-go="menuStats">${icon('chart', 16)}Štatistika Robiq</button>` : ''}<hr>
       <button class="out" data-go="logout">${icon('logout', 16)}Odhlásiť sa</button>
       <button class="del" data-go="askDeleteAccount">${icon('trash', 16)}Zmazať účet</button>
     </div>`;
@@ -886,10 +882,10 @@ function renderHeader() {                                  // l.342–372
     `<button class="${i === active ? 'on' : ''}" data-go="goTab" data-tab="${i}" aria-label="${label}" title="${label}"${i === active ? ' aria-current="page"' : ''}>${glyph}</button>`).join('')}</nav>`;
   r.innerHTML = `${nav}${nova}<div class="a-acc">${ava}${menu}</div>`;
 }
-// Account menu: icon-only tile (iPhone-style); `on` given → a toggle, filled when on. The label is in title / aria-label.
-function menuTile(go, glyph, label, on) {
-  const toggle = on !== undefined;
-  return `<button class="tile${toggle && on ? ' on' : ''}" data-go="${go}" title="${label}" aria-label="${label}"${toggle ? ` aria-pressed="${!!on}"` : ''}>${icon(glyph, 20)}</button>`;
+// Account menu row with an on/off switch on the right (instead of „Zap./Vyp.“ text).
+function menuSwitch(go, glyph, label, on) {
+  return `<button class="sw-row" data-go="${go}" role="switch" aria-checked="${!!on}">
+    <span class="sw-label">${icon(glyph, 16)}${label}</span><span class="switch${on ? ' on' : ''}"></span></button>`;
 }
 function menuName() { return isStudent() ? (state.obName || 'Študent') : state.fpName; }
 function avaInit() { return isStudent() ? initials() : (initialsOf(state.fpName) || 'F'); }

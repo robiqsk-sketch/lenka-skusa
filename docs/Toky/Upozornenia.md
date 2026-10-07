@@ -25,7 +25,7 @@ sequenceDiagram
 
 ## Zapnutie
 - Prihlásený vidí nad ponukami / kandidátmi prúžok **„Nezmeškaj zhodu ani správu"** s tlačidlom **Zapnúť** (dá sa zavrieť ✕ — pamätá si to zariadenie).
-- Alebo **menu účtu → prepínač so zvončekom** (vyfarbený = zapnuté)
+- Alebo **menu účtu → prepínač Upozornenia**
 - Prehliadač sa spýta na povolenie; zariadenie sa uloží k prihlásenému účtu (`save_push_subscription`).
 - **iPhone:** funguje len v appke pridanej na plochu (iOS 16.4+). V Safari prúžok radí pridať Robiq na plochu.
 
@@ -38,7 +38,7 @@ sequenceDiagram
 
 ## E-mail (zapnutý 27. 9. 2026)
 Funkcia `notify` posiela aj e-mail cez **Brevo** (zadarmo 300 e-mailov denne) — pri zhode vždy, pri správe len ak príjemca nemá push. Kľúč `brevo_api_key` je v trezore.
-Kto e-maily nechce, vypne ich v **menu účtu → prepínač s obálkou** (`profiles.email_notify`, mení sa cez `set_email_notify`; platí pre účet na všetkých zariadeniach). Predvolene sú zapnuté.
+Kto e-maily nechce, vypne ich v **menu účtu → prepínač E-maily** (`profiles.email_notify`, mení sa cez `set_email_notify`; platí pre účet na všetkých zariadeniach). Predvolene sú zapnuté.
 V Brevo je **vypnuté blokovanie IP** (Security → Authorised IPs) — funkcia beží na serveroch Supabase s meniacimi sa adresami, s blokovaním by ju Brevo odmietalo (401 „unrecognised IP address").
 Ako to bolo nastavené:
 Treba: účet v Brevo, overený odosielateľ / doména **robiq.sk** (odosielateľ `ahoj@robiq.sk` — ten istý, overený, ako pri prihlasovacích e-mailoch; tie idú cez SMTP v Supabase Auth a táto funkcia sa ich netýka), API kľúč (SMTP & API → API Keys), potom

@@ -31,9 +31,8 @@ Zoznam zhôd a chat. Pri novej zhode banner **„Máte zhodu!"**. → [[Záujem,
 - **Skryté firmy** — zablokované firmy s tlačidlom „Zobraziť" (ukáže sa, len ak nejaké sú).
 
 ## Menu účtu (vpravo hore)
-Takmer všetko je len ikonami, bez popisov (ako ovládacie centrum v iPhone) — názov sa ukáže až po podržaní myši nad ikonou, a čítačke obrazovky ho povie tiež.
-- **Prvý riadok – prepínače:** upozornenia (zvonček) · e-maily (obálka) · režim (slnko = svetlý, mesiac = tmavý). Zapnutý prepínač je vyfarbený hlavnou farbou, vypnutý sivý → [[Upozornenia]]
-- **Druhý riadok:** profil · pomoc (e-mail na support) · podmienky · **Štatistika** (len admin)
-- Pod čiarou ostávajú s textom **odhlásiť** a **zmazať účet** → [[Zmazanie účtu]] — pri nich nesmie byť omyl, čo tlačidlo urobí.
+Jeden stĺpec s ikonou a názvom: profil · **upozornenia** · **e-maily** · **tmavý režim** · pomoc (e-mail na support) · podmienky · **Štatistika** (len admin) · odhlásiť · **zmazať účet** → [[Zmazanie účtu]]
+
+Upozornenia, e-maily a tmavý režim majú vpravo klasický prepínač (zelený = zapnuté) → [[Upozornenia]]
 
 Súvisí: [[Registrácia študenta]], [[Obrazovky firmy]]
