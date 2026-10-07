@@ -2045,7 +2045,11 @@ sb.auth.onAuthStateChange(event => { if (event === 'PASSWORD_RECOVERY' && state.
 document.getElementById('reset-form').addEventListener('submit', e => { e.preventDefault(); go.doReset(); });
 (async () => {
   state.loading = true; render();
-  try { await loadCities(); await loadMe(); await loadPostings(); } catch (e) { fail(e); }
+  try { await loadCities(); await loadMe(); await loadPostings(); }
+  catch (e) {                                              // server unreachable → crash screen with „Skúsiť znova“; anything else → toast as before
+    if (/failed to fetch|networkerror|load failed|network request failed|timeout|timed out/i.test(e?.message || String(e))) { console.error(e); window.robiqCrash(); return; }
+    fail(e);
+  }
   state.loading = false;
   subscribe();
   if (state.oauth) resumeOnboarding();                     // back from Google, or a registration that was not finished
@@ -2053,6 +2057,7 @@ document.getElementById('reset-form').addEventListener('submit', e => { e.preven
   if (fromLink) history.replaceState(null, '', location.pathname);
   if (isRecovery) state.screen = 'reset';
   render();
+  window.robiqReady = true;                                // from here on, errors are toasts, not the crash screen
   const fromPush = location.hash === '#spravy';
   openFromNotification();                                  // opened from a notification → chats
   track('visit', isRecovery ? { via: 'password_reset' } : fromLink ? { via: 'google_return' } : fromPush ? { via: 'notification' } : {});
