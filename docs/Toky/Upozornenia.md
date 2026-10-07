@@ -39,6 +39,7 @@ sequenceDiagram
 ## E-mail (zapnutý 27. 9. 2026)
 Funkcia `notify` posiela aj e-mail cez **Brevo** (zadarmo 300 e-mailov denne) — pri zhode vždy, pri správe len ak príjemca nemá push. Kľúč `brevo_api_key` je v trezore.
 Kto e-maily nechce, vypne ich v **menu účtu → prepínač E-maily** (`profiles.email_notify`, mení sa cez `set_email_notify`; platí pre účet na všetkých zariadeniach). Predvolene sú zapnuté.
+Text e-mailu je obyčajný a osobný — bez emoji (tie ostávajú len v push upozornení), s adresou na odpoveď `ahoj@robiq.sk` a vetou, ako e-maily vypnúť. Doména robiq.sk je v Brevo overená (DKIM, DMARC) a sledovanie otvorení / klikov je vypnuté. Ak Gmail aj tak dá e-mail do „Reklamy", je to tým, že odosielateľa ešte nepozná — zlepší sa to, keď si ho ľudia presunú do „Hlavné" a budú e-maily otvárať.
 V Brevo je **vypnuté blokovanie IP** (Security → Authorised IPs) — funkcia beží na serveroch Supabase s meniacimi sa adresami, s blokovaním by ju Brevo odmietalo (401 „unrecognised IP address").
 Ako to bolo nastavené:
 Treba: účet v Brevo, overený odosielateľ / doména **robiq.sk** (odosielateľ `ahoj@robiq.sk` — ten istý, overený, ako pri prihlasovacích e-mailoch; tie idú cez SMTP v Supabase Auth a táto funkcia sa ich netýka), API kľúč (SMTP & API → API Keys), potom
