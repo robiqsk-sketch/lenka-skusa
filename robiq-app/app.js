@@ -1583,7 +1583,6 @@ const REPORT_REASONS = [['scam', 'Podvod / vyzerá nedôveryhodne'], ['inappropr
 // ─── OB — student onboarding — l.97–194 ───
 // Privacy policy §10: Robiq is for people aged 16+, younger cannot register.
 const MIN_AGE = 16;
-const AGE_NOTE    = `Robiq je pre ľudí od ${MIN_AGE} rokov. Dátum sa neskôr nedá zmeniť.`;
 const AGE_BLOCKED = `Robiq je pre ľudí od ${MIN_AGE} rokov — registrácia zatiaľ nie je možná.`;
 const isOldEnough = () => (ageOf(state.birth) ?? -1) >= MIN_AGE;
 const avatarTooBig = f => f.size > 5 * 1024 * 1024;       // profile photo limit (posting photos: see pickPhotos)
@@ -1692,19 +1691,19 @@ function renderOb() {
 const obEl = document.getElementById('ob-step');
 function obStep1() {                                       // l.111–119 + e-mail a heslo (nutné pre skutočný účet)
   obEl.innerHTML = `
-    <div class="s1-row">${avatarHtml('avatar', state.obPhotoPreview, initials(), ' id="avatar"')}
+    <div class="s1-row"><label class="avatar-pick" title="${state.obPhotoFile ? 'Zmeniť fotku' : 'Pridať fotku (voliteľné)'}">${avatarHtml('avatar', state.obPhotoPreview, initials(), ' id="avatar"')}
+        <span class="avatar-plus" aria-hidden="true">＋</span><input type="file" accept="image/*" id="ob-photo" hidden></label>
       <div class="col"><input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
         ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
         <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
         <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
         <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" max="${maxBirth()}" autocomplete="bday"></label>
-        <div class="ob-age-note" id="ob-age-note">${AGE_NOTE}</div>
-        <label class="photo-btn">${state.obPhotoFile ? 'Zmeniť fotku' : 'Nahrať fotku (voliteľné)'}<input type="file" accept="image/*" id="ob-photo" hidden></label>
+        <div class="ob-age-note" id="ob-age-note"></div>
         ${state.obPhotoFile ? '<button type="button" class="photo-remove" id="ob-photo-remove">Odstrániť fotku</button>' : ''}</div></div>`;
   const upd = () => {
     document.getElementById('ob-next').style.opacity = obCanContinue() ? 1 : .45;
     const a = ageOf(state.birth), note = document.getElementById('ob-age-note');
-    note.textContent = a !== null && a < MIN_AGE ? AGE_BLOCKED : AGE_NOTE;
+    note.textContent = a !== null && a < MIN_AGE ? AGE_BLOCKED : '';   // only when it blocks
     note.classList.toggle('err', a !== null && a < MIN_AGE);
     setErr('ob-err', '');
   };
@@ -1742,7 +1741,7 @@ function obStep3() {                                       // l.166–188
 }
 
 // ─── Shared editors: onboarding steps 2–3 and the profile in edit mode ───
-const SKILLS_SHOWN = 6;
+const SKILLS_SHOWN = 6;                                   // in the profile editor; registration shows 4 (less on one screen)
 function skillsEditor() {                                  // l.126–162, logic l.1256–1296
   const selNames = state.obSkills.map(x => x.n);
   const rows = state.obSkills.map((x, i) => {
@@ -1758,11 +1757,12 @@ function skillsEditor() {                                  // l.126–162, logic
       (RELATED[x.n] || []).forEach(r => { if (!selNames.includes(r) && !SKILLS.includes(r) && !sugg.includes(r)) sugg.push(r); }); });
     // A group shows its first SKILLS_SHOWN skills; the rest is one tap away ("Ďalšie") — ~50 chips at once was a wall.
     const left = gr.items.filter(n => !selNames.includes(n)), open = state.skillsOpen.includes(gr.g);
-    const shown = open ? left : left.slice(0, SKILLS_SHOWN), hidden = left.length - shown.length;
+    const max = state.screen === 'ob' ? 4 : SKILLS_SHOWN;
+    const shown = open ? left : left.slice(0, max), hidden = left.length - shown.length;
     const chips = shown.map(n => `<button type="button" class="chip" data-add="${esc(n)}">＋ ${esc(n)}</button>`)
       .concat(sugg.map(n => `<button type="button" class="chip sugg" data-add="${esc(n)}">${icon('sparkles', 13)}${esc(n)}</button>`))
       .concat(hidden ? [`<button type="button" class="chip more" data-more="${esc(gr.g)}">Ďalšie (${hidden})</button>`]
-            : open && left.length > SKILLS_SHOWN ? [`<button type="button" class="chip more" data-more="${esc(gr.g)}">Menej</button>`] : []);
+            : open && left.length > max ? [`<button type="button" class="chip more" data-more="${esc(gr.g)}">Menej</button>`] : []);
     return chips.length ? `<div><div class="group-title">${gr.g}</div><div class="chips">${chips.join('')}</div></div>` : '';
   }).join('');
   return `${rows ? `<div class="sel-list">${rows}</div>` : ''}
@@ -1848,7 +1848,6 @@ function availSummary() {                                  // l.1558–1563
 const ICO_RE = /^[0-9]{8}$/;                               // Slovak IČO: 8 digits
 // The official name always comes from the register lookup for the IČO that is typed right now —
 // a stale answer for an older IČO must not stay on the screen.
-const fobLegalName = () => state.fobRpo?.ico === state.fobIco && rpoOk(state.fobRpo) ? state.fobRpo.name : '';
 function fobCanContinue() {
   if (state.fobStep === 1) return state.fobName.trim() !== '' && ICO_RE.test(state.fobIco);
   if (state.fobStep === 2) return state.fobFields.length > 0;
@@ -1934,7 +1933,7 @@ async function finishCompanyReg() {                        // the company row ex
   await enterApp({ ftab: 0 });
 }
 function renderFob() {
-  renderStepChrome('fob', state.fobStep, 'Vytvoriť firemný účet', fobCanContinue());
+  renderStepChrome('fob', state.fobStep, 'Vytvoriť účet', fobCanContinue());
   if (state.fobStep === 1) fobStep1();
   if (state.fobStep === 2) fobStep2();
   if (state.fobStep === 3) fobStep3();
@@ -1946,10 +1945,7 @@ function fobStep1() {                                      // l.244–256
       <div class="col">
         <input class="input" id="fob-ico" placeholder="IČO (8 číslic)" value="${esc(state.fobIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
         <div class="ico-note ${rpoClass(state.fobRpo)}" id="fob-ico-note">${esc(state.fobRpo?.ico === state.fobIco ? rpoText(state.fobRpo) : '')}</div>
-        <div class="f1-lab">Oficiálny názov</div>
-        <input class="input locked" id="fob-legal" placeholder="Doplní sa podľa IČO" value="${esc(fobLegalName())}" readonly tabindex="-1">
-        <div class="f1-lab">Zobrazovaný názov</div>
-        <input class="input" id="fob-name" placeholder="Napríklad skrátený názov firmy" value="${esc(state.fobName)}">
+        <input class="input" id="fob-name" placeholder="Zobrazovaný názov firmy" value="${esc(state.fobName)}">
       </div></div>`;
   paintLogo();
   const upd = () => { document.getElementById('fob-next').style.opacity = fobCanContinue() ? 1 : .45; };
@@ -1957,17 +1953,15 @@ function fobStep1() {                                      // l.244–256
   nameEl.addEventListener('input', () => { state.fobName = nameEl.value; paintLogo(); upd(); });
   // IČO: digits only; as soon as there are 8 of them, ask the register and show the company under the field.
   const icoEl = document.getElementById('fob-ico'), noteEl = document.getElementById('fob-ico-note');
-  const legalEl = document.getElementById('fob-legal');
   const showRpo = r => { noteEl.textContent = rpoText(r); noteEl.className = 'ico-note ' + rpoClass(r); };
   icoEl.addEventListener('input', async () => {
     icoEl.value = icoEl.value.replace(/\D/g, '').slice(0, 8);
-    state.fobIco = icoEl.value; state.fobRpo = null; legalEl.value = ''; setErr('fob-err', ''); upd();
+    state.fobIco = icoEl.value; state.fobRpo = null; setErr('fob-err', ''); upd();
     if (!ICO_RE.test(state.fobIco)) { showRpo(null); return; }
     noteEl.textContent = 'Hľadám v registri…'; noteEl.className = 'ico-note';
     const r = await rpoLookup(state.fobIco);
     if (!r || r.ico !== state.fobIco) return;             // typed on meanwhile
     showRpo(r);
-    legalEl.value = rpoOk(r) ? r.name : '';                // the official name comes from the register, never from typing
     if (rpoOk(r) && !state.fobName.trim()) { state.fobName = r.name; nameEl.value = r.name; paintLogo(); upd(); }   // display name starts as the official one
   });
   document.getElementById('flogo-file').addEventListener('change', e => {      // l.1460–1464

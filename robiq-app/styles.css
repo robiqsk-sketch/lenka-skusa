@@ -90,8 +90,9 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 /* Pole, ktoré vypĺňa register, nie človek — vyzerá ako údaj, nie ako vstup. */
 .input.locked { background: var(--fill); color: var(--ink2); cursor: default; }
 .input.locked::placeholder { color: var(--muted); }
-.foot { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; }
-.foot .back { justify-self: start; white-space: nowrap; } .foot .next { justify-self: end; white-space: nowrap; padding-left: 22px; padding-right: 22px; }
+.foot { display: flex; gap: 12px; align-items: center; }
+.foot .dots { flex: 1; justify-content: center; }          /* centred in the gap between the two buttons */
+.foot .back, .foot .next { white-space: nowrap; } .foot .next { padding-left: 22px; padding-right: 22px; }
 .back { background: none; border: none; color: var(--ink2); font-size: var(--text-sm); cursor: pointer; padding: 10px 4px; }
 .back:hover { color: var(--ink); }
 .back-top { display: block; margin: -14px 0 6px -4px; padding: 6px 4px; }     /* top-left of a centred card */
@@ -745,10 +746,16 @@ html.dark, html.dark body { background: #0F0830; }
 /* ═══════════ OB — l.97–194 ═══════════ */
 .s1-row { display: flex; gap: 22px; align-items: center; margin-bottom: 26px; }
 .avatar { width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, var(--accent-hi), #9F8FF2); display: flex; align-items: center; justify-content: center; font-size: var(--text-3xl); font-weight: 700; }
+.avatar-pick { position: relative; flex-shrink: 0; cursor: pointer; border-radius: 50%; }
+.avatar-plus { position: absolute; right: 0; bottom: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--card); color: var(--accent); border: 1px solid var(--line2); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+.avatar-pick:hover .avatar-plus { border-color: var(--accent); }
+/* Registration: less on one screen — no hour ticks, no summary line, no city hint (the profile editor keeps them) */
+#scr-ob .ticks, #scr-ob .summary, #scr-ob #city-hint { display: none; }
+#scr-ob #hours { margin-bottom: 24px; }
 .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }   /* min-width 0: may shrink below its inputs' natural width (else the page scrolled sideways on phones) */
 @media (max-width: 480px) {                                /* registration step 1: photo above the fields, not beside them */
   .s1-row { flex-direction: column; align-items: stretch; gap: 16px; }
-  .s1-row > .avatar { align-self: center; }
+  .s1-row > .avatar-pick { align-self: center; }
 }
 /* Photo avatars: any round/rounded avatar shows the image instead of initials */
 .has-img { background-size: cover !important; background-position: center; background-repeat: no-repeat; color: transparent !important; }
@@ -789,6 +796,7 @@ html.dark, html.dark body { background: #0F0830; }
 .city-nudge { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line2); border-radius: 14px; padding: 12px 16px; font-size: var(--text-sm); color: var(--ink2); margin-bottom: 18px; flex-wrap: wrap; }
 .city-nudge button { margin-left: auto; background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-size: var(--text-base); font-weight: 700; cursor: pointer; font-family: inherit; }
 .ob-age-note { font-size: var(--text-sm); color: var(--muted); }
+.ob-age-note:empty { display: none; }
 .ob-age-note.err { color: var(--bad); font-weight: 700; }
 /* IČO lookup result (company registration step 1 + company profile) */
 .ico-note { font-size: var(--text-sm); color: var(--muted); min-height: 14px; }
