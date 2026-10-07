@@ -1118,7 +1118,6 @@ function chatUI(list, active, isFirm) {
 }
 function zhody() {                                         // l.478–513
   return `<div class="chat-wrap">
-    <div class="a-title"><h2>Tvoje <b>správy</b></h2></div>
     ${chatUI(state.matches, state.activeChat, false)}</div>`;
 }
 function fspravy() {                                       // l.708–743
