@@ -811,7 +811,7 @@ function render() {
   // Login screen is dark on phones: page background + Safari bar colour follow it
   const dark = state.screen === 'login' && matchMedia('(max-width: 640px)').matches;
   document.documentElement.classList.toggle('dark', dark);
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#120d2b' : isDarkTheme() ? '#0F0F13' : '#F6F6F8');
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0b0424' : isDarkTheme() ? '#0F0F13' : '#F6F6F8');
   if (state.screen === 'pick') {
     const note = document.getElementById('pick-note');
     note.hidden = !state.oauth;
