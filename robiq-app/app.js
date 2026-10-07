@@ -1539,7 +1539,7 @@ function layers() {                                        // banner l.946, toas
       <div><div class="t">${esc(d.t)}</div><div class="f">${esc(d.f)}${placeTxt(d) ? ` · ${esc(placeTxt(d))}` : ''}</div>
         ${d.legal && d.legal !== d.f ? `<div class="legal">✓ ${esc(d.legal)} — podľa Registra právnických osôb</div>` : ''}</div></div>
       <button class="x" data-go="closeDetail" aria-label="Zavrieť">${icon('x')}</button></div>
-    ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(b => `<span class="badge">${esc(b)}</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(typeLabel(t))}</span>`).join('')}</div>` : ''}
+    ${d.badges.length || d.tags.length ? `<div class="chips">${d.badges.map(() => `<span class="badge" title="Overená firma" aria-label="Overená firma">✓</span>`).join('')}${d.tags.map(t => `<span class="tag">${esc(typeLabel(t))}</span>`).join('')}</div>` : ''}
     <div class="payrow"><div class="pay">${esc(d.pay)} <small>/ hod</small></div><span class="need">${needTxt(d)}</span></div>
     ${d.remote ? '' : d.address || d.city ? `<div class="addr">${esc([d.address, d.city].filter(Boolean).join(', '))}
       ${d.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([d.address, d.city].filter(Boolean).join(', '))}" target="_blank" rel="noopener">mapa ↗</a>` : ''}</div>` : ''}
