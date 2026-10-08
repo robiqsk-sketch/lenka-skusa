@@ -18,7 +18,7 @@ const initialState = () => ({
   // student
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   skillsOpen: [],                                          // skill groups showing all their chips (registration step 2)
-  profEdit: false, birth: '', bio: '', obTerms: false,
+  profEdit: false, birth: '', bio: '', obTerms: false, focusCity: false,   // focusCity: next render scrolls to the city field (flashCity)
   cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
   matches: [], activeChat: 0, draft: '', myInterests: [],
@@ -619,7 +619,7 @@ const go = {
   // account menu — l.1515–1524
   menuToggle:  el => { if (el && el.classList.contains('a-menu')) { state.accMenu = true; return; } state.accMenu = !state.accMenu; },
   menuProfile: () => { if (isStudent()) state.tab = 2; else state.ftab = 3; state.accMenu = false; },
-  goProfileEdit: () => { state.tab = 2; state.profEdit = true; },
+  goProfileEdit: () => { state.tab = 2; state.profEdit = true; state.focusCity = true; },   // "Doplň si mesto" → Doplniť: straight to the city field
   menuClose:   () => { state.accMenu = false; },
   menuHelp:    () => { state.accMenu = false; location.href = 'mailto:support@robiq.sk?subject=Robiq%20%E2%80%93%20pomoc'; },
   menuTerms:   () => { state.accMenu = false; window.open('podmienky.html', '_blank', 'noopener'); },
@@ -840,6 +840,7 @@ function renderApp() {
   else if (!state.authed || isStudent()) {
     main.innerHTML = [feed, zhody, profile][state.tab]();
     if (state.tab === 2 && state.profEdit) bindEditors();
+    if (state.focusCity) { state.focusCity = false; flashCity(); }
   }
   else main.innerHTML = ({ 0: brig, 1: fspravy, 2: ponuky, 3: fprofil, 9: nova })[state.ftab]();
   bindAppInputs();
@@ -857,6 +858,15 @@ function renderApp() {
       await reloadCompany(); render(); showToast('Fotky uložené.');
     } catch (err) { fail(err); }
   });
+}
+
+// The profile opened from "Doplň si mesto": scroll to the city field, put the caret in it and light it up for a moment.
+function flashCity() {
+  const el = document.querySelector('#a-main #city'); if (!el) return;
+  el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  el.focus({ preventScroll: true });
+  el.classList.add('flash');
+  setTimeout(() => el.classList.remove('flash'), 2600);
 }
 
 function renderHeader() {                                  // l.342–372

@@ -15,7 +15,7 @@ Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 - Otvorenie detailu sa započíta do zobrazení inzerátu.
 - Tlačidlá **Mám záujem** / **✕ Nezaujíma ma** (= Preskočiť). Hosť vidí len „Mám záujem" — ✕ by mu nič nepovedalo. **Obsadená** ponuka (všetky miesta zabrané) je stlmená, je na konci zoznamu, namiesto tlačidiel má neaktívne „Obsadené" a neponúka sa v tipe „Toto by ti sedelo"; klik na kartu = **detail** (popis, fotky „deň v práci", adresa s odkazom na mapu, oficiálny názov firmy, nahlásenie).
 - Po 2 prezretých kartách sa hore ukáže tip **„✦ Toto by ti sedelo"** (prvý inzerát, o ktorý ešte nedal záujem).
-- Prúžok **„Doplň si mesto"**, ak študent nemá mesto.
+- Prúžok **„Doplň si mesto"**, ak študent nemá mesto. **Doplniť** otvorí profil v režime úprav rovno pri poli s mestom: stránka sa k nemu posunie, dá doň kurzor a pole dvakrát jemne zasvieti (pri vypnutých animáciách v systéme len chvíľu svieti bez pulzovania).
 - Menu karty: nahlásiť inzerát, **zablokovať firmu** (jej ponuky zmiznú; uloží sa do `blocks`).
 - Poradie: pozri [[Návrhy kandidátov (párovanie)]] → časť Poradie ponúk.
 - Hosť pri „Mám záujem" → výzva na prihlásenie (*gate*).
