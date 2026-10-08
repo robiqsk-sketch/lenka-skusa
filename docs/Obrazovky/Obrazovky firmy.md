@@ -23,12 +23,13 @@ Chat so zhodami (rovnaký ako u študenta). → [[Záujem, zhoda a chat]]
 
 ## Nový inzerát (`nova`)
 Názov pozície · **hodinová sadzba** (povinná, číslo od 1 do 100 €, napr. 8,50 — ukladá sa ako „8,50") · počet ľudí · **miesto** (mesto zo zoznamu, alebo „Na diaľku") + adresa · vek kandidátov (všetci / len 18+) ·
-typ brigády · popis práce · **✦ Koho hľadáte** (text pre párovanie — zručnosti, nie vek/pohlavie/zdravie) · fotky (max. 3).
+typ brigády · popis práce · **✦ Koho hľadáte** (text pre párovanie — zručnosti a povaha práce; zákaz diskriminácie podľa veku, pohlavia či zdravia je v podmienkach, pri poli sa nevypisuje) · fotky (max. 3).
 Po zverejnení appka prepne na Ponuku a ukáže, koľko kandidátov sedí.
 
 ## Firemný profil (`fprofil`)
 Oficiálny názov (z registra, needitovateľný) · zobrazovaný názov · sídlo (predvyplní miesto v novom inzeráte) ·
 IČO s overením („Overiť znova") · popis firmy · logo. → [[Registrácia firmy a overenie IČO]]
+Polia majú len názvy, bez vysvetľujúcich dovetkov; výsledok overenia IČO je v riadku pod poľom. Rovnako bez vysvetliviek sú aj „✦ Navrhovaní kandidáti" a okno s fotkami inzerátu.
 Pod profilom **Zablokovaní brigádnici** s tlačidlom „Odblokovať" (ukáže sa, len ak nejakí sú).
 
 Súvisí: [[Obrazovky hosťa a študenta]], [[Admin panel]]

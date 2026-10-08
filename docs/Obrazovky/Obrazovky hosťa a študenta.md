@@ -25,7 +25,8 @@ Zoznam zhôd a chat. Pri novej zhode banner **„Máte zhodu!"**. → [[Záujem,
 
 ## Profil (`profile`)
 - Hlavička: fotka, meno, hodiny, mesto; tlačidlo **Upraviť / ✓ Hotovo** (ukladá sa až pri Hotovo).
-- Režim úprav: fotka, dátum narodenia (len raz), bio (max. 240 znakov, s upozornením na citlivé údaje), zručnosti s úrovňou, dostupnosť a miesto.
+- Režim úprav: fotka, dátum narodenia (len raz), bio (max. 240 znakov), zručnosti s úrovňou, dostupnosť a miesto.
+- Bez vysvetľujúcich textov — pri poliach sú len názvy (Dátum narodenia, Bio, Zručnosti, Dostupnosť). Upozornenie nepísať citlivé údaje (zdravie, náboženstvo…) je len v podmienkach a v ochrane osobných údajov, nie pri poliach. Pod mestom sa ukáže „Vyber mesto zo zoznamu.", len keď mesto nie je vybrané.
 - Štatistika: prezreté · záujmy · zhody.
 - **Moje záujmy** — na čo klikol „Mám záujem" a stav (Čaká na odpoveď / ✓ Zhoda).
 - **Skryté firmy** — zablokované firmy s tlačidlom „Zobraziť" (ukáže sa, len ak nejaké sú).

@@ -29,7 +29,7 @@ flowchart TD
 - Fotka vybraná v kroku 1 sa nahrá až po vzniku účtu (bucket `avatars`).
 - **Krok 2** ukazuje z každej skupiny zručností len prvé 4 (editor v profile prvých 6); zvyšok je za „Ďalšie (n)" — celá ponuka (~50) naraz bola stena.
 - Kroky (aj výber typu účtu) sú bez nadpisov a nápisu „Krok 1 / 3" — rovno polia. Jedna krátka veta je len tam, kde by inak nebolo jasné, čo sa vypĺňa (krok 3: koľko hodín týždenne). Priebeh ukazujú bodky dole, vycentrované medzi „Späť" a „Pokračovať" — aktuálny krok je dlhšia čiarka, ktorá sa pri prechode plynulo presunie.
-- Na jednej obrazovke má byť čo najmenej: fotka sa pridáva klikom na kolieska s iniciálami (malé ＋), veta o veku 16+ sa ukáže len keď je dátum príliš nízky, v kroku 3 nie sú popisky pod posuvníkom hodín, zhrnutie „So, Ne · poobede" ani rada k mestu (editor v profile ich má).
+- Na jednej obrazovke má byť čo najmenej: fotka sa pridáva klikom na kolieska s iniciálami (malé ＋), veta o veku 16+ sa ukáže len keď je dátum príliš nízky, v kroku 2 nie je pod vlastnou zručnosťou žiadna veta, v kroku 3 nie sú popisky pod posuvníkom hodín, zhrnutie „So, Ne · poobede" ani rada k mestu (editor v profile ich má).
 
 ## Nedokončená registrácia
 Ak účet existuje, ale chýba profil alebo zručnosti (napr. prihlásenie cez Google, prerušená registrácia),

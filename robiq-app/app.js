@@ -1048,12 +1048,11 @@ function profile() {                                       // l.515–635
       ${s.avatarPath ? '<button type="button" class="photo-remove" id="p-photo-remove">Odstrániť</button>' : ''}
     </div>
     ${s.birth
-      ? `<div class="p-birth"><div class="l">Dátum narodenia<small>nedá sa zmeniť</small></div><div class="v">${esc(fmtDate(s.birth))}</div></div>`
-      : `<div class="p-birth"><div class="l">Dátum narodenia<small>nastavíš len raz</small></div><input type="date" id="p-birth" value="" max="${maxBirth()}"></div>`}
+      ? `<div class="p-birth"><div class="l">Dátum narodenia</div><div class="v">${esc(fmtDate(s.birth))}</div></div>`
+      : `<div class="p-birth"><div class="l">Dátum narodenia</div><input type="date" id="p-birth" value="" max="${maxBirth()}"></div>`}
     <div class="p-bio-edit"><div class="label" style="margin-bottom:8px">Bio</div>
-      <textarea id="p-bio" rows="3" maxlength="240" placeholder="Napíš pár viet o sebe — čo študuješ, čo ťa baví, kedy máš čas…">${esc(s.bio)}</textarea>
-      <div class="hint" style="margin-top:6px">Nepíš sem citlivé údaje — zdravie, náboženstvo, politické názory, rodné číslo.</div></div>
-    <div class="p-sec">Tvoje zručnosti — nastav úroveň</div>
+      <textarea id="p-bio" rows="3" maxlength="240" placeholder="Napíš pár viet o sebe — čo študuješ, čo ťa baví, kedy máš čas…">${esc(s.bio)}</textarea></div>
+    <div class="p-sec">Zručnosti</div>
     ${skillsEditor()}
     <div class="p-sec" style="margin-bottom:10px">Dostupnosť</div>
     ${availabilityEditor()}
@@ -1080,15 +1079,15 @@ function profile() {                                       // l.515–635
           <span class="st" style="background:${it.stBg};color:${it.stFg}">${it.status}</span></div>`).join('')}</div>`
       : `<div class="p-empty">Zatiaľ žiadne. Prejdi na <b>Objavuj</b> a označ ponuky, ktoré ťa zaujali.</div>`}
     </div>
-    ${blockedCard(s.blockedFirms, 'Skryté <b>firmy</b>', 'ich ponuky nevidíš', 'Zobraziť')}
+    ${blockedCard(s.blockedFirms, 'Skryté <b>firmy</b>', 'Zobraziť')}
   </div>`;
 }
 
 // Blocked companies (student) / students (company) with a button to undo it; hidden when the list is empty.
-function blockedCard(ids, title, sub, btn) {
+function blockedCard(ids, title, btn) {
   if (!ids.length) return '';
   return `<div class="pcard sm blocked-card">
-    <div class="p-int-head"><div class="t">${title}</div><span class="s">${sub}</span></div>
+    <div class="p-int-head"><div class="t">${title}</div></div>
     <div class="p-int">${ids.map(id => `
       <div class="p-int-row"><div style="flex:1;min-width:0"><div class="t">${esc(state.blockNames[id] || (isStudent() ? 'Firma' : 'Brigádnik'))}</div></div>
         <button class="p-edit" data-unblock="${esc(id)}" data-act="unblock">${btn}</button></div>`).join('')}</div>
@@ -1160,7 +1159,7 @@ function brig() {
         <div class="cgroup-head"><div class="t">${esc(o.t)}</div>${count ? `<span class="c">${count}</span>` : ''}</div>
         ${cands.length ? `<div class="cards">${cands.map(candCard).join('')}</div>` : ''}
         ${sugg.length ? `
-          <div class="sugg-head"><span class="eb">${icon('sparkles', 14)}Navrhovaní kandidáti</span><span class="s">Sedia na inzerát podľa zručností a dostupnosti. Meno a fotku uvidíte, keď prejavia záujem.</span></div>
+          <div class="sugg-head"><span class="eb">${icon('sparkles', 14)}Navrhovaní kandidáti</span></div>
           <div class="cards">${sugg.map(r => suggCard(o, r)).join('')}</div>` : ''}
       </div>`;
     }).join('');
@@ -1284,7 +1283,7 @@ function nova() {
       <div><div class="label" style="margin-bottom:4px">Popis práce</div>
         <textarea id="f-desc" rows="3" maxlength="1500" placeholder="Čo bude brigádnik robiť, kde a od kedy.">${esc(s.fDesc)}</textarea></div>
       <div><div class="label" style="margin-bottom:4px">${icon('sparkles', 14)} Koho hľadáte</div>
-        <textarea id="f-ai" rows="2" placeholder="Zručnosti a povaha práce — podľa toho zoradíme kandidátov. Nie vek, pohlavie či zdravie.">${esc(s.aiNote)}</textarea></div>
+        <textarea id="f-ai" rows="2" placeholder="Zručnosti a povaha práce">${esc(s.aiNote)}</textarea></div>
       ${s.fEditId ? '' : `<div><div class="label" style="margin-bottom:4px">Fotky „deň v práci“</div>
         ${photoGrid(s.fPhotos.map(p => p.url), 'f-photo', 'f-photo-rm', 'data-act="fphoto-rm"')}</div>`}
       <button class="publish" id="f-publish" data-go="publish" style="opacity:${novaCanPublish() ? 1 : .45}">${s.fEditId ? 'Uložiť zmeny' : 'Zverejniť ponuku'}</button>
@@ -1331,19 +1330,19 @@ function fprofil() {
         <div><div class="label">Oficiálny názov</div>
           <input class="input locked" id="fp-legal" value="${esc(s.fpLegal)}" placeholder="Doplní sa po overení IČO" readonly tabindex="-1"></div>
         <div><div class="label">Zobrazovaný názov</div><input class="input" id="fp-name" value="${esc(s.fpName)}"></div>
-        <div><div class="label">Sídlo (mesto) — predvyplní miesto v novom inzeráte</div><div class="place-row"><input class="input" id="fp-city" value="${esc(cityName(s.fpCityId))}" placeholder="Mesto" autocomplete="off"></div></div>
-        <div><div class="label">IČO — overujeme v Registri právnických osôb</div>
+        <div><div class="label">Sídlo (mesto)</div><div class="place-row"><input class="input" id="fp-city" value="${esc(cityName(s.fpCityId))}" placeholder="Mesto" autocomplete="off"></div></div>
+        <div><div class="label">IČO</div>
           <div class="fp-ico-row"><input class="input" id="fp-ico" value="${esc(s.fpIco)}" inputmode="numeric" maxlength="8" autocomplete="off">
             ${s.fpVerified ? '' : '<button class="p-edit" data-go="fpVerify">Overiť znova</button>'}</div>
           <div class="ico-note ${s.fpVerified ? 'ok' : rpoClass(s.fpRpo)}">${esc(s.fpVerified ? (rpoOk(s.fpRpo) ? rpoText(s.fpRpo) : '✓ Overená v Registri právnických osôb') : (rpoText(s.fpRpo) || 'Zatiaľ neoverené.'))}</div></div>
-        <div><div class="label">O firme — uvidia to študenti na karte</div><textarea id="fp-desc" rows="3">${esc(s.fpDesc)}</textarea></div>
+        <div><div class="label">O firme</div><textarea id="fp-desc" rows="3">${esc(s.fpDesc)}</textarea></div>
       </div>
       <div class="p-stats">
         <div><div class="n">${S.active}</div><div class="l">aktívne inzeráty</div></div>
         <div><div class="n green">${S.m}</div><div class="l">zhody spolu</div></div>
       </div>
     </div>
-    ${blockedCard(s.blocked, 'Zablokovaní <b>brigádnici</b>', 'nevidíte ich medzi kandidátmi', 'Odblokovať')}
+    ${blockedCard(s.blocked, 'Zablokovaní <b>brigádnici</b>', 'Odblokovať')}
   </div>`;
 }
 
@@ -1563,7 +1562,7 @@ function layers() {                                        // banner l.946, toas
   const pe = state.photoEdit;
   if (pe) h += `<div class="overlay del" data-go="photoClose"><div class="delm report" data-go="noop">
     <div class="h">Fotky „deň v práci“</div>
-    <div class="p" style="margin-bottom:12px"><b>${esc(pe.title)}</b> · max. ${MAX_PHOTOS} fotky, uvidia ich všetci v detaile inzerátu.</div>
+    <div class="p" style="margin-bottom:12px"><b>${esc(pe.title)}</b></div>
     ${photoGrid(pe.photos, 'pe-photo', 'i', 'data-go="photoRemove"')}
     <div class="col" style="margin-top:14px"><button class="b2" data-go="photoClose">Hotovo</button></div></div></div>`;
   // Report form (posting / company / student) — table `reports`, handled by admin.html
@@ -1770,8 +1769,7 @@ function skillsEditor() {                                  // l.126–162, logic
   return `${rows ? `<div class="sel-list">${rows}</div>` : ''}
     <div class="groups">${groups}
       <div><div class="group-title">Niečo iné?</div>
-        <div class="custom-row"><input class="input" id="custom" placeholder="Napíš vlastnú zručnosť a stlač Enter…" value="${esc(state.customSkill)}"><button type="button" class="add-btn" id="add-custom">Pridať</button></div>
-        <div class="hint">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami. Nepíš sem citlivé údaje (zdravie, náboženstvo, politické názory).</div></div></div>`;
+        <div class="custom-row"><input class="input" id="custom" placeholder="Napíš vlastnú zručnosť a stlač Enter…" value="${esc(state.customSkill)}"><button type="button" class="add-btn" id="add-custom">Pridať</button></div></div></div>`;
 }
 // "Kde môžeš pracovať?" — city (fixed list with suggestions) + how far the student travels. Onboarding step 3 and the profile.
 function placeEditor() {
@@ -1779,7 +1777,7 @@ function placeEditor() {
     <div class="place-row"><input class="input" id="city" placeholder="Tvoje mesto" value="${esc(cityName(state.cityId))}" autocomplete="off">
       ${state.cityId ? '<span class="ok">✓</span>' : ''}</div>
     <div class="commute">${COMMUTES.map(([k, l]) => `<button type="button" class="${state.commute === k ? 'on' : ''}" data-commute="${k}">${l}</button>`).join('')}</div>
-    <div class="hint" id="city-hint">${state.cityId ? '' : 'Vyber mesto zo zoznamu — podľa neho ťa firmy nájdu.'}</div>`;
+    <div class="hint" id="city-hint">${state.cityId ? '' : 'Vyber mesto zo zoznamu.'}</div>`;
 }
 function availabilityEditor() {                            // l.169–188, logic l.1542–1563
   return `<input type="range" id="hours" min="0" max="3" step="1" value="${state.obHours}">
@@ -1820,7 +1818,7 @@ function bindEditors() {
   if (city) cityAutocomplete(city, () => city.dispatchEvent(new Event('input')));
   if (city) city.addEventListener('input', () => {
     const c = cityByName(city.value); state.cityId = c ? c.id : null;
-    const hint = document.getElementById('city-hint'); if (hint) hint.textContent = c ? '' : 'Vyber mesto zo zoznamu — podľa neho ťa firmy nájdu.';
+    const hint = document.getElementById('city-hint'); if (hint) hint.textContent = c ? '' : 'Vyber mesto zo zoznamu.';
     const ok = city.parentElement.querySelector('.ok'); if (ok && !c) ok.remove();
     const next = document.getElementById('ob-next'); if (next && state.screen === 'ob') next.style.opacity = obCanContinue() ? 1 : .45;
   });
@@ -1841,7 +1839,7 @@ function addSkill(n) { if (!state.obSkills.some(x => x.n === n)) { state.obSkill
 function addCustom() { const n = state.customSkill.trim(); if (n) addSkill(n); }
 function availSummary() {                                  // l.1558–1563
   const d = state.availDays, t = state.availTimes;
-  if (!d.length && !t.length) return 'Vyber si dni a časy, kedy môžeš pracovať.';
+  if (!d.length && !t.length) return '';
   const dd = d.length === 7 ? 'každý deň' : (d.length ? d.join(', ') : 'dni podľa dohody');
   return dd + (t.length ? ' · ' + t.join(', ').toLowerCase() : '');
 }
