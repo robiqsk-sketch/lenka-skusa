@@ -148,10 +148,11 @@
     const pct = (a, b) => b ? Math.round(a / b * 100) + ' %' : '–';
 
     // Registration funnel: started → step 2 → step 3 → done, per role (d.reg = { "reg_start:student": n, "reg_step:student:2": n, … }).
+    // A middle step nobody reached is left out — the student registration v2 is one screen, without steps 2–3.
     function funnel(title, role, reg) {
       const g = k => reg[k] || 0;
       const steps = [['Začali registráciu', g('reg_start:' + role)], ['Krok 2', g('reg_step:' + role + ':2')],
-                     ['Krok 3', g('reg_step:' + role + ':3')], ['Dokončili', g('reg_done:' + role)]];
+                     ['Krok 3', g('reg_step:' + role + ':3')], ['Dokončili', g('reg_done:' + role)]].filter(([, v], i) => v || i === 0 || i === 3);
       const max = Math.max(1, ...steps.map(s => s[1]));
       return `<div><h3>${title}</h3>${steps.map(([l, v], i) => `<div class="row"><span class="lbl">${l}</span><span class="bar"><i style="width:${v / max * 100}%"></i></span><span class="val">${v}${i ? ' <span class="muted">' + pct(v, steps[0][1]) + '</span>' : ''}</span></div>`).join('')}</div>`;
     }
@@ -231,7 +232,9 @@
             <div class="tile"><div class="n">${p.matches || 0}</div><div class="l">zhôd</div></div>
             <div class="tile"><div class="n">${p.messages || 0}</div><div class="l">správ v chate</div></div>
             <div class="tile"><div class="n">${ev.detail_open || 0}</div><div class="l">otvorených detailov</div></div>
-            <div class="tile"><div class="n">${ev.gate_shown || 0}</div><div class="l">„prihlás sa“ pri záujme</div></div>
+            <div class="tile"><div class="n">${ev.gate_shown || 0}</div><div class="l">„Mám záujem“ bez účtu</div></div>
+            <div class="tile"><div class="n">${ev.profile_fill_start || 0}</div><div class="l">otvorili „Doplniť profil“</div></div>
+            <div class="tile"><div class="n">${ev.profile_filled || 0}</div><div class="l">uložili doplnený profil</div></div>
             <div class="tile"><div class="n">${ev.login || 0}</div><div class="l">prihlásení e-mailom</div></div>
           </div></div>
 

@@ -27,8 +27,9 @@ sequenceDiagram
 2. **Firma prvá (oslovenie):** firma v anonymných návrhoch osloví kandidáta → študentovi sa inzerát ukáže v Objavuj **na prvom mieste** + toast „Firma ťa oslovila" → študent dá „Mám záujem" → zhoda. Pozri [[Návrhy kandidátov (párovanie)]].
 
 ## Hosť
-Hosť vidí ponuky, ale pri „Mám záujem" sa mu ukáže výzva na prihlásenie/registráciu (tzv. *gate*).
-Inzerát si appka zapamätá a po prihlásení záujem odošle sama.
+Hosť vidí ponuky. Pri „Mám záujem" ho appka pošle **rovno na krátku registráciu** s kartou toho inzerátu (meno, dátum narodenia, e-mail a heslo alebo Google; „Už mám účet" vedie na prihlásenie).
+Inzerát si zapamätá — aj v prehliadači, lebo Google a potvrdzovací e-mail stránku znovu načítajú — a **po prihlásení záujem odošle sama** (`sendPending`). → [[Registrácia študenta]]
+Verzia 1 (schovaná) namiesto toho ukázala výzvu na prihlásenie/registráciu (tzv. *gate*).
 
 ## Preskočiť
 „Preskočiť" uloží riadok do `skips` a karta sa už neukáže. Keď študent všetko preskočí, môže dať „Prezrieť znova" (zmaže svoje skips).

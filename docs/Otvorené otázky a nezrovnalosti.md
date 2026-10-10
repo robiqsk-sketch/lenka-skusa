@@ -8,6 +8,10 @@ tags: [robiq, todo]
 Sem si zapisuj veci, ktoré nesedia alebo treba doriešiť. Keď sa niečo vyrieši, odškrtni to alebo riadok zmaž.
 
 ## Treba urobiť
+- [ ] **Doplnenie profilu inak** — dnes „Doplniť profil" otvára pôvodné kroky 2–3 (zručnosti, čas, mesto). Vybrať z [[Nápady – doplnenie profilu]] a prerobiť.
+- [ ] **Hodiny nového študenta** — databáza zapíše 10 h / týždeň, aj keď ich študent nezadal (registrácia v2). Appka ich zatiaľ skrýva, kým nevyplní čas; čistejšie by bolo „neuvedené" v databáze (migrácia).
+- [ ] **Pripomienka doplniť profil mimo appky** (push / e-mail) — zatiaľ len v appke. Treba naplánovanú úlohu a rozmyslieť súhlas (je to skôr marketing).
+- [ ] **Registrácia v1** je v `app.js` schovaná za prepínačom `REG_V2`. Keď sa v2 osvedčí, starý kód (gate, krok 1 s fotkou, súhlas v kroku 3, „Doplň si mesto") zmazať.
 - [ ] **Nástup brigády** — firma ho pri inzeráte nevie zadať (v databáze je všade „ihneď"), preto sa na kartách zatiaľ nezobrazuje. Ak ho chceme ukazovať, treba pridať pole do formulára Nový inzerát.
 - [ ] **Notifikácie** — appka zatiaľ žiadne neposiela (prepínač v menu bol len atrapa, odstránený 26. 9.).
 - [ ] **Ochrana pred uniknutými heslami** — zapnúť ručne v Supabase → Authentication → Settings (kontrola hesiel cez HaveIBeenPwned).

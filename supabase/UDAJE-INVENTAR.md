@@ -22,7 +22,7 @@ Stav k: 23. 9. 2026.
 | **Supabase — Auth** | e-mail, heslo (uložené len ako hash, aplikácia ho nikdy nevidí), časy prihlásení, IP adresa pri prihlásení (systémový log Supabase) | Supabase | Frankfurt |
 | **Supabase — Storage** | logá firiem (bucket `logos`, **verejné**), fotky „deň v práci" pri inzerátoch (bucket `posting-photos`, **verejné**), profilové fotky brigádnikov (bucket `avatars`, **neverejné**) | Supabase | Frankfurt |
 | **Supabase — Realtime** | prenos nových správ a zhôd v reálnom čase (nič sa navyše neukladá) | Supabase | Frankfurt |
-| **Prehliadač používateľa — localStorage** | prihlasovací token (session) Supabase, aby človek zostal prihlásený; voľba svetlý/tmavý režim; či už videl upozornenie v chate | — | zariadenie používateľa |
+| **Prehliadač používateľa — localStorage** | prihlasovací token (session) Supabase, aby človek zostal prihlásený; voľba svetlý/tmavý režim; či už videl upozornenie v chate; číslo inzerátu, o ktorý hosť klikol „Mám záujem" pred registráciou (`robiq_pending_job`, zmaže sa po odoslaní záujmu, najviac na deň) | — | zariadenie používateľa |
 | **Register právnických osôb (api.statistics.sk)** | pri registrácii firmy sa odošle **IČO** na overenie; vráti oficiálny názov a obec | Štatistický úrad SR | SR |
 | **Google (OAuth)** | ak sa používateľ prihlási cez Google: Google overí identitu a Supabase dostane e-mail a meno | Google | — |
 | **jsDelivr CDN** | načítanie knižnice supabase-js (pri načítaní stránky sa odošle IP adresa a hlavičky prehliadača) | jsDelivr (Prospect One) | globálna CDN |
@@ -52,13 +52,13 @@ Vzniká pri registrácii študenta aj firmy.
 ### 3.3 `students` — profil študenta
 | Údaj | Odkiaľ | Povinný | Poznámka |
 |---|---|---|---|
-| `name` | onboarding krok 1 | áno | meno a priezvisko |
-| `skills` | onboarding krok 2 / profil | nie | zoznam zručností s úrovňou (Základy/Dobré/Top), pri jazykoch úroveň A1–C2 a či ním hovorí; **môže obsahovať vlastný text** používateľa („Niečo iné?") |
-| `hours` | onboarding krok 3 / profil | nie | koľko hodín týždenne môže pracovať (4 stupne) |
+| `name` | registrácia | áno | meno a priezvisko |
+| `skills` | „Doplniť profil" (v1: onboarding krok 2) / profil | nie | zoznam zručností s úrovňou (Základy/Dobré/Top), pri jazykoch úroveň A1–C2 a či ním hovorí; **môže obsahovať vlastný text** používateľa („Niečo iné?") |
+| `hours` | „Doplniť profil" (v1: onboarding krok 3) / profil | nie | koľko hodín týždenne môže pracovať (4 stupne) |
 | `avail_days` | onboarding / profil | nie | dni v týždni |
 | `avail_times` | onboarding / profil | nie | časy dňa (ráno, poobede, večer, nočné) |
-| `birth` | onboarding krok 1 | **áno** | **dátum narodenia** — vek 16+ (kontroluje appka aj DB trigger), inzeráty „Len 18+" sa mladším neukazujú; po nastavení nemenný |
-| `city_id`, `commute` | onboarding krok 3 / profil | **áno** (mesto) | mesto z pevného zoznamu `cities` + dochádzanie (city / 15km / 30km / any); vzdialenosť sa počíta v DB medzi mestami, bez GPS používateľa; mesto vidí firma v anonymných návrhoch a po záujme |
+| `birth` | registrácia | **áno** | **dátum narodenia** — vek 16+ (kontroluje appka aj DB trigger), inzeráty „Len 18+" sa mladším neukazujú; po nastavení nemenný |
+| `city_id`, `commute` | „Doplniť profil" (v1: onboarding krok 3) / profil | nie (v1: áno) | mesto z pevného zoznamu `cities` + dochádzanie (city / 15km / 30km / any); vzdialenosť sa počíta v DB medzi mestami, bez GPS používateľa; mesto vidí firma v anonymných návrhoch a po záujme |
 | `bio` | profil → Upraviť | nie | voľný text do 240 znakov — **môže obsahovať čokoľvek**, čo človek napíše (škola, záľuby…) |
 | `avatar_path` | onboarding krok 1 / profil | nie | **profilová fotka** v neverejnom bucket-e `avatars`; vidí ju študent a firma, o ktorej inzerát študent prejavil záujem (podpísané URL) |
 | `updated_at` | systém | | |

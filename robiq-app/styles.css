@@ -879,6 +879,59 @@ input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer;
 .terms .txt { font-size: var(--text-xs); line-height: 1.45; color: var(--muted); }
 .terms .txt a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .terms .txt a:hover { color: var(--accent-hi); }
+
+/* ═══════════ REGISTRÁCIA v2 — one screen after „Mám záujem“, the profile is filled in later (app.js → REG_V2) ═══════════ */
+/* The posting the guest clicked „Mám záujem“ on, above the fields */
+.join-job { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 20px; border: 1px solid rgba(var(--tint),.35); background: rgba(var(--tint),.06); border-radius: 14px; }
+.join-job .lg { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: var(--text-md); color: #fff; flex-shrink: 0; }
+.join-job .name { flex: 1; min-width: 0; }
+.join-job .t { font-size: var(--text-md); font-weight: 700; line-height: 1.25; }
+.join-job .f { font-size: var(--text-sm); color: var(--ink2); margin-top: 2px; }
+.join-job .f b { color: var(--ink); font-weight: 700; }
+.join-job .heart { display: flex; color: var(--accent); }
+.join-terms { margin-top: 16px; }
+.ob-alt .divider { margin: 22px 0 16px; }
+.ob-alt .secondary.google { margin-bottom: 4px; }
+.ob-login { text-align: center; }
+/* Unfinished profile: the strip above the feed (same shape as the push nudge) */
+.todo-nudge { border-color: rgba(var(--tint),.4); }
+/* … and the card at the end of the feed (also the guest's „Vytvoriť profil“) */
+.feed-end { margin-top: 22px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 34px 24px; border-radius: 20px; border: 1px solid rgba(var(--tint),.35); background: linear-gradient(160deg, rgba(var(--tint),.1), rgba(var(--tint),.02)); }
+.feed-end .ic { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(var(--tint),.14); color: var(--accent); }
+.feed-end .h { font-size: var(--text-xl); font-weight: 700; color: var(--ink); text-wrap: balance; }
+.feed-end p { margin: 0; font-size: var(--text-sm); line-height: 1.5; color: var(--ink2); max-width: 42ch; text-wrap: pretty; }
+.feed-end .btn-violet { margin-top: 4px; }
+.todo-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.todo-chips button { min-height: 36px; padding: 0 14px; border-radius: 99px; border: 1px dashed rgba(var(--tint),.55); background: var(--card); color: var(--accent-ink); font-size: var(--text-sm); font-weight: 700; cursor: pointer; font-family: inherit; }
+.todo-chips button:hover { border-style: solid; border-color: var(--accent); }
+/* … and the progress card above the profile: a bar + what is done / missing, each missing row opens its step */
+.todo-card { border-color: rgba(var(--tint),.4); }
+.todo-top { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 14px; margin-bottom: 12px; }
+.todo-top .t { font-size: var(--text-lg); font-weight: 700; color: var(--ink); }
+.todo-top .s { font-size: var(--text-sm); color: var(--ink2); }
+.todo-bar { height: 6px; border-radius: 99px; background: var(--fill); overflow: hidden; margin-bottom: 16px; }
+.todo-bar i { display: block; height: 100%; border-radius: 99px; background: var(--accent); }
+.todo-list { display: flex; flex-direction: column; gap: 6px; }
+.todo-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 13px; background: var(--card); color: var(--ink); font-size: var(--text-base); font-weight: 700; text-align: left; font-family: inherit; }
+button.todo-row { cursor: pointer; transition: border-color .15s; }
+button.todo-row:hover { border-color: var(--accent); }
+.todo-row .ck { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; border: 2px dashed var(--line2); display: flex; align-items: center; justify-content: center; font-size: var(--text-xs); }
+.todo-row .l { flex: 1; min-width: 0; }
+.todo-row .go { font-size: var(--text-sm); color: var(--accent); }
+.todo-row.done { border-color: transparent; background: var(--fill3); color: var(--muted); font-weight: 500; }
+.todo-row.done .ck { border: none; background: rgba(21,128,61,.12); color: var(--ok); }
+/* … and the glowing Profil tab: an amber dot with a pulse (phone dock + desktop top bar) */
+.dock .tabs button.todo .glyph, .a-nav button.todo { position: relative; }
+.dock .tabs button.todo .glyph::after, .a-nav button.todo::after {
+  content: ''; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #FBBF24; border: 2px solid var(--bar);
+  animation: todoPulse 2.2s ease-out infinite;
+}
+.dock .tabs button.todo .glyph::after { top: -4px; right: -5px; }
+.a-nav button.todo::after { top: 5px; right: 6px; }
+.dock .tabs button.on.todo .glyph::after, .a-nav button.on.todo::after { border-color: #FFFFFF; }   /* on the white active pill */
+@keyframes todoPulse { 0% { box-shadow: 0 0 0 0 rgba(251,191,36,.6); } 70%, 100% { box-shadow: 0 0 0 8px rgba(251,191,36,0); } }
+@media (prefers-reduced-motion: reduce) { .dock .tabs button.todo .glyph::after, .a-nav button.todo::after { animation: none; } }
+
 /* Compact footer: one row on desktop (brand · links · contact), wraps on phones */
 .a-footer { margin: auto auto 0; padding: 14px 4px 0; font-size: var(--text-sm); gap: 8px 22px; align-items: center; width: 100%; }
 #a-main { padding-bottom: 36px; }                          /* gap between content and footer when the page is long */

@@ -10,7 +10,7 @@ Nový inzerát je samostatný pohľad (`ftab = 9`).
 
 ## Ponuka brigádnikov (`brig`)
 Zoskupené podľa aktívnych inzerátov:
-- **Kandidáti** — študenti, ktorí dali „Mám záujem": meno, fotka, hodiny, mesto, zručnosti → **♥ Prejaviť záujem** (= zhoda). Menu: nahlásiť, zablokovať (zmizne z kandidátov aj z návrhov; uloží sa do `blocks`).
+- **Kandidáti** — študenti, ktorí dali „Mám záujem": meno, fotka, hodiny, mesto, zručnosti (kto ešte nemá zručnosti, má namiesto hodín **„Profil ešte nedoplnený"** — registrácia v2 sa na ne pýta až neskôr, hodiny by boli len predvolená hodnota) → **♥ Prejaviť záujem** (= zhoda). Menu: nahlásiť, zablokovať (zmizne z kandidátov aj z návrhov; uloží sa do `blocks`).
 - **✦ Navrhovaní kandidáti** — anonymné návrhy (bez mena a fotky) so skóre zhody → **✦ Osloviť**. → [[Návrhy kandidátov (párovanie)]]
 
 ## Správy (`fspravy`)

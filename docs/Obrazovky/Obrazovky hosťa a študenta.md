@@ -3,11 +3,13 @@ tags: [robiq, obrazovky, študent]
 ---
 # Obrazovky hosťa a študenta
 
-← [[00 Mapa systému]] · kód: `app.js` → `feed`, `jobCard`, `zhody`, `profile`
+← [[00 Mapa systému]] · kód: `app.js` → `feed`, `jobCard`, `todoNudge`, `feedEnd`, `zhody`, `profile`, `todoCard`
 
 Študent má tri záložky: **Objavuj · Správy · Profil** (`STUDENT_TABS` v `data.js`). Na mobile sú v tmavej lište dole (**dock**), na počítači (šírka nad 960 px) v hornej lište vedľa loga — dock sa tam neukazuje. Vyzerajú rovnako: aktívna záložka je biela „pilulka" s ikonou a názvom, ostatné sú len sivé ikony (názov ukáže podržanie myši / čítačka obrazovky). Pri prepnutí sa pilulka plynulo presunie.
 Hosť má v hornej lište tmavý režim · Prihlásiť sa · Vytvoriť účet. Na veľmi úzkych telefónoch (pod 380 px) sa prepínač režimu skryje, pod 320 px (zložený Galaxy Fold) aj „Prihlásiť sa" — prihlásenie ostáva cez „Vytvoriť účet" → „Už mám účet".
 Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
+
+**Záložka Profil svieti** (žltá pulzujúca bodka, v docku aj v hornej lište; čítačka obrazovky povie „Profil — nedoplnený"), kým študent nemá doplnené zručnosti, čas a mesto — registrácia v2, pozri [[Registrácia študenta]] → Doplnenie profilu.
 
 ## Objavuj (`feed`)
 - Nadpis „Ponuky **pre teba**", pod ním rad **filtrov**: „V mojom okolí" (len študent s mestom) a typy brigády (Víkendy, Poobede, Večery, Na diaľku, Flexibilné). Typ „Na diaľku" sa v dátach volá `Remote` — mení sa len to, čo ľudia vidia. Na mobile sa rad posúva do strany a pravý okraj jemne mizne, aby bolo jasné, že je tam viac. Vybrané typy platia ako „aspoň jeden z nich", okolie navyše; „Zrušiť" ich vypne. Filtre sa neukladajú — po obnovení stránky sú preč.
@@ -15,16 +17,21 @@ Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 - Otvorenie detailu sa započíta do zobrazení inzerátu.
 - Tlačidlá **Mám záujem** / **✕ Nezaujíma ma** (= Preskočiť). Hosť vidí len „Mám záujem" — ✕ by mu nič nepovedalo. **Obsadená** ponuka (všetky miesta zabrané) je stlmená, je na konci zoznamu, namiesto tlačidiel má neaktívne „Obsadené" a neponúka sa v tipe „Toto by ti sedelo"; klik na kartu = **detail** (popis, fotky „deň v práci", adresa s odkazom na mapu, oficiálny názov firmy, nahlásenie).
 - Po 2 prezretých kartách sa hore ukáže tip **„✦ Toto by ti sedelo"** (prvý inzerát, o ktorý ešte nedal záujem).
-- Prúžok **„Doplň si mesto"**, ak študent nemá mesto.
+- Nad feedom **jeden pruh naraz**: pri nedoplnenom profile **„Profil máš na 25 %. Bez neho ti nevieme nájsť veľa ponúk."** s tlačidlom Doplniť a ✕ (zavrie ho len do ďalšieho otvorenia appky — potom je späť, kým profil nie je hotový); inak pozvánka na zapnutie upozornení.
+- **Koniec feedu** (registrácia v2, len bez zapnutých filtrov):
+  - študent s nedoplneným profilom — karta **„Nemáš dokončený profil"**: bez neho mu nevieme nájsť veľa ponúk a firmy ho ťažko nájdu; čo chýba (Čo ti ide · Kedy máš čas · Kde môžeš pracovať — každé otvorí svoj krok) a **Doplniť profil**,
+  - hosť — **„Nehľadaj brigádu. Nechaj ju nájsť teba."** a **Vytvoriť profil** (rovno registrácia študenta, bez výberu typu účtu).
+- Prúžok **„Doplň si mesto"** je len vo verzii 1 — vo v2 je mesto súčasťou nedoplneného profilu.
 - Menu karty: nahlásiť inzerát, **zablokovať firmu** (jej ponuky zmiznú; uloží sa do `blocks`).
 - Poradie: pozri [[Návrhy kandidátov (párovanie)]] → časť Poradie ponúk.
-- Hosť pri „Mám záujem" → výzva na prihlásenie (*gate*).
+- Hosť pri „Mám záujem" → rovno **registrácia** s kartou toho inzerátu; záujem sa po nej odošle sám (v1: výzva na prihlásenie, *gate*). → [[Registrácia študenta]]
 
 ## Správy (`zhody`)
 Zoznam zhôd a chat. Pri novej zhode banner **„Máte zhodu!"**. → [[Záujem, zhoda a chat]]
 
 ## Profil (`profile`)
-- Hlavička: fotka, meno, hodiny, mesto; tlačidlo **Upraviť / ✓ Hotovo** (ukladá sa až pri Hotovo).
+- Pri nedoplnenom profile (v2) je navrchu karta **„Profil máš na 25 %"**: čiara s percentami a riadky ✓ Meno a dátum narodenia · Čo ti ide · Kedy máš čas · Kde môžeš pracovať — chýbajúce majú „Doplniť" a otvoria svoj krok. Počas úprav sa skryje.
+- Hlavička: fotka, meno, hodiny (len keď študent vyplnil, kedy má čas — inak by tam bola predvolená hodnota z databázy), mesto; tlačidlo **Upraviť / ✓ Hotovo** (ukladá sa až pri Hotovo).
 - Režim úprav: fotka, dátum narodenia (len raz), bio (max. 240 znakov, s upozornením na citlivé údaje), zručnosti s úrovňou, dostupnosť a miesto.
 - Štatistika: prezreté · záujmy · zhody.
 - **Moje záujmy** — na čo klikol „Mám záujem" a stav (Čaká na odpoveď / ✓ Zhoda).
