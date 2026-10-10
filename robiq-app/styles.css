@@ -890,6 +890,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer;
 .join-job .f b { color: var(--ink); font-weight: 700; }
 .join-job .heart { display: flex; color: var(--accent); }
 .join-terms { margin-top: 16px; }
+/* „Doplniť profil“ in small steps: one question per screen, a little air below it */
+.desc.step-note.center.fill-q { margin-bottom: 18px; }
+.fill-q ~ .commute, .fill-q ~ .times { margin-bottom: 22px; }   /* last thing above „Späť / Pokračovať“ */
 .ob-alt .divider { margin: 22px 0 16px; }
 .ob-alt .secondary.google { margin-bottom: 4px; }
 .ob-login { text-align: center; }

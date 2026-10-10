@@ -19,7 +19,7 @@ Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 - Po 2 prezretých kartách sa hore ukáže tip **„✦ Toto by ti sedelo"** (prvý inzerát, o ktorý ešte nedal záujem).
 - Nad feedom **jeden pruh naraz**: pri nedoplnenom profile **„Profil máš na 25 %. Bez neho ti nevieme nájsť veľa ponúk."** s tlačidlom Doplniť a ✕ (zavrie ho len do ďalšieho otvorenia appky — potom je späť, kým profil nie je hotový); inak pozvánka na zapnutie upozornení.
 - **Koniec feedu** (registrácia v2, len bez zapnutých filtrov):
-  - študent s nedoplneným profilom — karta **„Nemáš dokončený profil"**: bez neho mu nevieme nájsť veľa ponúk a firmy ho ťažko nájdu; čo chýba (Čo ti ide · Kedy máš čas · Kde môžeš pracovať — každé otvorí svoj krok) a **Doplniť profil**,
+  - študent s nedoplneným profilom — karta **„Nemáš dokončený profil"**: bez neho mu nevieme nájsť veľa ponúk a firmy ho ťažko nájdu; čo chýba (Čo ti ide · Kedy máš čas · Kde môžeš pracovať — každé otvorí len svoje kroky) a **Doplniť profil**,
   - hosť — **„Nehľadaj brigádu. Nechaj ju nájsť teba."** a **Vytvoriť profil** (rovno registrácia študenta, bez výberu typu účtu).
 - Prúžok **„Doplň si mesto"** je len vo verzii 1 — vo v2 je mesto súčasťou nedoplneného profilu.
 - Menu karty: nahlásiť inzerát, **zablokovať firmu** (jej ponuky zmiznú; uloží sa do `blocks`).
@@ -30,7 +30,7 @@ Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 Zoznam zhôd a chat. Pri novej zhode banner **„Máte zhodu!"**. → [[Záujem, zhoda a chat]]
 
 ## Profil (`profile`)
-- Pri nedoplnenom profile (v2) je navrchu karta **„Profil máš na 25 %"**: čiara s percentami a riadky ✓ Meno a dátum narodenia · Čo ti ide · Kedy máš čas · Kde môžeš pracovať — chýbajúce majú „Doplniť" a otvoria svoj krok. Počas úprav sa skryje.
+- Pri nedoplnenom profile (v2) je navrchu karta **„Profil máš na 25 %"**: čiara s percentami a riadky ✓ Meno a dátum narodenia · Čo ti ide · Kedy máš čas · Kde môžeš pracovať — chýbajúce majú „Doplniť" a otvoria len svoje kroky (jedna otázka na obrazovku → [[Registrácia študenta]]). Počas úprav sa skryje. Režim úprav (nižšie) má naďalej všetko na jednej stránke.
 - Hlavička: fotka, meno, hodiny (len keď študent vyplnil, kedy má čas — inak by tam bola predvolená hodnota z databázy), mesto; tlačidlo **Upraviť / ✓ Hotovo** (ukladá sa až pri Hotovo).
 - Režim úprav: fotka, dátum narodenia (len raz), bio (max. 240 znakov, s upozornením na citlivé údaje), zručnosti s úrovňou, dostupnosť a miesto.
 - Štatistika: prezreté · záujmy · zhody.

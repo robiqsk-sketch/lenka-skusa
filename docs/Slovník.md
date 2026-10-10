@@ -20,7 +20,7 @@ tags: [robiq, slovník]
 | **Gate** | výzva na prihlásenie, keď hosť klikne „Mám záujem" — len v registrácii v1 (v2 ide hosť rovno na registráciu) | – |
 | **Registrácia v1 / v2** | v1: tri kroky so zručnosťami a časom (schovaná); v2: jedna obrazovka, profil sa dopĺňa neskôr | prepínač `REG_V2` v `app.js` |
 | **Nedoplnený profil** | študent (v2) bez zručností, času alebo mesta — svieti mu Profil, upozornenie nad feedom a karta na jeho konci | `profileTodo` (appka) |
-| **Doplniť profil** | pôvodné kroky 2 a 3 registrácie otvorené z appky, ukladajú sa do profilu | – |
+| **Doplniť profil** | zručnosti, čas a miesto po malých krokoch (jedna otázka na obrazovku), otvorené z appky; ukladajú sa do profilu | – |
 | **Dochádzanie** | ako ďaleko je študent ochotný cestovať | `students.commute` |
 | **Overená firma** | IČO nájdené v Registri právnických osôb | `companies.verified` |
 | **Oficiálny vs. zobrazovaný názov** | z registra vs. zvolený firmou | `legal_name` vs. `name` |

@@ -18,7 +18,8 @@ const initialState = () => ({
   // student
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   skillsOpen: [],                                          // skill groups showing all their chips (registration step 2)
-  obFill: false, obFrom: 'pick', todoNudgeOff: false,      // v2: obFill = the old steps 2–3 reopened to fill in the profile; obFrom = where „← Späť“ on the registration goes; todoNudgeOff = „Doplň profil“ above the feed closed until the next visit
+  obFill: false, fillSteps: [], fillIdx: 0,                // v2 „Doplniť profil“: the small steps of this run (FILL_PARTS) and the current one
+  obFrom: 'pick', todoNudgeOff: false,                     // v2: where „← Späť“ on the registration goes; „Doplň profil“ above the feed closed until the next visit
   profEdit: false, birth: '', bio: '', obTerms: false,
   cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
@@ -547,7 +548,9 @@ function openJoin(from) {                                  // v2 registration, o
 }
 // What the student has not filled in yet. Robiq orders offers and companies find students by exactly these —
 // without them there are few offers. Empty for companies, guests and in version 1 (there they are part of the registration).
-const TODO = { skills: ['Čo ti ide', 2], time: ['Kedy máš čas', 3], place: ['Kde môžeš pracovať', 3] };   // label, wizard step
+const TODO = { skills: 'Čo ti ide', time: 'Kedy máš čas', place: 'Kde môžeš pracovať' };
+// „Doplniť profil“ goes through small steps, one question per screen (FILL_STEP in the OB section draws them).
+const FILL_PARTS = { skills: ['skills'], time: ['hours', 'days', 'times'], place: ['place'] };
 const timeSet = () => state.availDays.length > 0 || state.availTimes.length > 0;
 function profileTodo() {
   if (!REG_V2 || !state.authed || !isStudent()) return [];
@@ -638,12 +641,13 @@ const go = {
   goSignup:    () => openPick('app'),                     // from the feed header
   pickStudent: () => { if (REG_V2) openJoin('pick'); else { state.screen = 'ob'; state.obStep = 1; } track('reg_start', { role: 'student' }); },
   join:        () => { openJoin('app'); track('reg_start', { role: 'student' }); },   // v2: „Vytvoriť profil“ at the end of the guest feed
-  // v2: fill in the profile — the old registration steps 2 (skills) and 3 (time and place), saved to the profile.
-  // data-step on the button opens that step; otherwise the first one that is missing.
+  // v2: fill in the profile in small steps, saved to the profile. data-part on the button (skills · time · place)
+  // opens just that part; otherwise every part that is missing, one after another.
   fillProfile: el => {
-    const todo = profileTodo(), step = +(el?.dataset.step) || (todo.length && todo[0] !== 'skills' ? 3 : 2);
-    Object.assign(state, { screen: 'ob', obFill: true, obStep: step, accMenu: false });
-    window.scrollTo(0, 0); track('profile_fill_start', { step });
+    const part = el?.dataset.part, todo = profileTodo();
+    const steps = (part ? [part] : todo.length ? todo : Object.keys(FILL_PARTS)).flatMap(p => FILL_PARTS[p]);
+    Object.assign(state, { screen: 'ob', obFill: true, fillSteps: steps, fillIdx: 0, accMenu: false });
+    window.scrollTo(0, 0); track('profile_fill_start', { part: part || 'all' });
   },
   todoNudgeClose: () => { state.todoNudgeOff = true; },   // until the next visit — it comes back while the profile is unfinished
   pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },  goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
@@ -1064,7 +1068,7 @@ function feedEnd(todo) {
     <div class="ic">${icon('user', 22)}</div>
     <div class="h">Nemáš dokončený profil</div>
     <p>Bez neho ti nevieme nájsť veľa ponúk a firmy ťa ťažko nájdu. Chýba:</p>
-    <div class="todo-chips">${todo.map(k => `<button data-go="fillProfile" data-step="${TODO[k][1]}">${TODO[k][0]}</button>`).join('')}</div>
+    <div class="todo-chips">${todo.map(k => `<button data-go="fillProfile" data-part="${k}">${TODO[k]}</button>`).join('')}</div>
     <button class="btn-violet" data-go="fillProfile">Doplniť profil</button></div>`;
 }
 
@@ -1165,16 +1169,16 @@ function profile() {                                       // l.515–635
   </div>`;
 }
 
-// v2: unfinished profile — progress and what is missing, above the profile card. Each row opens its step.
+// v2: unfinished profile — progress and what is missing, above the profile card. Each row opens its own steps.
 function todoCard(todo) {
   const pct = profilePct();
-  const rows = [['', 'Meno a dátum narodenia', 0], ...Object.entries(TODO).map(([k, [label, step]]) => [k, label, step])];
+  const rows = [['', 'Meno a dátum narodenia'], ...Object.entries(TODO)];
   return `<div class="pcard sm todo-card">
     <div class="todo-top"><div class="t">Profil máš na <b>${pct} %</b></div><span class="s">Bez neho ti nevieme nájsť veľa ponúk.</span></div>
     <div class="todo-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
-    <div class="todo-list">${rows.map(([k, label, step]) => !k || !todo.includes(k)
+    <div class="todo-list">${rows.map(([k, label]) => !k || !todo.includes(k)
       ? `<div class="todo-row done"><span class="ck">✓</span><span class="l">${label}</span></div>`
-      : `<button class="todo-row" data-go="fillProfile" data-step="${step}"><span class="ck"></span><span class="l">${label}</span><span class="go">Doplniť</span></button>`).join('')}</div>
+      : `<button class="todo-row" data-go="fillProfile" data-part="${k}"><span class="ck"></span><span class="l">${label}</span><span class="go">Doplniť</span></button>`).join('')}</div>
   </div>`;
 }
 
@@ -1720,7 +1724,7 @@ function obStep1Problem() {                                // why step 1 cannot 
 }
 const TERMS_MISSING = 'Potvrď, že máš 16+ a súhlasíš s podmienkami.';
 document.getElementById('ob-back').addEventListener('click', async () => {
-  if (state.obFill) { if (state.obStep > 2) state.obStep--; else await leaveFill(false); }   // filling in the profile: what is chosen stays saved
+  if (state.obFill) { if (state.fillIdx > 0) state.fillIdx--; else await leaveFill(false); }   // filling in the profile: what is chosen stays saved
   else if (state.obStep > 1) state.obStep--;
   else if (REG_V2 && state.obFrom === 'app') { state.screen = 'app'; state.pendingJob = null; pendingSave(null); }   // v2 from a posting: back to the feed, interest dropped
   else state.screen = 'pick';
@@ -1735,7 +1739,7 @@ async function leaveFill(done) {                           // end of „Doplniť
   track('profile_filled', { left });
 }
 document.getElementById('ob-next').addEventListener('click', async () => {           // l.1566–1570
-  if (state.obFill) { if (state.obStep < 3) state.obStep++; else await leaveFill(true); render(); return; }
+  if (state.obFill) { if (state.fillIdx < state.fillSteps.length - 1) state.fillIdx++; else await leaveFill(true); render(); return; }
   if (!obCanContinue()) {
     if (state.obStep === 1) { const pr = obStep1Problem(); setErr('ob-err', pr === AGE_BLOCKED ? '' : pr); if (state.birth && !isOldEnough()) track('reg_blocked', { reason: 'age' }); }
     if (state.obStep === 3) setErr('ob-err', !state.cityId ? 'Vyber svoje mesto zo zoznamu.' : TERMS_MISSING);
@@ -1796,9 +1800,10 @@ async function finishStudentReg() {                        // the account exists
   await enterApp({ tab: 0 });
 }
 // Progress dots (between „Späť“ and the "next" button; the current step is the long one) and the "next" button of a registration
-// (prefix 'ob' = student, 'fob' = company). total: 3 steps; 2 = filling in the profile (v2); 1 = one screen, no dots (v2).
+// (prefix 'ob' = student, 'fob' = company). total: 3 steps; 1 = one screen, no dots (v2); „Doplniť profil“: as many as it has.
 function renderStepChrome(prefix, step, lastLabel, canContinue, total = 3) {
   const dots = document.getElementById(prefix + '-dots');
+  while (dots.children.length < total) dots.appendChild(document.createElement('span'));
   dots.style.visibility = total > 1 ? '' : 'hidden';       // hidden, not removed: „Späť“ and the button keep their places
   dots.setAttribute('aria-label', `Krok ${step} z ${total}`);
   [...dots.children].forEach((d, i) => { d.hidden = i >= total; d.classList.toggle('on', step >= i + 1); d.classList.toggle('cur', step === i + 1); });
@@ -1807,10 +1812,14 @@ function renderStepChrome(prefix, step, lastLabel, canContinue, total = 3) {
   next.style.opacity = canContinue ? 1 : .45;
 }
 function renderOb() {
-  if (state.obFill) renderStepChrome('ob', state.obStep - 1, 'Uložiť', true, 2);   // v2: steps 2–3 of the old registration
-  else if (REG_V2) renderStepChrome('ob', 1, state.pendingJob ? 'Odoslať záujem' : 'Vytvoriť účet', obCanContinue(), 1);
-  else renderStepChrome('ob', state.obStep, 'Hotovo — pozri ponuky', obCanContinue());
   document.getElementById('ob-alt').hidden = !REG_V2 || state.obFill || state.oauth;   // Google + „Už mám účet“ under the v2 registration
+  if (state.obFill) {                                      // v2 „Doplniť profil“: one small step per screen
+    renderStepChrome('ob', state.fillIdx + 1, 'Uložiť', true, state.fillSteps.length);
+    FILL_STEP[state.fillSteps[state.fillIdx]]();
+    return;
+  }
+  if (REG_V2) renderStepChrome('ob', 1, state.pendingJob ? 'Odoslať záujem' : 'Vytvoriť účet', obCanContinue(), 1);
+  else renderStepChrome('ob', state.obStep, 'Hotovo — pozri ponuky', obCanContinue());
   if (state.obStep === 1) (REG_V2 ? obJoin : obStep1)();
   if (state.obStep === 2) obStep2();
   if (state.obStep === 3) obStep3();
@@ -1886,11 +1895,25 @@ function obStep3() {                                       // l.166–188
     <p class="desc step-note center">Koľko hodín týždenne môžeš pracovať?</p>
     <div class="hours-label" id="hours-label">${HOURS[state.obHours]}</div>
     ${availabilityEditor()}
-    ${state.obFill ? '' : `<div style="margin-top:22px">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`}`;   // filling in later: agreed at registration
+    <div style="margin-top:22px">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`;
   obEl.onclick = e => { const el = e.target.closest('button'); if (el && el.id !== 'terms') editorClick(el); };
-  if (!state.obFill) bindTerms(obEl, 'obTerms');
+  bindTerms(obEl, 'obTerms');
   bindEditors();
 }
+// v2 „Doplniť profil“: the old step 3 split up — one question per screen (FILL_PARTS says which steps a run has).
+// Skills stay the old step 2 as they are. The profile's „Upraviť“ keeps everything on one page (availabilityEditor).
+function fillStep(question, body) {
+  obEl.innerHTML = `<p class="desc step-note center fill-q">${question}</p>${body}`;
+  obEl.onclick = e => { const el = e.target.closest('button'); if (el) editorClick(el); };
+  bindEditors();
+}
+const FILL_STEP = {
+  skills: obStep2,
+  hours: () => fillStep('Koľko hodín týždenne môžeš pracovať?', `<div class="hours-label" id="hours-label">${HOURS[state.obHours]}</div>${hoursEditor()}`),
+  days:  () => fillStep('Ktoré dni môžeš pracovať?', daysEditor()),
+  times: () => fillStep('Kedy počas dňa?', timesEditor()),
+  place: () => fillStep('Kde môžeš pracovať?', placeEditor(false)),
+};
 
 // ─── Shared editors: onboarding steps 2–3 and the profile in edit mode ───
 const SKILLS_SHOWN = 6;                                   // in the profile editor; registration shows 4 (less on one screen)
@@ -1924,23 +1947,27 @@ function skillsEditor() {                                  // l.126–162, logic
         <div class="hint">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami. Nepíš sem citlivé údaje (zdravie, náboženstvo, politické názory).</div></div></div>`;
 }
 // "Kde môžeš pracovať?" — city (fixed list with suggestions) + how far the student travels. Onboarding step 3 and the profile.
-function placeEditor() {
-  return `<div class="label">Kde môžeš pracovať?</div>
+function placeEditor(label = true) {                       // label = false: the question is already the step's title („Doplniť profil“)
+  return `${label ? '<div class="label">Kde môžeš pracovať?</div>' : ''}
     <div class="place-row"><input class="input" id="city" placeholder="Tvoje mesto" value="${esc(cityName(state.cityId))}" autocomplete="off">
       ${state.cityId ? '<span class="ok">✓</span>' : ''}</div>
     <div class="commute">${COMMUTES.map(([k, l]) => `<button type="button" class="${state.commute === k ? 'on' : ''}" data-commute="${k}">${l}</button>`).join('')}</div>
     <div class="hint" id="city-hint">${state.cityId ? '' : 'Vyber mesto zo zoznamu — podľa neho ťa firmy nájdu.'}</div>`;
 }
-function availabilityEditor() {                            // l.169–188, logic l.1542–1563
-  return `<input type="range" id="hours" min="0" max="3" step="1" value="${state.obHours}">
-    <div class="ticks"><span>5 h</span><span>10 h</span><span>20 h</span><span>Fulltime</span></div>
+function availabilityEditor() {                            // l.169–188, logic l.1542–1563 — all on one page (profile, v1 step 3)
+  return `${hoursEditor()}
     <div class="label">Ktoré dni?</div>
-    <div class="days">${DAYS.map(d => `<button type="button" class="${state.availDays.includes(d) ? 'on' : ''}" data-day="${d}">${d}</button>`).join('')}</div>
+    ${daysEditor()}
     <div class="label">Kedy počas dňa?</div>
-    <div class="times">${TIMES.map(([t, sub]) => `<button type="button" class="${state.availTimes.includes(t) ? 'on' : ''}" data-time="${t}"><span>${t}</span><small>${sub}</small></button>`).join('')}</div>
+    ${timesEditor()}
     <div class="summary">${availSummary()}</div>
     <div style="margin-top:22px">${placeEditor()}</div>`;
 }
+// The pieces, also used one per screen in „Doplniť profil“ (FILL_STEP)
+const hoursEditor = () => `<input type="range" id="hours" min="0" max="3" step="1" value="${state.obHours}">
+    <div class="ticks"><span>5 h</span><span>10 h</span><span>20 h</span><span>Fulltime</span></div>`;
+const daysEditor = () => `<div class="days">${DAYS.map(d => `<button type="button" class="${state.availDays.includes(d) ? 'on' : ''}" data-day="${d}">${d}</button>`).join('')}</div>`;
+const timesEditor = () => `<div class="times">${TIMES.map(([t, sub]) => `<button type="button" class="${state.availTimes.includes(t) ? 'on' : ''}" data-time="${t}"><span>${t}</span><small>${sub}</small></button>`).join('')}</div>`;
 function editorClick(el) {                                 // returns true when it handled the click
   if (el.dataset.add)    { addSkill(el.dataset.add); return true; }
   if (el.dataset.more)   { toggleInList(state.skillsOpen, el.dataset.more); render(); return true; }

@@ -26,7 +26,7 @@ flowchart TD
   CONF -->|nie| APP
   UP --> APP[Appka → Objavuj<br/>záujem sa odošle sám]
   APP --> T[Profil nedoplnený:<br/>svieti záložka Profil, pruh nad feedom,<br/>karta na konci feedu]
-  T -->|Doplniť| W["Doplniť profil — pôvodné kroky 2 a 3<br/>zručnosti → čas a miesto → Uložiť"]
+  T -->|Doplniť| W["Doplniť profil — malé kroky, jedna otázka na obrazovku<br/>zručnosti → hodiny → dni → časť dňa → miesto → Uložiť"]
 ```
 
 ## Obrazovka registrácie (v2)
@@ -53,8 +53,23 @@ Zmaže sa po odoslaní, pri „← Späť" z registrácie a pri odhlásení. Uve
 - na konci feedu karta **„Nemáš dokončený profil"** s tým, čo chýba,
 - v profile karta s percentami a riadkami Čo ti ide · Kedy máš čas · Kde môžeš pracovať.
 
-Percentá: účet = 25 %, každá doplnená časť ďalších 25 %. Tlačidlá **Doplniť** otvoria **pôvodné kroky 2 a 3 z v1** (zatiaľ bez zmeny — [[Nápady – doplnenie profilu|nápady, ako to spraviť inak]]):
-krok 1/2 zručnosti, krok 2/2 hodiny, dni, časy a mesto → **Uložiť**. Nič nie je povinné a ukladá sa aj pri „← Späť" — vyplnené sa nestratí.
+Percentá: účet = 25 %, každá doplnená časť ďalších 25 %.
+
+**Doplniť** ide po **malých krokoch — na každej obrazovke jedna otázka** (bodky dole ukazujú, koľko krokov ešte zostáva):
+
+| Časť | Kroky |
+|---|---|
+| Čo ti ide | zručnosti (pôvodný krok 2 registrácie, bez zmeny) |
+| Kedy máš čas | Koľko hodín týždenne? → Ktoré dni? → Kedy počas dňa? |
+| Kde môžeš pracovať | mesto + ako ďaleko dochádzaš |
+
+- Riadok v profile alebo čip na konci feedu otvorí **len svoju časť** (napr. „Kedy máš čas" = 3 kroky).
+- Tlačidlo **Doplniť / Doplniť profil** prejde **všetky časti, ktoré chýbajú**, za sebou.
+- Posledný krok má **Uložiť**; „← Späť" ide o krok späť, z prvého kroku späť do appky. Nič nie je povinné a ukladá sa aj pri odchode cez „← Späť" — vyplnené sa nestratí.
+- Prečo: pôvodný krok 3 mal hodiny, dni, časy, mesto aj dochádzanie na jednej obrazovke — priveľa naraz.
+- V profile cez **Upraviť** je naďalej všetko na jednej stránke (tam človek mení jednu vec, nie vypĺňa od nuly).
+
+Iné spôsoby, ako sa na to pýtať: [[Nápady – doplnenie profilu]].
 
 Prečo „veľa ponúk" záleží na profile: feed radí ponuky podľa mesta a firma vidí študenta v [[Návrhy kandidátov (párovanie)|návrhoch]] až od skóre 30 —
 prázdny profil ho skoro nikdy nedosiahne.

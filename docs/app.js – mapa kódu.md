@@ -38,8 +38,8 @@ flowchart LR
 | — študent | Objavuj, Správy, Profil; upozornenia na nedoplnený profil | `feed`, `jobCard`, `todoNudge`, `feedEnd`, `zhody`, `profile`, `todoCard` → [[Obrazovky hosťa a študenta]] |
 | — firma | Ponuka, Správy, Inzeráty, Nový, Profil | `brig`, `suggCard`, `candCard`, `fspravy`, `ponuky`, `nova`, `fprofil` → [[Obrazovky firmy]] |
 | — spoločné | chat, dock (svietiaca záložka Profil), prekrývacie vrstvy (detail, gate, toast, banner, nahlásenie, mazanie) | `chatUI`, `updateDock`, `todoTab`, `layers`, `bindAppInputs` |
-| OB | registrácia študenta: v2 jedna obrazovka; tá istá obrazovka slúži na „Doplniť profil" (kroky 2–3, `obFill`) | `renderOb`, `obJoin` (v2), `obStep1–3`, `bindStep1`, `leaveFill`, `registerStudent` → [[Registrácia študenta]] |
-| Shared editors | editor zručností, miesta a dostupnosti (onboarding aj profil) | `skillsEditor`, `placeEditor`, `availabilityEditor` |
+| OB | registrácia študenta: v2 jedna obrazovka; tá istá obrazovka slúži na „Doplniť profil" po malých krokoch (`obFill`, časti → kroky v `FILL_PARTS`) | `renderOb`, `obJoin` (v2), `obStep1–3`, `bindStep1`, `fillStep`/`FILL_STEP`, `leaveFill`, `registerStudent` → [[Registrácia študenta]] |
+| Shared editors | editor zručností, miesta a dostupnosti (onboarding aj profil); dostupnosť aj po kúskoch pre „Doplniť profil" | `skillsEditor`, `placeEditor`, `availabilityEditor` = `hoursEditor` + `daysEditor` + `timesEditor` + miesto |
 | FOB | registrácia firmy, overenie IČO | `renderFob`, `fobStep1–3`, `rpoLookup`, `verifyCompany`, `registerCompany` → [[Registrácia firmy a overenie IČO]] |
 | Helpers | drobnosti (`esc` = ochrana pred vložením HTML) | `bindInput`, `esc` |
 | Login background | animované bodky na prihlásení | `draw`, `loop` |

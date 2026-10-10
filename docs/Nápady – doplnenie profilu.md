@@ -5,8 +5,8 @@ tags: [robiq, nápady, študent]
 
 ← [[00 Mapa systému]] · súvisí: [[Registrácia študenta]], [[Návrhy kandidátov (párovanie)]]
 
-Stav: **návrhy na rozhodnutie** (10. 10. 2026). Dnes „Doplniť profil" otvára pôvodné kroky 2 a 3 registrácie —
-stenu ~50 zručností a kalendár. Funguje to, ale je to formulár, nie zážitok. Tu sú spôsoby, ako sa dopýtať na
+Stav: **návrhy na rozhodnutie** (10. 10. 2026). Dnes „Doplniť profil" ide po malých krokoch (zručnosti, hodiny, dni, časť dňa, miesto) —
+zručnosti sú stále stena ~50 čipov. Funguje to, ale je to formulár, nie zážitok. Tu sú spôsoby, ako sa dopýtať na
 **čo študentovi ide, kedy má čas, kde chce pracovať a aký je** inak. Každý nápad hovorí, čo do profilu naplní.
 
 ## 1. Jedna otázka po každom záujme ⭐
