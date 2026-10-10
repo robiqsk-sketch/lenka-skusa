@@ -22,7 +22,7 @@ Stav k: 23. 9. 2026.
 | **Supabase — Auth** | e-mail, heslo (uložené len ako hash, aplikácia ho nikdy nevidí), časy prihlásení, IP adresa pri prihlásení (systémový log Supabase) | Supabase | Frankfurt |
 | **Supabase — Storage** | logá firiem (bucket `logos`, **verejné**), fotky „deň v práci" pri inzerátoch (bucket `posting-photos`, **verejné**), profilové fotky brigádnikov (bucket `avatars`, **neverejné**) | Supabase | Frankfurt |
 | **Supabase — Realtime** | prenos nových správ a zhôd v reálnom čase (nič sa navyše neukladá) | Supabase | Frankfurt |
-| **Prehliadač používateľa — localStorage** | prihlasovací token (session) Supabase, aby človek zostal prihlásený; voľba svetlý/tmavý režim; či už videl upozornenie v chate; číslo inzerátu, o ktorý hosť klikol „Mám záujem" pred registráciou (`robiq_pending_job`, zmaže sa po odoslaní záujmu, najviac na deň) | — | zariadenie používateľa |
+| **Prehliadač používateľa — localStorage** | prihlasovací token (session) Supabase, aby človek zostal prihlásený; voľba svetlý/tmavý režim; či už videl upozornenie v chate; číslo inzerátu, o ktorý hosť klikol „Mám záujem" pred registráciou (`robiq_pending_job`, zmaže sa po odoslaní záujmu, najviac na deň); či ešte ukázať „Doplniť profil / Preskočiť" po registrácii (`robiq_offer`) a odmietnuté návrhy z lajknutých inzerátov (`robiq_learn_no`) | — | zariadenie používateľa |
 | **Register právnických osôb (api.statistics.sk)** | pri registrácii firmy sa odošle **IČO** na overenie; vráti oficiálny názov a obec | Štatistický úrad SR | SR |
 | **Google (OAuth)** | ak sa používateľ prihlási cez Google: Google overí identitu a Supabase dostane e-mail a meno | Google | — |
 | **jsDelivr CDN** | načítanie knižnice supabase-js (pri načítaní stránky sa odošle IP adresa a hlavičky prehliadača) | jsDelivr (Prospect One) | globálna CDN |
@@ -59,6 +59,8 @@ Vzniká pri registrácii študenta aj firmy.
 | `avail_times` | onboarding / profil | nie | časy dňa (ráno, poobede, večer, nočné) |
 | `birth` | registrácia | **áno** | **dátum narodenia** — vek 16+ (kontroluje appka aj DB trigger), inzeráty „Len 18+" sa mladším neukazujú; po nastavení nemenný |
 | `city_id`, `commute` | „Doplniť profil" (v1: onboarding krok 3) / profil | nie (v1: áno) | mesto z pevného zoznamu `cities` + dochádzanie (city / 15km / 30km / any); vzdialenosť sa počíta v DB medzi mestami, bez GPS používateľa; mesto vidí firma v anonymných návrhoch a po záujme |
+| `fields` | registrácia (v3) / profil / potvrdený návrh z lajknutých inzerátov | **áno** (aspoň jedno) | akú prácu hľadá — odvetvia zo zoznamu firiem; vidí ho firma, o ktorej inzerát študent prejavil záujem |
+| `phone` | len test registrácie s AI (nie v `main`) | nie | telefón; firma ho nevidí |
 | `bio` | profil → Upraviť | nie | voľný text do 240 znakov — **môže obsahovať čokoľvek**, čo človek napíše (škola, záľuby…) |
 | `avatar_path` | onboarding krok 1 / profil | nie | **profilová fotka** v neverejnom bucket-e `avatars`; vidí ju študent a firma, o ktorej inzerát študent prejavil záujem (podpísané URL) |
 | `updated_at` | systém | | |
@@ -126,7 +128,7 @@ E-maily správcov, ktorí vidia štatistiku a nahlásenia.
 | Údaj | Hosť | Študent | Firma | Prevádzkovateľ |
 |---|---|---|---|---|
 | inzeráty (aktívne) + názov, popis a logo firmy | **áno** | áno | áno | áno |
-| profil študenta (meno, zručnosti, hodiny, mesto, fotka) | nie | len svoj | **len študentov, ktorí dali záujem o jej inzerát** | áno |
+| profil študenta (meno, akú prácu hľadá, zručnosti, hodiny, dni a časti dňa, mesto, fotka) | nie | len svoj | **len študentov, ktorí dali záujem o jej inzerát** | áno |
 | anonymný návrh študenta (zručnosti, hodiny, dostupnosť, mesto/vzdialenosť, skóre — **bez mena a fotky**) | nie | — | pre svoje inzeráty | áno |
 | dátum narodenia, bio študenta | nie | len svoj | **nie** (funkcia `candidate_profiles` ich nevracia) | áno |
 | IČO, kontaktná osoba firmy | nie | nie | len svoja | áno |
@@ -150,7 +152,7 @@ Zatiaľ **nie**: marketing, newsletter (ten rieši waitlist), profilovanie, auto
 - **Voľné texty** (`bio`, `skills` vlastné položky, `ai_note`, `messages.body`) môžu obsahovať citlivé údaje, ak ich tam človek sám napíše. Dokument by mal používateľov upozorniť, aby do nich nepísali citlivé informácie, a určiť, ako sa s nimi zaobchádza.
 - **Verejné údaje firmy:** názov, popis a logo firmy sú verejné bez prihlásenia. Meno kontaktnej osoby verejné nie je.
 - **Prístup firmy k profilu študenta** je podmienený tým, že študent sám klikol „Mám záujem" na jej inzerát — to je vhodný právny základ (plnenie zmluvy / oprávnený záujem) a dá sa to v dokumente jasne opísať.
-- **Bio a dátum narodenia firma nevidí** — technicky zaručené: firma číta kandidátov len cez funkciu `candidate_profiles` (meno, zručnosti, hodiny, fotka, mesto), priamo k tabuľke `students` prístup nemá.
+- **Bio a dátum narodenia firma nevidí** — technicky zaručené: firma číta kandidátov len cez funkciu `candidate_profiles` (meno, akú prácu hľadá, zručnosti, hodiny, dni a časti dňa, fotka, mesto — nie telefón), priamo k tabuľke `students` prístup nemá.
 - **Uchovávanie a zmazanie účtu:** schéma nemá automatické mazanie podľa času. Používateľ si **môže účet zmazať sám** (menu účtu → Zmazať účet, s potvrdením) — zmaže sa účet, profil, inzeráty, záujmy, zhody, správy, zablokovania, profilová fotka, logo aj fotky inzerátov firmy. Nahlásenia, ktoré človek podal, zostanú bez väzby na neho (`reporter_id` sa vynuluje). Nič sa neuchováva po zmazaní okrem systémových logov poskytovateľa.
 - **Export údajov (prenosnosť):** nie je v aplikácii; riešiť na žiadosť.
 - **Tretie strany mimo EÚ:** jsDelivr a cdnfonts sú globálne CDN — pri načítaní stránky im prehliadač odošle IP adresu. Ak to má byť čisto EÚ, dá sa knižnica aj písma hostovať priamo v aplikácii (jednoduchá úprava).

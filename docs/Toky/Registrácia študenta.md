@@ -3,10 +3,21 @@ tags: [robiq, tok, študent]
 ---
 # Registrácia študenta
 
-← [[00 Mapa systému]] · kód: `app.js` → `REG_V2`, `openJoin`, `obJoin`, `registerStudent`, `sendPending`, `profileTodo` · v1: `renderOb`, `obStep1–3`
+← [[00 Mapa systému]] · kód: `app.js` → `REG_V2`, `REG_V3`, `openJoin`, `obJoin`, `registerStudent`, `sendPending`, `profileTodo`, `offerScreen`, `learnProposals` · v1: `renderOb`, `obStep1–3`
 
-Od 10. 10. 2026 beží **verzia 2**: registrácia je jedna krátka obrazovka a všetko ostatné si študent **doplní neskôr v appke**.
-Pôvodná trojkroková registrácia (**verzia 1**) je v kóde **schovaná, nie zmazaná** — zapne sa späť prepínačom `REG_V2 = false` na začiatku `app.js`.
+Od 10. 10. 2026 beží **verzia 3** — verzia 2 (jedna krátka obrazovka, profil sa dopĺňa neskôr) a k tomu **odvetvie pri registrácii**, ponuka **„Doplniť profil / Preskočiť"** hneď po nej a **učenie z ponúk, ktoré sa študentovi páčia**.
+Staršie verzie sú v kóde **schované, nie zmazané** — prepínače na začiatku `app.js`: `REG_V3 = … false` vráti presne verziu 2, `REG_V2 = false` pôvodnú trojkrokovú verziu 1.
+
+## Verzia 3 — čo pribudlo
+Tok: páči sa ti ponuka → **Mám záujem** → registrácia (alebo prihlásenie) → **Doplniť profil / Preskočiť** → feed. Kto preskočí, tomu profil dopĺňa Robiq podľa toho, čo lajkuje.
+
+1. **Akú prácu hľadáš?** — na registračnej obrazovke čipy s odvetviami (rovnaký zoznam ako pri firmách: Gastro, Retail, Sklad a logistika…), aspoň jedno. Predvyplní sa odvetvie firmy z inzerátu, na ktorý hosť klikol — väčšinou stačí nič nemeniť. Ukladá sa do `students.fields`, upraviť sa dá v profile.
+2. **Hneď po registrácii** (`offerScreen`): „✓ Záujem o … je odoslaný", **Chceš ponuky na mieru?** → **Doplniť profil** (malé kroky nižšie) alebo **Preskočiť**. Pri registrácii s potvrdzovacím e-mailom sa ukáže pri prvom prihlásení (značka v prehliadači `robiq_offer`).
+3. **Robiq si všimol, čo ťa baví** (`learnProposals`) — po 3 záujmoch sa pozrie na lajknuté inzeráty a ak sa niečo opakuje aspoň 2×, navrhne to: **odvetvie** firmy, **víkendy / poobedia / večery** (podľa typu brigády) a **mesto** („Trnava a okolie"). Navrhuje len to, čo v profile chýba. Okno s čipmi: každý sa dá vypnúť, **Uložiť do profilu** uloží len zapnuté, vypnuté už na tomto zariadení neponúkne (`robiq_learn_no`). „Teraz nie" → znova najskôr po ďalších 3 záujmoch. Nie je to AI — obyčajné počítanie.
+4. **Firma vidí viac** — pri kandidátovi aj **„Hľadá: Gastro, Eventy"** a **dni / časti dňa** (aj keď ich študent len potvrdil z návrhu). „Profil ešte nedoplnený" ostáva len pri kandidátovi, o ktorom nevieme nič. Funkcia `candidate_profiles`, migrácia `student-fields`.
+
+> [!warning] Čo ostáva otvorené
+> Kto preskočí doplnenie a lajkne menej ako 3 ponuky, o tom firma vie len meno a odvetvie z registrácie. Ďalší krok môže byť jedna otázka pri záujme ([[Nápady – doplnenie profilu]], nápad 1).
 
 ## Prečo verzia 2
 Hosť, ktorý klikne „Mám záujem", chce dať najavo záujem o konkrétnu brigádu — nie vypĺňať 50 zručností a kalendár.

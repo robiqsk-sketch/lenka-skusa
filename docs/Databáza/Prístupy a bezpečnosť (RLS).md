@@ -22,7 +22,7 @@ používateľ smie čítať alebo meniť. Keďže appka nemá vlastný server, *
 | štatistika, nahlásenia | – | – | – | ✓ |
 
 ## Kľúčové pravidlá
-- **Firma nemá priamy prístup k tabuľke `students`.** Kandidátov číta len cez funkciu `candidate_profiles`, ktorá vráti meno, zručnosti, hodiny, fotku a mesto — a len tých, čo dali záujem o jej inzerát (`is_my_candidate`).
+- **Firma nemá priamy prístup k tabuľke `students`.** Kandidátov číta len cez funkciu `candidate_profiles`, ktorá vráti meno, zručnosti, hodiny, fotku, mesto, akú prácu hľadá a dni / časti dňa — a len tých, čo dali záujem o jej inzerát (`is_my_candidate`).
 - **Zhodu nevie vytvoriť klient**, len trigger v databáze → nikto si nemôže „vyrobiť" chat.
 - **Pozastavený inzerát** (`active = false` alebo `blocked`) vidí stále firma a študent, ktorý o neho dal záujem.
 - **Správu** môže poslať len účastník zhody a len pod vlastným menom.

@@ -32,14 +32,14 @@ flowchart LR
 | Data: reading | načítanie dát zo Supabase | `loadPostings`, `loadMe`, `loadStudent`, `loadCompany`, `loadSuggestions`, `loadCandidates`, `loadMatches` |
 | Realtime | počúvanie nových správ, zhôd, oslovení | `subscribe`, `onNewMatch` |
 | Actions | záujem/preskočiť, vstup do appky, všetky tlačidlá | `act`, `enterApp`, objekt `go`, `sendMsg`, `saveStudent`, `saveCompany`, `uploadLogo` |
-| — registrácia v2 | záujem hosťa čaká na účet (aj v prehliadači), čo študentovi chýba v profile | `pendingSave`/`pendingLoad`, `sendPending`, `openJoin`, `profileTodo`, `profilePct` → [[Registrácia študenta]] |
+| — registrácia v2 / v3 | záujem hosťa čaká na účet (aj v prehliadači), čo študentovi chýba v profile; v3: ponuka po registrácii, učenie z lajknutých inzerátov | `pendingSave`/`pendingLoad`, `sendPending`, `openJoin`, `profileTodo`, `profilePct`, `offerLater`/`maybeOffer`, `learnProposals`/`maybeLearn` → [[Registrácia študenta]] |
 | — spoločné kroky | veci, ktoré robí viac tlačidiel rovnako | `resetToGuest` (odhlásenie aj zmazanie účtu), `reloadCompany`, `removeFolder`, `checkMatch`, `reachOut`, `openReport`, `openPick` |
 | Render | vykreslenie obrazoviek | `render`, `renderApp`, `renderHeader` |
 | — študent | Objavuj, Správy, Profil; upozornenia na nedoplnený profil | `feed`, `jobCard`, `todoNudge`, `feedEnd`, `zhody`, `profile`, `todoCard` → [[Obrazovky hosťa a študenta]] |
 | — firma | Ponuka, Správy, Inzeráty, Nový, Profil | `brig`, `suggCard`, `candCard`, `fspravy`, `ponuky`, `nova`, `fprofil` → [[Obrazovky firmy]] |
 | — spoločné | chat, dock (svietiaca záložka Profil), prekrývacie vrstvy (detail, gate, toast, banner, nahlásenie, mazanie) | `chatUI`, `updateDock`, `todoTab`, `layers`, `bindAppInputs` |
-| OB | registrácia študenta: v2 jedna obrazovka; tá istá obrazovka slúži na „Doplniť profil" po malých krokoch (`obFill`, časti → kroky v `FILL_PARTS`) | `renderOb`, `obJoin` (v2), `obStep1–3`, `bindStep1`, `fillStep`/`FILL_STEP`, `leaveFill`, `registerStudent` → [[Registrácia študenta]] |
-| Shared editors | editor zručností, miesta a dostupnosti (onboarding aj profil); dostupnosť aj po kúskoch pre „Doplniť profil" | `skillsEditor`, `placeEditor`, `availabilityEditor` = `hoursEditor` + `daysEditor` + `timesEditor` + miesto |
+| OB | registrácia študenta: v2 jedna obrazovka; tá istá obrazovka slúži na „Doplniť profil" po malých krokoch (`obFill`, časti → kroky v `FILL_PARTS`) | `renderOb`, `obJoin` (v2), `offerScreen` (v3), `obStep1–3`, `bindStep1`, `fillStep`/`FILL_STEP`, `leaveFill`, `registerStudent` → [[Registrácia študenta]] |
+| Shared editors | editor zručností, miesta a dostupnosti (onboarding aj profil); dostupnosť aj po kúskoch pre „Doplniť profil" | `skillsEditor`, `placeEditor`, `availabilityEditor` = `hoursEditor` + `daysEditor` + `timesEditor` + miesto, `fieldsEditor` (v3, odvetvie) |
 | FOB | registrácia firmy, overenie IČO | `renderFob`, `fobStep1–3`, `rpoLookup`, `verifyCompany`, `registerCompany` → [[Registrácia firmy a overenie IČO]] |
 | Helpers | drobnosti (`esc` = ochrana pred vložením HTML) | `bindInput`, `esc` |
 | Login background | animované bodky na prihlásení | `draw`, `loop` |

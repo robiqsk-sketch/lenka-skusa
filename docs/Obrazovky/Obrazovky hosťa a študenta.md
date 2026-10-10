@@ -24,7 +24,8 @@ Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 - Prúžok **„Doplň si mesto"** je len vo verzii 1 — vo v2 je mesto súčasťou nedoplneného profilu.
 - Menu karty: nahlásiť inzerát, **zablokovať firmu** (jej ponuky zmiznú; uloží sa do `blocks`).
 - Poradie: pozri [[Návrhy kandidátov (párovanie)]] → časť Poradie ponúk.
-- Hosť pri „Mám záujem" → rovno **registrácia** s kartou toho inzerátu; záujem sa po nej odošle sám (v1: výzva na prihlásenie, *gate*). → [[Registrácia študenta]]
+- Hosť pri „Mám záujem" → rovno **registrácia** s kartou toho inzerátu; záujem sa po nej odošle sám (v1: výzva na prihlásenie, *gate*). Po registrácii obrazovka **Doplniť profil / Preskočiť** (v3). → [[Registrácia študenta]]
+- **Robiq si všimol, čo ťa baví** (v3) — po 3. záujme (a potom najskôr po ďalších 3) okno s návrhmi z lajknutých inzerátov: odvetvie, víkendy/poobedia/večery, mesto; každý čip sa dá vypnúť, uloží sa len zapnuté.
 
 ## Správy (`zhody`)
 Zoznam zhôd a chat. Pri novej zhode banner **„Máte zhodu!"**. → [[Záujem, zhoda a chat]]
@@ -32,7 +33,8 @@ Zoznam zhôd a chat. Pri novej zhode banner **„Máte zhodu!"**. → [[Záujem,
 ## Profil (`profile`)
 - Pri nedoplnenom profile (v2) je navrchu karta **„Profil máš na 25 %"**: čiara s percentami a riadky ✓ Meno a dátum narodenia · Čo ti ide · Kedy máš čas · Kde môžeš pracovať — chýbajúce majú „Doplniť" a otvoria len svoje kroky (jedna otázka na obrazovku → [[Registrácia študenta]]). Počas úprav sa skryje. Režim úprav (nižšie) má naďalej všetko na jednej stránke.
 - Hlavička: fotka, meno, hodiny (len keď študent vyplnil, kedy má čas — inak by tam bola predvolená hodnota z databázy), mesto; tlačidlo **Upraviť / ✓ Hotovo** (ukladá sa až pri Hotovo).
-- Režim úprav: fotka, dátum narodenia (len raz), bio (max. 240 znakov, s upozornením na citlivé údaje), zručnosti s úrovňou, dostupnosť a miesto.
+- **Akú prácu hľadám** (v3) — odvetvia z registrácie, v režime úprav čipy na zmenu.
+- Režim úprav: fotka, dátum narodenia (len raz), bio (max. 240 znakov, s upozornením na citlivé údaje), akú prácu hľadáš (v3), zručnosti s úrovňou, dostupnosť a miesto.
 - Štatistika: prezreté · záujmy · zhody.
 - **Moje záujmy** — na čo klikol „Mám záujem" a stav (Čaká na odpoveď / ✓ Zhoda).
 - **Skryté firmy** — zablokované firmy s tlačidlom „Zobraziť" (ukáže sa, len ak nejaké sú).

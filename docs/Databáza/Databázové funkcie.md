@@ -24,7 +24,7 @@ tags: [robiq, databáza]
 | `count_view` | ktokoľvek | +1 zobrazenie inzerátu pri otvorení detailu (raz za načítanie stránky) |
 | `rpo_lookup` | ktokoľvek | nájde firmu podľa IČO v registri → [[Registrácia firmy a overenie IČO]] |
 | `verify_my_company` | firma | overí vlastnú firmu, nastaví `verified` + `legal_name` |
-| `candidate_profiles` | firma | profily kandidátov (bez dátumu narodenia a bia) |
+| `candidate_profiles` | firma | profily kandidátov: meno, zručnosti, hodiny, fotka, mesto, akú prácu hľadá, dni a časti dňa (bez dátumu narodenia, bia a telefónu) |
 | `suggest_candidates` | firma | anonymné návrhy kandidátov so skóre → [[Návrhy kandidátov (párovanie)]] |
 | `delete_my_account` | prihlásený | zmaže vlastný účet → [[Zmazanie účtu]] |
 | `is_admin` | prihlásený | je admin? (ukáže položku Štatistika v menu) |
