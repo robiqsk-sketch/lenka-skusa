@@ -751,6 +751,8 @@ html.crashed .screen:not(#scr-crash) { display: none !important; }
 .choice .txt small { font-size: var(--text-sm); color: var(--ink2); }
 
 /* ═══════════ AIOB — TEST: registration as a chat with AI ═══════════ */
+.ai-demo { margin-bottom: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(var(--tint),.08); border: 1px solid rgba(var(--tint),.25); color: var(--ink2); font-size: var(--text-sm); line-height: 1.45; }
+.ai-demo[hidden] { display: none; }
 .ai-chat { border: 1px solid var(--line2); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; background: var(--card); }
 .ai-msgs { height: min(52vh, 440px); overflow: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
 .ai-msgs .msg { max-width: 85%; white-space: pre-wrap; }

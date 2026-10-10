@@ -38,7 +38,7 @@ flowchart LR
 | — firma | Ponuka, Správy, Inzeráty, Nový, Profil | `brig`, `suggCard`, `candCard`, `fspravy`, `ponuky`, `nova`, `fprofil` → [[Obrazovky firmy]] |
 | — spoločné | chat, dock, prekrývacie vrstvy (detail, gate, toast, banner, nahlásenie, mazanie) | `chatUI`, `updateDock`, `layers`, `bindAppInputs` |
 | OB | registrácia študenta | `renderOb`, `obStep1–3`, `registerStudent` → [[Registrácia študenta]] |
-| AIOB | **test:** registrácia študenta rozhovorom s AI | `renderAiob`, `aiSend`, `applyAiProfile`, `aiSummary` → [[Registrácia rozhovorom s AI (test)]] |
+| AIOB | **test:** registrácia študenta rozhovorom s AI | `renderAiob`, `aiSend`, `applyAiProfile`, `aiSummary`, `demoReply` (bot bez AI) → [[Registrácia rozhovorom s AI (test)]] |
 | Shared editors | editor zručností, miesta a dostupnosti (onboarding aj profil) | `skillsEditor`, `placeEditor`, `availabilityEditor` |
 | FOB | registrácia firmy, overenie IČO | `renderFob`, `fobStep1–3`, `rpoLookup`, `verifyCompany`, `registerCompany` → [[Registrácia firmy a overenie IČO]] |
 | Helpers | drobnosti (`esc` = ochrana pred vložením HTML) | `bindInput`, `esc` |

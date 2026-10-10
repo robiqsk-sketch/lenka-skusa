@@ -19,7 +19,8 @@ const initialState = () => ({
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   skillsOpen: [],                                          // skill groups showing all their chips (registration step 2)
   profEdit: false, birth: '', bio: '', obTerms: false,
-  aiMsgs: [], aiBusy: false, aiDone: false, aiDraft: '', aiCity: '', aiFocus: false,   // TEST aiob: chat [{ role, content }], waiting for the reply, bot says the profile is complete, typed text, city as the bot heard it
+  aiMsgs: [], aiBusy: false, aiDone: false, aiDraft: '', aiCity: '', aiFocus: false, aiTime: false,   // TEST aiob: chat [{ role, content }], waiting for the reply, bot says the profile is complete, typed text, city as the bot heard it, hours/days known
+  aiReal: false, aiDemo: false, aiDemoStep: 0,               // the AI answered at least once · scripted bot without AI (function not deployed / no key yet) · its current question
   cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
   matches: [], activeChat: 0, draft: '', myInterests: [],
@@ -1866,7 +1867,7 @@ function applyAiProfile(p) {                               // only what the bot 
   if (Array.isArray(p.skills) && p.skills.length) state.obSkills = p.skills
     .filter(x => x && typeof x.n === 'string' && x.n.trim()).slice(0, 20)
     .map(x => ({ n: x.n.trim().slice(0, 30), lvl: [1, 2, 3].includes(x.lvl) ? x.lvl : 2, speak: x.speak !== false }));
-  if ([0, 1, 2, 3].includes(p.hours)) state.obHours = p.hours;
+  if ([0, 1, 2, 3].includes(p.hours)) { state.obHours = p.hours; state.aiTime = true; }
   if (Array.isArray(p.avail_days) && p.avail_days.length) state.availDays = DAYS.filter(d => p.avail_days.includes(d));
   if (Array.isArray(p.avail_times) && p.avail_times.length) state.availTimes = TIMES.map(t => t[0]).filter(t => p.avail_times.includes(t));
   if (typeof p.city === 'string' && p.city.trim()) { state.aiCity = p.city.trim(); const c = cityByName(p.city); if (c) state.cityId = c.id; }
@@ -1879,27 +1880,147 @@ async function aiSend() {
   if (!state.aiMsgs.length) state.aiMsgs.push({ role: 'assistant', content: AI_HELLO });
   state.aiMsgs.push({ role: 'user', content: txt.slice(0, 1000) });
   state.aiDraft = ''; state.aiBusy = true; setErr('aiob-err', ''); render();
-  const { data, error } = await sb.functions.invoke('ai-onboarding', { body: { messages: state.aiMsgs.slice(-40) } });
-  state.aiBusy = false;
-  if (error || !data || typeof data.reply !== 'string') {
+  if (!state.aiDemo) {
+    const { data, error } = await sb.functions.invoke('ai-onboarding', { body: { messages: state.aiMsgs.slice(-40) } });
+    state.aiBusy = false;
+    if (!error && data && typeof data.reply === 'string') {
+      state.aiReal = true;
+      state.aiMsgs.push({ role: 'assistant', content: data.reply.slice(0, 2000) });
+      applyAiProfile(data.profile);
+      if (data.done && !state.aiDone) { state.aiDone = true; track('reg_ai_done'); }
+      state.aiFocus = true; render();
+      return;
+    }
     const status = error?.context?.status;
-    state.aiMsgs.pop(); state.aiDraft = txt;               // the message was not answered — give it back to send again
-    state.aiFocus = true; render();
-    setErr('aiob-err', status === 429 ? 'Veľa správ naraz — skús to o chvíľu.' : 'AI teraz neodpovedá. Skús to znova, alebo vyplň formulár.');
-    track('reg_ai_error', { status: status || 0 });
-    return;
-  }
-  state.aiMsgs.push({ role: 'assistant', content: data.reply.slice(0, 2000) });
-  applyAiProfile(data.profile);
-  if (data.done && !state.aiDone) { state.aiDone = true; track('reg_ai_done'); }
+    if (state.aiReal || status === 429) {                   // the AI works, it just did not answer now
+      state.aiMsgs.pop(); state.aiDraft = txt;             // the message was not answered — give it back to send again
+      state.aiFocus = true; render();
+      setErr('aiob-err', status === 429 ? 'Veľa správ naraz — skús to o chvíľu.' : 'AI teraz neodpovedá. Skús to znova, alebo vyplň formulár.');
+      track('reg_ai_error', { status: status || 0 });
+      return;
+    }
+    state.aiDemo = true; track('reg_ai_demo', { status: status || 0 });   // AI not available at all yet → the scripted bot takes this conversation
+  } else await new Promise(r => setTimeout(r, 450));        // a short "typing" pause, so it reads like a chat
+  state.aiBusy = false;
+  state.aiMsgs.push({ role: 'assistant', content: demoReply(txt) });
+  if (state.aiDone && state.aiDemoStep === 6) { state.aiDemoStep = 7; track('reg_ai_done', { demo: true }); }
   state.aiFocus = true; render();
+}
+
+// ─── Scripted bot without AI (demo) ───
+// Used while the `ai-onboarding` function is not deployed or has no key: the same questions in a fixed order, and the answers
+// are searched for key words (skills, numbers, days, a city from the list). Enough to try the flow; it does not understand corrections.
+const DEMO_SKILLS = [
+  ['barist', 'Barista'], ['kaviar', 'Barista'], ['kavu', 'Barista'], ['casn', 'Čašník / Servírka'], ['servir', 'Čašník / Servírka'], ['obsluh', 'Čašník / Servírka'],
+  ['restaurac', 'Čašník / Servírka'], ['predava', 'Predaj'], ['predaj', 'Predaj'], ['obchod', 'Predaj'], ['poklad', 'Pokladňa'], ['sklad', 'Sklad'],
+  ['event', 'Eventy'], ['festival', 'Eventy'], ['hostes', 'Hostesing'], ['promo', 'Promo akcie'], ['letak', 'Promo akcie'], ['doucov', 'Doučovanie'],
+  ['kurier', 'Kuriér'], ['rozvoz', 'Rozvoz'], ['rozvaz', 'Rozvoz'], ['recepc', 'Recepcia'], ['kuchyn', 'Kuchyňa'], ['kuchar', 'Kuchyňa'], ['varim', 'Kuchyňa'],
+  ['uprat', 'Upratovanie'], ['admin', 'Administratíva'], ['react', 'React'], ['web', 'Tvorba webu'], ['grafik', 'Grafika'], ['figma', 'Figma'], ['canva', 'Canva'],
+  ['photoshop', 'Photoshop'], ['video', 'Video strih'], ['strih', 'Video strih'], ['copywrit', 'Copywriting'], ['socialn', 'Sociálne siete'], ['instagram', 'Sociálne siete'],
+  ['tiktok', 'Sociálne siete'], ['excel', 'Excel'], ['analyz', 'Dátová analýza'], ['chatgpt', 'AI nástroje'], ['angl', 'Angličtina'], ['nemc', 'Nemčina'], ['nemeck', 'Nemčina'],
+  ['spaniel', 'Španielčina'], ['francuz', 'Francúzština'], ['talian', 'Taliančina'], ['rusk', 'Ruština'], ['rustin', 'Ruština'], ['ukrajin', 'Ukrajinčina'],
+  ['madar', 'Maďarčina'], ['polsk', 'Poľština'], ['polstin', 'Poľština'], ['cinsk', 'Čínština'], ['cinstin', 'Čínština'], ['vodic', 'Vodičský preukaz B'],
+  ['komunik', 'Komunikatívnosť'], ['spolahl', 'Spoľahlivosť'], ['v time', 'Práca v tíme'], ['timov', 'Práca v tíme'], ['kondic', 'Fyzická kondícia'],
+  ['flexib', 'Flexibilita'], ['pod tlakom', 'Práca pod tlakom'], ['organiz', 'Organizovanosť'], ['rychlo sa uc', 'Rýchle učenie'],
+];
+const DEMO_MONTHS = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+const DEMO_DAYS = [['pondel', 'Po'], ['utor', 'Ut'], ['stred', 'St'], ['stvrt', 'Št'], ['piat', 'Pi'], ['sobot', 'So'], ['nedel', 'Ne']];
+const demoDay = w => ({ po: 'Po', ut: 'Ut', st: 'St', pi: 'Pi', so: 'So', ne: 'Ne' })[w] || (DEMO_DAYS.find(([k]) => w.startsWith(k)) || [])[1] || null;
+function demoDate(txt) {                                   // "14. 5. 2006", "14/05/2006", "2006-05-14", "14. mája 2006" → ISO, or null
+  const f = fold(txt);
+  let d, m, y, r;
+  if ((r = f.match(/(\d{4})-(\d{1,2})-(\d{1,2})/))) [, y, m, d] = r;
+  else if ((r = f.match(/(\d{1,2})\s*[.\/-]\s*(\d{1,2})\s*[.\/-]?\s*(\d{4})/))) [, d, m, y] = r;
+  else if ((r = f.match(/(\d{1,2})\.?\s*([a-z]+)\s*(\d{4})/))) { d = r[1]; y = r[3]; m = DEMO_MONTHS.findIndex(x => r[2].startsWith(x)) + 1; if (!m) return null; }
+  else return null;
+  const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`, dt = new Date(iso + 'T12:00:00');
+  return !isNaN(dt) && dt.getDate() === +d && dt.getMonth() + 1 === +m && +y > 1900 ? iso : null;
+}
+function demoReply(txt) {
+  const f = ' ' + fold(txt).replace(/[^a-z0-9]+/g, ' ').trim() + ' ';   // " robila som v kaviarni po anglicky "
+  const has = (...words) => words.some(w => f.includes(w));
+  const step = state.aiDemoStep;
+  if (step === 0) {                                        // name (the hello asks for it)
+    const name = txt.replace(/^(ahoj|čau|cau|dobrý deň|dobry den|zdravím|zdravim)[\s,!.]*/i, '')
+      .replace(/^(ja\s+)?(sa\s+)?(volám sa|volam sa|moje meno je|meno je|volám|volam|som)\s+/i, '').replace(/[.!?,]+$/, '').trim()
+      .split(/\s+/).slice(0, 4).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    if (!/\p{L}/u.test(name)) return 'Ako sa voláš? Napíš meno a priezvisko.';
+    state.obName = name.slice(0, 80); state.aiDemoStep = 1;
+    return `Teší ma, ${name.split(' ')[0]}! Aký je tvoj dátum narodenia? Napíš celý, napr. 14. 5. 2006.`;
+  }
+  if (step === 1) {                                        // birth date, 16+
+    const iso = demoDate(txt);
+    if (!iso) return 'Tomu dátumu nerozumiem — napíš ho, prosím, ako 14. 5. 2006.';
+    state.birth = iso;
+    if (!isOldEnough()) return AGE_BLOCKED;
+    state.aiDemoStep = 2;
+    return 'Super. Čo ti ide, alebo akú prácu by ťa bavilo robiť? Napíš aj, čo už máš za sebou — napr. kaviareň, sklad, angličtina.';
+  }
+  if (step === 2) {                                        // skills (+ one level for the whole answer)
+    const lvl = has('plynul', 'vyborn', 'perfekt', ' top ', 'skvel', 'roky', 'dlho') ? 3 : has('zaklad', 'trochu', 'zaciat', 'slab') ? 1 : 2;
+    let found = [...new Set(DEMO_SKILLS.filter(([k]) => f.includes(k)).map(([, n]) => n))];
+    if (!found.length && txt.length <= 30) found = [txt.charAt(0).toUpperCase() + txt.slice(1)];   // short answer outside the list → own skill
+    if (!found.length) return 'Nenašiel som to v zozname — skús to napísať kratšie, napr. „barista, sklad, angličtina“.';
+    for (const n of found) if (!state.obSkills.some(x => x.n === n)) state.obSkills.push({ n, lvl, speak: true });
+    state.aiDemoStep = 3;
+    return `Zapísal som: ${found.join(', ')}. Koľko hodín týždenne môžeš pracovať? Asi 5, 10, 20, alebo fulltime cez leto?`;
+  }
+  if (step === 3) {                                        // hours
+    const n = +(f.match(/\d+/) || [])[0];
+    if (has('full', 'leto', 'cely den')) state.obHours = 3;
+    else if (n) state.obHours = n <= 7 ? 0 : n <= 14 ? 1 : n < 30 ? 2 : 3;
+    else return 'Napíš to číslom, napr. 10 — alebo „fulltime cez leto“.';
+    state.aiTime = true; state.aiDemoStep = 4;
+    return 'Ktoré dni a kedy počas dňa? Napr. „víkendy poobede“ alebo „po–pi večer“.';
+  }
+  if (step === 4) {                                        // days + times of day
+    const days = new Set(), times = new Set();
+    if (has('vikend')) { days.add('So'); days.add('Ne'); }
+    if (has('cez tyzden', 'pracovn')) DAYS.slice(0, 5).forEach(d => days.add(d));
+    if (has('kazdy den', 'kedykolvek', 'hocikedy', 'cely tyzden', 'vsetky dni')) DAYS.forEach(d => days.add(d));
+    for (const r of fold(txt).matchAll(/([a-z]+)\s*(?:-|–|az)\s*([a-z]+)/g)) {   // "po-pi", "pondelok až piatok"
+      const a = DAYS.indexOf(demoDay(r[1])), b = DAYS.indexOf(demoDay(r[2]));
+      if (a >= 0 && b >= a) DAYS.slice(a, b + 1).forEach(d => days.add(d));
+    }
+    f.replace(/ po skol\w*/g, ' ').trim().split(' ').forEach(w => { const d = demoDay(w); if (d) days.add(d); });   // "po škole" is not Monday
+    if (has('ran', 'dopoludn', 'doobed')) times.add('Ráno');
+    if (has('poobed', 'popoludn')) times.add('Poobede');
+    if (has('vecer')) times.add('Večer');
+    if (has('noc')) times.add('Nočné zmeny');
+    if (has('hocikedy', 'kedykolvek', 'cely den')) ['Ráno', 'Poobede', 'Večer'].forEach(t => times.add(t));
+    if (!days.size && !times.size) return 'Nerozumel som — napíš dni a čas, napr. „víkendy poobede“ alebo „každý deň večer“.';
+    if (days.size) state.availDays = DAYS.filter(d => days.has(d));
+    if (times.size) state.availTimes = TIMES.map(t => t[0]).filter(t => times.has(t));
+    state.aiDemoStep = 5;
+    return 'Dobre. V akom meste bývaš a ako ďaleko môžeš dochádzať? Napr. „Žilina, do 15 km“.';
+  }
+  if (step === 5) {                                        // city from the list + commute
+    const chunks = txt.split(/,|;| a /).map(x => x.replace(/^\s*(bývam\s+)?(v|vo|z|zo)\s+/i, '').trim()).filter(Boolean);
+    let c = chunks.map(cityByName).find(Boolean);
+    if (!c) c = [...CITIES].filter(x => x.name.length >= 4).sort((a, b) => b.name.length - a.name.length)
+      .find(x => f.includes(' ' + fold(x.name).replace(/[^a-z0-9]+/g, ' ') + ' '));
+    if (c) state.cityId = c.id; else state.aiCity = chunks[0] || '';
+    if (has('len ', 'iba ') && has('mest')) state.commute = 'city';
+    else if (/ 15( |km)/.test(f)) state.commute = '15km';
+    else if (/ 30( |km)/.test(f)) state.commute = '30km';
+    else if (has('cele slovensko', 'kdekolvek', 'hocikde', 'vsade')) state.commute = 'any';
+    state.aiDemoStep = 6;
+    return (c ? '' : 'To mesto som v zozname nenašiel — vyberieš ho dole. ')
+      + 'Ešte pár slov o sebe — čo by mala firma o tebe vedieť? Ak nechceš, napíš „nie“.';
+  }
+  if (step === 6) {                                        // short "about me", optional
+    if (!/^(nie|nechcem|preskoč|preskoc|nič|nic|-)\b/i.test(txt.trim())) state.bio = txt.trim().slice(0, 300);
+    state.aiDone = true;
+    return 'Hotovo! Tvoj profil je dole — skontroluj ho a dokonči registráciu.';
+  }
+  return 'Profil máš hotový dole. Ak chceš niečo zmeniť, klikni na „Radšej vyplním formulár“ — všetko tam už bude vyplnené.';
 }
 function aiSummary() {                                     // what the bot has understood so far — the student sees it and can correct it in the chat
   const rows = [
     ['Meno', esc(state.obName.trim())],
     ['Narodenie', state.birth ? fmtDate(state.birth) : ''],
     ['Vie', state.obSkills.map(x => esc(x.n) + ` <span style="color:var(--muted)">(${(LANGS.includes(x.n) ? LANG_LVLS : LVLS)[x.lvl - 1]})</span>`).join(', ')],
-    ['Čas', state.aiMsgs.length > 4 ? `${HOURS[state.obHours]} · ${esc(availSummary())}` : ''],
+    ['Čas', state.aiTime ? `${HOURS[state.obHours]} · ${esc(availSummary())}` : ''],
     ['Mesto', state.cityId ? `${esc(cityName(state.cityId))} · ${commuteLabel(state.commute).toLowerCase()}` : esc(state.aiCity)],
   ].filter(r => r[1]);
   if (!rows.length) return '';
@@ -1913,6 +2034,7 @@ function renderAiob() {
   box.innerHTML = msgs.map(m => `<div class="msg ${m.role === 'user' ? 'me' : 'them'}">${esc(m.content)}</div>`).join('')
     + (state.aiBusy ? '<div class="msg them typing">…</div>' : '');
   box.scrollTop = box.scrollHeight;
+  document.getElementById('ai-demo').hidden = !state.aiDemo;
   const draft = document.getElementById('ai-draft');
   if (draft.value !== state.aiDraft) draft.value = state.aiDraft;
   document.getElementById('ai-send').disabled = state.aiBusy;
