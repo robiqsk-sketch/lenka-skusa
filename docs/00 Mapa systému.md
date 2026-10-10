@@ -36,7 +36,7 @@ flowchart LR
 - [[Migrácie – história]] — čo sa kedy menilo
 
 ### Toky (ako veci prebiehajú)
-- [[Registrácia študenta]]
+- [[Registrácia študenta]] — verzia 2: „Mám záujem" → jedna obrazovka, profil sa dopĺňa neskôr
 - [[Registrácia firmy a overenie IČO]]
 - [[Prihlásenie a obnova hesla]]
 - [[Záujem, zhoda a chat]] — jadro celej appky
@@ -55,4 +55,5 @@ flowchart LR
 ### Ostatné
 - [[Slovník]] — pojmy (záujem, zhoda, oslovenie…)
 - [[Otvorené otázky a nezrovnalosti]]
+- [[Nápady – doplnenie profilu]] — ako sa pýtať na zručnosti, čas a povahu inak než formulárom (na rozhodnutie)
 - Existujúce dokumenty: [[PLAN-parovanie-v2]], `supabase/UDAJE-INVENTAR.md`, `design_handoff_robiq/DESIGN.md`

@@ -7,7 +7,8 @@ tags: [robiq, tok]
 
 ## Spôsoby prihlásenia
 - **E-mail + heslo** (Supabase Auth).
-- **Google** — Supabase presmeruje na Google a späť; `loadMe` potom zistí, či už existuje profil. Ak nie, pokračuje sa registráciou (výber typu účtu).
+- **Google** — Supabase presmeruje na Google a späť; `loadMe` potom zistí, či už existuje profil. Ak nie, pokračuje sa registráciou: výber typu účtu, alebo — ak hosť predtým klikol „Mám záujem" na inzeráte — rovno registrácia študenta s tým inzerátom ([[Registrácia študenta]]).
+- Po každom prihlásení študenta appka odošle záujem, na ktorý hosť klikol ešte bez účtu (`sendPending`).
 
 ## Čo sa deje pri štarte appky
 ```mermaid

@@ -11,9 +11,9 @@ Robiq — brigádny matching systém pre študentov a firmy. Frontend postavený
 
 ## Čo appka obsahuje
 
-- Prihlásenie, výber typu účtu, onboarding študenta (3 kroky), registrácia firmy (3 kroky)
+- Prihlásenie, výber typu účtu, registrácia študenta (jedna obrazovka — zručnosti, čas a miesto si doplní neskôr v appke), registrácia firmy (3 kroky)
 - Študent: Objavuj (feed ponúk), Zhody (chat), Profil
 - Firma: Brigádnici, Správy, Inzeráty, Nová ponuka, Firemný profil
-- Guest-first: feed je viditeľný bez účtu, prihlásenie sa vyžiada až pri akcii
+- Guest-first: feed je viditeľný bez účtu; „Mám záujem" hosťa vedie rovno na krátku registráciu a záujem sa po nej odošle sám
 
 Podrobný popis systému je v `docs/` (začni na `docs/00 Mapa systému.md`).

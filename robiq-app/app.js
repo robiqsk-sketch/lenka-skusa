@@ -18,6 +18,7 @@ const initialState = () => ({
   // student
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   skillsOpen: [],                                          // skill groups showing all their chips (registration step 2)
+  obFill: false, obFrom: 'pick', todoNudgeOff: false,      // v2: obFill = the old steps 2–3 reopened to fill in the profile; obFrom = where „← Späť“ on the registration goes; todoNudgeOff = „Doplň profil“ above the feed closed until the next visit
   profEdit: false, birth: '', bio: '', obTerms: false,
   cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
@@ -35,6 +36,12 @@ const initialState = () => ({
 });
 let state = initialState();
 let order = [];                                            // guest feed order (shuffled)
+
+// Student registration, version 2 (10. 10. 2026): a guest's „Mám záujem" opens a one-screen registration straight away
+// (name, birth date, e-mail + password or Google, consent). Skills, time and place are filled in later in the app —
+// until then the Profil tab glows, a nudge sits above the feed and its end says so (profileTodo).
+// false = version 1: sign-up prompt → account type → 3 steps incl. skills and time. Hidden, not deleted.
+const REG_V2 = true;
 
 // ═══════════ Theme (light / dark) ═══════════
 // Per-browser preference in localStorage; without one we follow the system setting. Class `theme-dark` on <html> (styles.css tokens).
@@ -277,10 +284,10 @@ async function loadMe() {                                  // who is signed in, 
   const { data: noStats } = await sb.rpc('is_stats_excluded');
   if (noStats === true) try { localStorage.setItem(NO_STATS_KEY, '1'); } catch {}
 }
-async function profileUnfinished(role) {                   // true → the role row is missing or has no skills yet
+async function profileUnfinished(role) {                   // true → the role row is missing or has no skills yet (v2: no name yet)
   if (role === 'student') {
     const { data: s } = await sb.from('students').select('name, birth, skills').eq('id', state.uid).maybeSingle();
-    if (s && (s.skills || []).length) return false;
+    if (s && (REG_V2 ? (s.name || '').trim() : (s.skills || []).length)) return false;   // v2: skills come later, in the app
     if (s) { state.obName = state.obName || s.name || ''; state.birth = state.birth || s.birth || ''; }   // keep what step 1 already saved
     return true;
   }
@@ -290,6 +297,8 @@ async function profileUnfinished(role) {                   // true → the role 
 // Account exists, registration unfinished → continue where it stopped (role already chosen → skip the pick screen).
 function resumeOnboarding() {
   state.pickFrom = 'app';
+  // v2: a student — or someone back from Google after „Mám záujem" on a posting — finishes the one-screen registration
+  if (REG_V2 && state.oauthRole !== 'firm' && (state.oauthRole === 'student' || pendingLoad())) { openJoin('pick'); return; }
   state.screen = state.oauthRole === 'firm' ? 'fob' : state.oauthRole === 'student' ? 'ob' : 'pick';
   state.obStep = 1; state.fobStep = 1;
   if (state.screen === 'ob' && obCanContinue()) state.obStep = 2;   // name + birth already known → straight to skills
@@ -380,7 +389,9 @@ async function loadCandidates() {                          // students who liked
   const profiles = await loadCandidateProfiles([...new Set(rows.map(r => r.student_id))]);
   state.candidates = rows.filter(r => profiles[r.student_id]).map(r => {
     const s = profiles[r.student_id];
-    return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: (HOURS[s.hours] || '') + (s.city ? ' · ' + s.city : ''), photo: avatarUrl(s.avatar_path),
+    // No skills = the student has not filled in the profile yet (registration v2) — the hours are then only the database default.
+    const hrs = (s.skills || []).length ? HOURS[s.hours] || '' : 'Profil ešte nedoplnený';
+    return { id: s.id, n: s.name || 'Študent', ini: initialsOf(s.name), hrs: hrs + (s.city ? ' · ' + s.city : ''), photo: avatarUrl(s.avatar_path),
       skills: (s.skills || []).map(k => k.n), offer: r.postings.title, postingId: r.posting_id, at: r.created_at,
       g: candGrad(s.name) };
   });
@@ -484,7 +495,7 @@ function skError(e) {
 async function resetToGuest() {                            // l.1506–1514: sign out → clean guest view (logout, account deletion)
   if (pushOn) await disablePush().catch(() => {});        // this device stops getting the signed-out account's notifications
   await sb.auth.signOut();
-  state = initialState(); order = [];
+  state = initialState(); order = []; pendingSave(null);
   subscribe();
   state.loading = true; render();
   try { await loadPostings(); } catch (e) { fail(e); }
@@ -512,8 +523,44 @@ function openReport(type, id, label) {                     // report form: posti
   state.report = { type, id: String(id), label, reason: type === 'posting' ? 'scam' : 'inappropriate', note: '' };
 }
 
+// ─── Registration v2: the guest's interest waits for the account, the profile is filled in later ───
+// The posting is also kept in the browser for a day: Google sign-in and the e-mail confirmation link reload the page
+// (the link even opens a new tab) — sendPending() sends the interest as soon as a student is signed in.
+const PENDING_KEY = 'robiq_pending_job';
+function pendingSave(id) {
+  try { if (id) localStorage.setItem(PENDING_KEY, JSON.stringify({ id, at: Date.now() })); else localStorage.removeItem(PENDING_KEY); } catch {}
+}
+function pendingLoad() {
+  try { const p = JSON.parse(localStorage.getItem(PENDING_KEY)); return p && Date.now() - p.at < 864e5 ? p.id : null; } catch { return null; }
+}
+function sendPending() {                                   // l.1498–1503: the interest clicked as a guest, once signed in
+  if (!state.authed) return;                               // registration not finished yet → keep it for afterwards
+  const id = state.pendingJob?.id || pendingLoad();
+  state.pendingJob = null; pendingSave(null);
+  const j = id && isStudent() ? state.postings.find(p => p.id === id) : null;
+  if (!j || state.likedIds.includes(j.id)) return;
+  setTimeout(async () => { await act(j, 'like'); if (state.likedIds.includes(j.id)) showToast(`${j.t} — záujem odoslaný. ✓`); }, 40);
+}
+function openJoin(from) {                                  // v2 registration, one screen; „← Späť“ returns to `from` (app · pick)
+  Object.assign(state, { screen: 'ob', obStep: 1, obFill: false, obFrom: from });
+  if (!state.pendingJob) { const id = pendingLoad(); state.pendingJob = id ? state.postings.find(p => p.id === id) || null : null; }
+}
+// What the student has not filled in yet. Robiq orders offers and companies find students by exactly these —
+// without them there are few offers. Empty for companies, guests and in version 1 (there they are part of the registration).
+const TODO = { skills: ['Čo ti ide', 2], time: ['Kedy máš čas', 3], place: ['Kde môžeš pracovať', 3] };   // label, wizard step
+const timeSet = () => state.availDays.length > 0 || state.availTimes.length > 0;
+function profileTodo() {
+  if (!REG_V2 || !state.authed || !isStudent()) return [];
+  return [!state.obSkills.length && 'skills', !timeSet() && 'time', !state.cityId && 'place'].filter(Boolean);
+}
+const profilePct = () => Math.round((4 - profileTodo().length) / 4 * 100);   // the account itself is the first quarter
+
 async function act(job, dir) {                             // l.1219–1235
-  if (!state.authed && dir === 'like') { state.gate = true; state.pendingJob = job; state.detail = null; render(); track('gate_shown'); return; }
+  if (!state.authed && dir === 'like') {                   // guest → v2: straight to the registration; v1: sign-up prompt (gate)
+    state.pendingJob = job; state.detail = null; track('gate_shown');
+    if (REG_V2) { pendingSave(job.id); openJoin('app'); track('reg_start', { role: 'student' }); } else state.gate = true;
+    render(); return;
+  }
   if (state.likedIds.includes(job.id) || state.skippedIds.includes(job.id)) return;
   try {
     if (dir === 'like') {
@@ -533,8 +580,7 @@ async function act(job, dir) {                             // l.1219–1235
 }
 
 async function enterApp(extra) {                           // after sign-in / registration
-  const pj = state.pendingJob;
-  Object.assign(state, { screen: 'app', pendingJob: null, gate: false }, extra);
+  Object.assign(state, { screen: 'app', gate: false }, extra);
   state.loading = true; render();
   try { await loadMe(); await loadPostings(); } catch (e) { fail(e); }
   state.loading = false;
@@ -543,7 +589,7 @@ async function enterApp(extra) {                           // after sign-in / re
   if (state.oauth) resumeOnboarding();                     // signed in, but the registration steps are not done yet
   subscribe();
   render();
-  if (pj && state.authed && isStudent()) setTimeout(() => act(pj, 'like'), 40);   // l.1498–1503
+  sendPending();                                           // the posting the guest clicked „Mám záujem“ on
 }
 
 function openPick(from) { state.pickFrom = from; state.screen = 'pick'; state.obStep = 1; state.fobStep = 1; }   // account-type screen; "← Späť" returns to `from`
@@ -590,7 +636,16 @@ const go = {
   },
   goRegister:  () => openPick('login'),                   // from the login card
   goSignup:    () => openPick('app'),                     // from the feed header
-  pickStudent: () => { state.screen = 'ob';  state.obStep = 1; track('reg_start', { role: 'student' }); },
+  pickStudent: () => { if (REG_V2) openJoin('pick'); else { state.screen = 'ob'; state.obStep = 1; } track('reg_start', { role: 'student' }); },
+  join:        () => { openJoin('app'); track('reg_start', { role: 'student' }); },   // v2: „Vytvoriť profil“ at the end of the guest feed
+  // v2: fill in the profile — the old registration steps 2 (skills) and 3 (time and place), saved to the profile.
+  // data-step on the button opens that step; otherwise the first one that is missing.
+  fillProfile: el => {
+    const todo = profileTodo(), step = +(el?.dataset.step) || (todo.length && todo[0] !== 'skills' ? 3 : 2);
+    Object.assign(state, { screen: 'ob', obFill: true, obStep: step, accMenu: false });
+    window.scrollTo(0, 0); track('profile_fill_start', { step });
+  },
+  todoNudgeClose: () => { state.todoNudgeOff = true; },   // until the next visit — it comes back while the profile is unfinished
   pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },  goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
   // "← Späť" on login and account-type screens: login → feed; pick → wherever it was opened from
   back:        () => { state.screen = state.screen === 'pick' ? (state.pickFrom || 'app') : 'app'; },
@@ -760,12 +815,13 @@ async function sendMsg(listKey, idxKey, draftKey) {
   } catch (e) { if (!state[draftKey]) state[draftKey] = t; render(); fail(e); }   // not sent → the text goes back into the field
 }
 
-async function saveStudent() {
+async function saveStudent() {                             // true = saved
   try {
     const { error } = await sb.from('students').update({ name: state.obName.trim(), skills: state.obSkills, hours: state.obHours,
       avail_days: state.availDays, avail_times: state.availTimes, birth: state.birth || null, bio: state.bio, city_id: state.cityId, commute: state.commute, updated_at: new Date().toISOString() }).eq('id', state.uid);
     if (error) throw error;
-  } catch (e) { fail(e); }
+    return true;
+  } catch (e) { fail(e); return false; }
 }
 async function saveCompany(patch) {
   try {
@@ -888,7 +944,7 @@ function renderHeader() {                                  // l.342–372
   // Desktop: the tabs live here in the top bar, icons only like the dock (CSS hides this on phones, where the bottom dock is used instead).
   const tabs = isStudent() ? STUDENT_TABS : FIRM_TABS, active = activeTab();
   const nav = `<nav class="a-nav" aria-label="Navigácia">${tabs.map(([label, glyph], i) =>
-    `<button class="${i === active ? 'on' : ''}" data-go="goTab" data-tab="${i}" aria-label="${label}" title="${label}"${i === active ? ' aria-current="page"' : ''}>${glyph}<span class="lbl">${label}</span></button>`).join('')}</nav>`;
+    `<button class="${i === active ? 'on' : ''}${todoTab(i) ? ' todo' : ''}" data-go="goTab" data-tab="${i}" aria-label="${tabLabel(label, i)}" title="${tabLabel(label, i)}"${i === active ? ' aria-current="page"' : ''}>${glyph}<span class="lbl">${label}</span></button>`).join('')}</nav>`;
   r.innerHTML = `${nav}${nova}<div class="a-acc">${ava}${menu}</div>`;
 }
 // Account menu row with an on/off switch on the right (instead of „Zap./Vyp.“ text).
@@ -981,12 +1037,35 @@ function feed() {                                          // l.408–475
       <p>Robiq medzitým aktívne hľadá ďalšie ponuky, ktoré ti sadnú. Vráť sa večer.</p>
       ${state.skippedIds.length ? '<button data-go="resetDeck">Prezrieť znova</button>' : ''}
     </div>`;
-  const noCity = state.authed && isStudent() && !state.cityId && CITIES.length ? `
+  const noCity = !REG_V2 && state.authed && isStudent() && !state.cityId && CITIES.length ? `
     <div class="city-nudge"><b>Doplň si mesto</b> — firmy ťa potom nájdu na brigády vo svojom okolí a ponuky zoradíme podľa vzdialenosti.
-      <button data-go="goProfileEdit">Doplniť</button></div>` : '';
+      <button data-go="goProfileEdit">Doplniť</button></div>` : '';   // v2: the city is part of „Doplň profil“
+  const todo = profileTodo();
+  const nudge = todo.length && !state.todoNudgeOff ? todoNudge() : pushNudge();   // one strip at a time — the profile first
   return `<div class="a-wrap">
     <div class="a-title"><h2>Ponuky <b>pre teba</b></h2></div>
-    ${pushNudge()}${noCity}${state.postings.length ? filterBar() : ''}${tip}${cards}</div>`;
+    ${nudge}${noCity}${state.postings.length ? filterBar() : ''}${tip}${cards}${feedEnd(todo)}</div>`;
+}
+// v2: unfinished profile — a strip above the feed (back on every visit until it is done) and a card at the end of the feed.
+function todoNudge() {
+  return `<div class="push-nudge todo-nudge">${icon('sparkles', 18)}<span><b>Profil máš na ${profilePct()} %.</b> Bez neho ti nevieme nájsť veľa ponúk.</span>
+    <button class="on" data-go="fillProfile">Doplniť</button>
+    <button class="x" data-go="todoNudgeClose" aria-label="Zavrieť">${icon('x', 16)}</button></div>`;
+}
+function feedEnd(todo) {
+  if (!REG_V2 || state.filters.length) return '';          // a filtered list is not the whole feed
+  if (!state.authed) return `<div class="feed-end">
+      <div class="ic">${icon('sparkles', 22)}</div>
+      <div class="h">Nehľadaj brigádu. Nechaj ju nájsť teba.</div>
+      <p>Vytvor si profil — stačí meno a e-mail.</p>
+      <button class="btn-violet" data-go="join">Vytvoriť profil</button></div>`;
+  if (!todo.length) return '';
+  return `<div class="feed-end">
+    <div class="ic">${icon('user', 22)}</div>
+    <div class="h">Nemáš dokončený profil</div>
+    <p>Bez neho ti nevieme nájsť veľa ponúk a firmy ťa ťažko nájdu. Chýba:</p>
+    <div class="todo-chips">${todo.map(k => `<button data-go="fillProfile" data-step="${TODO[k][1]}">${TODO[k][0]}</button>`).join('')}</div>
+    <button class="btn-violet" data-go="fillProfile">Doplniť profil</button></div>`;
 }
 
 // "Trnava" · "Na diaľku" · "Trnava · 12 km od teba" (student with a city)
@@ -1058,11 +1137,13 @@ function profile() {                                       // l.515–635
     <div class="p-sec" style="margin-bottom:10px">Dostupnosť</div>
     ${availabilityEditor()}
   </div>`;
+  const todo = profileTodo();
   return `<div class="prof">
+    ${todo.length && !s.profEdit ? todoCard(todo) : ''}
     <div class="pcard">
       <div class="p-head">
         ${avatarHtml('p-ava', avatarUrl(s.avatarPath), initials())}
-        <div style="flex:1;min-width:0"><div class="p-name">${esc(s.obName.trim() || 'Študent')}</div><div class="p-sub">Študent · <span id="p-hours">${HOURS[s.obHours]}</span>${s.cityId ? ` · ${esc(cityName(s.cityId))}${s.commute !== 'city' ? ' (' + commuteLabel(s.commute).toLowerCase() + ')' : ''}` : ''}</div></div>
+        <div style="flex:1;min-width:0"><div class="p-name">${esc(s.obName.trim() || 'Študent')}</div><div class="p-sub">Študent${timeSet() ? ` · <span id="p-hours">${HOURS[s.obHours]}</span>` : ''}${s.cityId ? ` · ${esc(cityName(s.cityId))}${s.commute !== 'city' ? ' (' + commuteLabel(s.commute).toLowerCase() + ')' : ''}` : ''}</div></div>
         <button class="p-edit" data-go="profEditToggle">${s.profEdit ? '✓ Hotovo' : 'Upraviť'}</button>
       </div>
       ${s.profEdit ? edit : view}
@@ -1081,6 +1162,19 @@ function profile() {                                       // l.515–635
       : `<div class="p-empty">Zatiaľ žiadne. Prejdi na <b>Objavuj</b> a označ ponuky, ktoré ťa zaujali.</div>`}
     </div>
     ${blockedCard(s.blockedFirms, 'Skryté <b>firmy</b>', 'ich ponuky nevidíš', 'Zobraziť')}
+  </div>`;
+}
+
+// v2: unfinished profile — progress and what is missing, above the profile card. Each row opens its step.
+function todoCard(todo) {
+  const pct = profilePct();
+  const rows = [['', 'Meno a dátum narodenia', 0], ...Object.entries(TODO).map(([k, [label, step]]) => [k, label, step])];
+  return `<div class="pcard sm todo-card">
+    <div class="todo-top"><div class="t">Profil máš na <b>${pct} %</b></div><span class="s">Bez neho ti nevieme nájsť veľa ponúk.</span></div>
+    <div class="todo-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+    <div class="todo-list">${rows.map(([k, label, step]) => !k || !todo.includes(k)
+      ? `<div class="todo-row done"><span class="ck">✓</span><span class="l">${label}</span></div>`
+      : `<button class="todo-row" data-go="fillProfile" data-step="${step}"><span class="ck"></span><span class="l">${label}</span><span class="go">Doplniť</span></button>`).join('')}</div>
   </div>`;
 }
 
@@ -1503,8 +1597,14 @@ function updateDock() {
       <button data-tab="${i}" aria-label="${label}" title="${label}"><span class="glyph">${glyph}</span><span class="lbl">${label}</span></button>`).join('')}</div></nav>`;
   }
   const active = activeTab();
-  host.querySelectorAll('[data-tab]').forEach((b, i) => { b.classList.toggle('on', i === active); b.toggleAttribute('aria-current', i === active); });
+  host.querySelectorAll('[data-tab]').forEach((b, i) => {
+    b.classList.toggle('on', i === active); b.toggleAttribute('aria-current', i === active);
+    b.classList.toggle('todo', todoTab(i)); b.setAttribute('aria-label', tabLabel(tabs[i][0], i)); b.title = tabLabel(tabs[i][0], i);
+  });
 }
+// v2: the student's Profil tab glows (a pulsing dot) while the profile is unfinished — dock and desktop top bar.
+const todoTab = i => isStudent() && i === 2 && profileTodo().length > 0;
+const tabLabel = (label, i) => todoTab(i) ? `${label} — nedoplnený` : label;
 window.addEventListener('resize', () => { if (state.screen === 'app' && state.authed) updateDock(); });
 document.getElementById('a-dock').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
@@ -1593,7 +1693,8 @@ const AVATAR_TOO_BIG = 'Fotka je príliš veľká (max. 5 MB).';
 function maxBirth() { const d = new Date(); d.setFullYear(d.getFullYear() - MIN_AGE); return d.toISOString().slice(0, 10); }
 const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('sk-SK'); };
 function obCanContinue() {
-  if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && isOldEnough();
+  if (state.obFill) return true;                           // filling in the profile later: every part is optional
+  if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && isOldEnough() && (!REG_V2 || state.obTerms);
   if (state.obStep === 2) return state.obSkills.length > 0;
   return state.obTerms && !!state.cityId;                  // step 3: city (required) + terms/privacy consent (also for Google sign-ups)
 }
@@ -1614,17 +1715,34 @@ function obStep1Problem() {                                // why step 1 cannot 
   if (!state.oauth && state.obPass.length < 6) return 'Heslo musí mať aspoň 6 znakov.';
   if (!state.birth) return 'Zadaj dátum narodenia.';
   if (!isOldEnough()) return AGE_BLOCKED;
+  if (REG_V2 && !state.obTerms) return TERMS_MISSING;     // v2: the consent is on this one screen
   return '';
 }
-document.getElementById('ob-back').addEventListener('click', () => { if (state.obStep > 1) state.obStep--; else state.screen = 'pick'; render(); });
+const TERMS_MISSING = 'Potvrď, že máš 16+ a súhlasíš s podmienkami.';
+document.getElementById('ob-back').addEventListener('click', async () => {
+  if (state.obFill) { if (state.obStep > 2) state.obStep--; else await leaveFill(false); }   // filling in the profile: what is chosen stays saved
+  else if (state.obStep > 1) state.obStep--;
+  else if (REG_V2 && state.obFrom === 'app') { state.screen = 'app'; state.pendingJob = null; pendingSave(null); }   // v2 from a posting: back to the feed, interest dropped
+  else state.screen = 'pick';
+  render();
+});
+async function leaveFill(done) {                           // end of „Doplniť profil“ (done = „Uložiť“, else „← Späť“) — saves either way
+  if (!await saveStudent()) return;
+  state.obFill = false; state.screen = 'app';
+  if (!done) return;
+  const left = profileTodo().length;
+  showToast(left ? 'Uložené. ✓' : 'Profil je hotový — teraz ti vieme nájsť viac ponúk. ✓');
+  track('profile_filled', { left });
+}
 document.getElementById('ob-next').addEventListener('click', async () => {           // l.1566–1570
+  if (state.obFill) { if (state.obStep < 3) state.obStep++; else await leaveFill(true); render(); return; }
   if (!obCanContinue()) {
     if (state.obStep === 1) { const pr = obStep1Problem(); setErr('ob-err', pr === AGE_BLOCKED ? '' : pr); if (state.birth && !isOldEnough()) track('reg_blocked', { reason: 'age' }); }
-    if (state.obStep === 3) setErr('ob-err', !state.cityId ? 'Vyber svoje mesto zo zoznamu.' : 'Potvrď, že máš 16+ a súhlasíš s podmienkami.');
+    if (state.obStep === 3) setErr('ob-err', !state.cityId ? 'Vyber svoje mesto zo zoznamu.' : TERMS_MISSING);
     return;
   }
   if (state.obStep === 1 && !state.oauth && await emailTaken(state.obEmail, 'ob-err', 'ob-next', EMAIL_TAKEN_S)) { track('reg_blocked', { reason: 'email_taken' }); return; }
-  if (state.obStep < 3) { state.obStep++; render(); track('reg_step', { role: 'student', step: state.obStep }); return; }
+  if (!REG_V2 && state.obStep < 3) { state.obStep++; render(); track('reg_step', { role: 'student', step: state.obStep }); return; }
   await registerStudent();
 });
 // A used e-mail stops the registration right where it is typed. Supabase signUp itself does not complain when
@@ -1643,11 +1761,13 @@ async function emailTaken(email, errId, btnId, msg) {
 const signUpTaken = (data, error) => (error && /already registered/i.test(error.message)) || (!error && data?.user?.identities?.length === 0);
 async function registerStudent() {
   const btn = document.getElementById('ob-next'); btn.disabled = true; setErr('ob-err', '');
+  // v2 stores only who the student is — skills, time and place are filled in later (the database fills in empty defaults)
+  const prof = { name: state.obName.trim(), birth: state.birth || null, ...(REG_V2 ? {} : { skills: state.obSkills, hours: state.obHours,
+    avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute }) };
   if (state.oauth) {                                       // account exists (Google) — create the profile rows directly
     // upsert: a profile row left behind by an interrupted registration must not block finishing it
     const p = await sb.from('profiles').upsert({ id: state.uid, role: 'student' }, { onConflict: 'id', ignoreDuplicates: true });
-    const s = p.error ? p : await sb.from('students').upsert({ id: state.uid, name: state.obName.trim(), birth: state.birth || null,
-      skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute });
+    const s = p.error ? p : await sb.from('students').upsert({ id: state.uid, ...prof });
     btn.disabled = false;
     if (s.error) { setErr('ob-err', skError(s.error)); return; }
     await finishStudentReg();
@@ -1655,14 +1775,14 @@ async function registerStudent() {
     return;
   }
   const { data, error } = await sb.auth.signUp({ email: state.obEmail.trim(), password: state.obPass,
-    options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute } } });
+    options: { data: { role: 'student', ...prof } } });
   btn.disabled = false;
   if (signUpTaken(data, error)) { state.obStep = 1; render(); setErr('ob-err', EMAIL_TAKEN_S); return; }   // back to the e-mail field
   if (error) { setErr('ob-err', skError(error)); return; }
   track('reg_done', { role: 'student', via: 'email' });
-  if (!data.session) {                                    // e-mail confirmation is on
+  if (!data.session) {                                    // e-mail confirmation is on (the interest waits — sendPending)
     state.screen = 'login'; render();
-    setErr('login-err', 'Poslali sme ti potvrdzovací e-mail. Po potvrdení sa prihlás.');
+    setErr('login-err', 'Poslali sme ti potvrdzovací e-mail. Po potvrdení sa prihlás' + (state.pendingJob ? ' a záujem odošleme.' : '.'));
     return;
   }
   state.uid = data.user.id;
@@ -1675,22 +1795,48 @@ async function finishStudentReg() {                        // the account exists
   }
   await enterApp({ tab: 0 });
 }
-// Progress dots (between „Späť“ and the "next" button; the current step is the long one) and the "next" button of a 3-step registration (prefix 'ob' = student, 'fob' = company).
-function renderStepChrome(prefix, step, lastLabel, canContinue) {
+// Progress dots (between „Späť“ and the "next" button; the current step is the long one) and the "next" button of a registration
+// (prefix 'ob' = student, 'fob' = company). total: 3 steps; 2 = filling in the profile (v2); 1 = one screen, no dots (v2).
+function renderStepChrome(prefix, step, lastLabel, canContinue, total = 3) {
   const dots = document.getElementById(prefix + '-dots');
-  dots.setAttribute('aria-label', `Krok ${step} z 3`);
-  [...dots.children].forEach((d, i) => { d.classList.toggle('on', step >= i + 1); d.classList.toggle('cur', step === i + 1); });
+  dots.style.visibility = total > 1 ? '' : 'hidden';       // hidden, not removed: „Späť“ and the button keep their places
+  dots.setAttribute('aria-label', `Krok ${step} z ${total}`);
+  [...dots.children].forEach((d, i) => { d.hidden = i >= total; d.classList.toggle('on', step >= i + 1); d.classList.toggle('cur', step === i + 1); });
   const next = document.getElementById(prefix + '-next');
-  next.textContent = step === 3 ? lastLabel : 'Pokračovať';
+  next.textContent = step === total ? lastLabel : 'Pokračovať';
   next.style.opacity = canContinue ? 1 : .45;
 }
 function renderOb() {
-  renderStepChrome('ob', state.obStep, 'Hotovo — pozri ponuky', obCanContinue());
-  if (state.obStep === 1) obStep1();
+  if (state.obFill) renderStepChrome('ob', state.obStep - 1, 'Uložiť', true, 2);   // v2: steps 2–3 of the old registration
+  else if (REG_V2) renderStepChrome('ob', 1, state.pendingJob ? 'Odoslať záujem' : 'Vytvoriť účet', obCanContinue(), 1);
+  else renderStepChrome('ob', state.obStep, 'Hotovo — pozri ponuky', obCanContinue());
+  document.getElementById('ob-alt').hidden = !REG_V2 || state.obFill || state.oauth;   // Google + „Už mám účet“ under the v2 registration
+  if (state.obStep === 1) (REG_V2 ? obJoin : obStep1)();
   if (state.obStep === 2) obStep2();
   if (state.obStep === 3) obStep3();
 }
 const obEl = document.getElementById('ob-step');
+// v2: the whole registration on one screen — the posting the guest clicked „Mám záujem“ on, then only what an employer
+// needs to know about who they are: name and age (16+, 18+ postings). No photo, skills or time here.
+function obJoin() {
+  const j = state.pendingJob;
+  obEl.innerHTML = `
+    ${j ? `<div class="join-job"><div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
+      <div class="name"><div class="t">${esc(j.t)}</div><div class="f">${esc(j.f)} · <b>${esc(j.pay)}/hod</b></div></div>
+      <span class="heart">${icon('heart', 18)}</span></div>` : ''}
+    <div class="col">
+      <input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
+      <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" max="${maxBirth()}" autocomplete="bday"></label>
+      <div class="ob-age-note" id="ob-age-note"></div>
+      ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
+      <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
+      <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
+    </div>
+    <div class="join-terms">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`;
+  bindStep1();
+  bindTerms(obEl, 'obTerms');
+  obEl.onclick = null;
+}
 function obStep1() {                                       // l.111–119 + e-mail a heslo (nutné pre skutočný účet)
   obEl.innerHTML = `
     <div class="s1-row"><label class="avatar-pick" title="${state.obPhotoFile ? 'Zmeniť fotku' : 'Pridať fotku (voliteľné)'}">${avatarHtml('avatar', state.obPhotoPreview, initials(), ' id="avatar"')}
@@ -1702,6 +1848,10 @@ function obStep1() {                                       // l.111–119 + e-ma
         <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" max="${maxBirth()}" autocomplete="bday"></label>
         <div class="ob-age-note" id="ob-age-note"></div>
         ${state.obPhotoFile ? '<button type="button" class="photo-remove" id="ob-photo-remove">Odstrániť fotku</button>' : ''}</div></div>`;
+  bindStep1();
+  obEl.onclick = null;
+}
+function bindStep1() {                                     // name · e-mail · password · birth date (+ photo in v1) → state, live checks
   const upd = () => {
     document.getElementById('ob-next').style.opacity = obCanContinue() ? 1 : .45;
     const a = ageOf(state.birth), note = document.getElementById('ob-age-note');
@@ -1709,12 +1859,13 @@ function obStep1() {                                       // l.111–119 + e-ma
     note.classList.toggle('err', a !== null && a < MIN_AGE);
     setErr('ob-err', '');
   };
-  const nameEl = document.getElementById('ob-name');
-  nameEl.addEventListener('input', () => { state.obName = nameEl.value; document.getElementById('avatar').textContent = initials(); upd(); });
+  const nameEl = document.getElementById('ob-name'), ava = document.getElementById('avatar');
+  nameEl.addEventListener('input', () => { state.obName = nameEl.value; if (ava) ava.textContent = initials(); upd(); });
   const emailEl = document.getElementById('ob-email'); if (emailEl) emailEl.addEventListener('input', () => { state.obEmail = emailEl.value; setErr('ob-err', ''); upd(); });
   const passEl = document.getElementById('ob-pass');    if (passEl) passEl.addEventListener('input', () => { state.obPass = passEl.value; upd(); });
   const birthEl = document.getElementById('ob-birth');  birthEl.addEventListener('input', () => { state.birth = birthEl.value; upd(); });
-  document.getElementById('ob-photo').addEventListener('change', e => {
+  const photo = document.getElementById('ob-photo');
+  if (photo) photo.addEventListener('change', e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
     if (avatarTooBig(f)) { setErr('ob-err', AVATAR_TOO_BIG); return; }
     setErr('ob-err', ''); state.obPhotoFile = f; state.obPhotoPreview = URL.createObjectURL(f); render();
@@ -1722,7 +1873,6 @@ function obStep1() {                                       // l.111–119 + e-ma
   const rm = document.getElementById('ob-photo-remove');
   if (rm) rm.addEventListener('click', () => { state.obPhotoFile = null; state.obPhotoPreview = ''; render(); });
   upd();
-  obEl.onclick = null;
 }
 const initials = () => initialsOf(state.obName.trim() || 'Tomáš Novák');   // the student's own avatar — l.1247–1248
 function obStep2() {                                       // l.123–162
@@ -1736,9 +1886,9 @@ function obStep3() {                                       // l.166–188
     <p class="desc step-note center">Koľko hodín týždenne môžeš pracovať?</p>
     <div class="hours-label" id="hours-label">${HOURS[state.obHours]}</div>
     ${availabilityEditor()}
-    <div style="margin-top:22px">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`;
+    ${state.obFill ? '' : `<div style="margin-top:22px">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`}`;   // filling in later: agreed at registration
   obEl.onclick = e => { const el = e.target.closest('button'); if (el && el.id !== 'terms') editorClick(el); };
-  bindTerms(obEl, 'obTerms');
+  if (!state.obFill) bindTerms(obEl, 'obTerms');
   bindEditors();
 }
 
@@ -2060,6 +2210,7 @@ document.getElementById('reset-form').addEventListener('submit', e => { e.preven
   if (isRecovery) state.screen = 'reset';
   render();
   window.robiqReady = true;                                // from here on, errors are toasts, not the crash screen
+  sendPending();                                           // back from Google / the e-mail confirmation link after „Mám záujem“ as a guest
   const fromPush = location.hash === '#spravy';
   openFromNotification();                                  // opened from a notification → chats
   track('visit', isRecovery ? { via: 'password_reset' } : fromLink ? { via: 'google_return' } : fromPush ? { via: 'notification' } : {});
