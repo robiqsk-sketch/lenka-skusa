@@ -5,6 +5,11 @@ tags: [robiq, tok, študent, test]
 
 ← [[00 Mapa systému]] · kód: `app.js` → `renderAiob`, `aiSend`, `applyAiProfile`, `aiFormStep`, `demoReply` · AI: `worker/index.js` (Cloudflare Workers AI)
 
+> [!note] Odložené (10. 10. 2026)
+> Zatiaľ sa s tým nejde — vetva `claude/practical-fermi-k5e1jz` ostáva bokom na neskôr, do `main` sa nedáva.
+> Hotové: rozhovor (Workers AI aj skúšobný bot bez AI) → formulár s povinnými údajmi vrátane telefónu. Neoverené: ako model zvláda slovenčinu na skutočných rozhovoroch.
+> V ostrej databáze z toho už sú migrácie `ai-onboarding` a `student-phone` (prázdny stĺpec `students.phone`, nepoužívaná tabuľka `ai_onboarding_calls`, `handle_new_user` berie aj bio a telefón) — klasickej registrácii neprekážajú.
+
 > [!warning] Testovacia verzia
 > Žije len vo vetve `claude/practical-fermi-k5e1jz` (náhľad na Cloudflare), **nie v `main`**. Je to **ďalší, voliteľný** spôsob registrácie študenta — klasické tri kroky ([[Registrácia študenta]]) ostávajú bez zmeny a sú stále hlavná cesta. Skúšame, či je rozhovor pre ľudí príjemnejší než formulár.
 
