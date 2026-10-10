@@ -3,10 +3,10 @@ tags: [robiq, tok, študent, test]
 ---
 # Registrácia rozhovorom s AI (test)
 
-← [[00 Mapa systému]] · kód: `app.js` → `renderAiob`, `aiSend`, `applyAiProfile`, `aiFormStep`, `demoReply` · funkcia `supabase/functions/ai-onboarding`
+← [[00 Mapa systému]] · kód: `app.js` → `renderAiob`, `aiSend`, `applyAiProfile`, `aiFormStep`, `demoReply` · AI: `worker/index.js` (Cloudflare Workers AI)
 
 > [!warning] Testovacia verzia
-> Žije len vo vetve `claude/practical-fermi-k5e1jz` (náhľad na Cloudflare), **nie v `main`**. Je to druhý spôsob registrácie študenta popri klasických troch krokoch ([[Registrácia študenta]]) — skúšame, či je rozhovor pre ľudí príjemnejší než formulár.
+> Žije len vo vetve `claude/practical-fermi-k5e1jz` (náhľad na Cloudflare), **nie v `main`**. Je to **ďalší, voliteľný** spôsob registrácie študenta — klasické tri kroky ([[Registrácia študenta]]) ostávajú bez zmeny a sú stále hlavná cesta. Skúšame, či je rozhovor pre ľudí príjemnejší než formulár.
 
 ## Ako to prebieha
 Na výbere typu účtu je tretia možnosť **„Hľadám prácu — porozprávam sa s AI"**. Registrácia má dve časti:
@@ -17,7 +17,7 @@ Na výbere typu účtu je tretia možnosť **„Hľadám prácu — porozprávam
 ```mermaid
 flowchart TD
   P[Výber typu účtu] -->|Porozprávam sa s AI| CH[Rozhovor: čo hľadáš]
-  CH -->|celý rozhovor| F[funkcia ai-onboarding<br/>→ Claude]
+  CH -->|koniec rozhovoru + čo už vieme| F[/api/ai-onboarding<br/>worker → Cloudflare Workers AI/]
   F -->|ďalšia veta + zručnosti, čas, o mne| CH
   CH --> SUM[„Čo hľadáš" pod chatom<br/>priebežne sa dopĺňa]
   SUM -->|Pokračovať| FORM[Formulár: meno · dátum narodenia · telefón<br/>mesto · e-mail · heslo · súhlas]
@@ -36,26 +36,31 @@ flowchart TD
 - Študent má po registrácii vyplnené aj **„o mne"** (bio) — preto sa pri registrácii posiela aj ono (migrácia `ai-onboarding`).
 
 ## Skúšobný režim bez AI
-Kým funkcia `ai-onboarding` nie je nasadená alebo nemá kľúč, appka to zistí pri prvej správe a rozhovor prevezme **jednoduchý bot bez AI**. Nad chatom sa vtedy ukáže, že ide o skúšobný režim.
+Keď AI pri prvej správe neodpovie, rozhovor prevezme **jednoduchý bot bez AI** a nad chatom sa ukáže, že ide o skúšobný režim. Stáva sa to pri spustení appky na vlastnom počítači (tam Worker nebeží), keď je minutý denný limit zadarmo, alebo keď je AI vypnutá.
 - Kladie rovnaké otázky v pevnom poradí (čo ti ide → hodiny → dni a čas → pár slov o sebe).
 - V odpovediach hľadá kľúčové slová: zručnosti („kaviareň" → Barista, „po anglicky" → Angličtina), čísla, dni („víkendy", „po–pi"), časti dňa. Opravy typu „nie, vlastne sklad" nepochopí.
-- Stačí na vyskúšanie celého postupu a vzhľadu, **nič nestojí**. Registrácia na konci je skutočná (vytvorí účet) — na skúšanie použi testovací e-mail.
-- Keď je kľúč nastavený, skutočná AI sa použije automaticky pri ďalšom rozhovore. Ak už AI raz odpovedala, na bota sa neprepína — pri výpadku ukáže chybu.
+- Ak už AI v rozhovore raz odpovedala, na bota sa neprepína — pri výpadku ukáže chybu.
 
-## Funkcia `ai-onboarding`
-- Appka pošle celý doterajší rozhovor, funkcia sa opýta Clauda (Anthropic) a vráti ďalšiu vetu bota, čo zatiaľ vie (zručnosti, čas, o mne) a či je hotovo. Odpoveď má pevný tvar (JSON podľa schémy), takže appka ju vie rovno použiť.
-- **Ochrana kreditu:** najviac 60 správ za hodinu z jednej IP a 3000 za deň spolu (tabuľka `ai_onboarding_calls` — ukladá len odtlačok IP, nie IP; staršie ako týždeň maže). Rozhovor má najviac 40 správ, jedna správa najviac 1000 znakov.
-- **Platí sa za použitie** (API kľúč Anthropic, kredit vopred). S modelom Claude Opus 5.5 vyjde rozhovor rádovo na 10–20 centov, s Claude Haiku 5.5 pod 1 cent.
+## AI: Cloudflare Workers AI (`worker/index.js`)
+- Web beží na Cloudflare, tak aj AI: malý Worker beží **len pre adresy `/api/…`** (všetko ostatné sú rovno súbory z `robiq-app/`, ako doteraz). AI volá cez väzbu `AI` vo `wrangler.jsonc` — **bez API kľúča, nič netreba nastavovať**.
+- **Zadarmo:** 10 000 „Neurons" denne (reset o polnoci UTC), to je zhruba 100–200 odpovedí, teda asi 15–30 rozhovorov denne. Keď sa minú, ďalší rozhovor prevezme skúšobný bot. Pri väčšom raste by sa platilo.
+- **Model:** Llama 3.3 70B (otvorený model) — konštanta `MODEL` vo Workeri, dá sa vymeniť (Gemma 3, Mistral Small 3.1, Qwen 3). Treba vyskúšať, ako zvláda slovenčinu.
+- Appka posiela len **koniec rozhovoru (12 správ) a to, čo už vieme** — menej textu = viac rozhovorov zadarmo. Model vráti ďalšiu vetu a celý doplnený profil v pevnom tvare (JSON); keby pevný tvar zlyhal, skúsi to ešte raz bez neho.
+- **Ochrana limitu:** najviac 10 správ za minútu z jednej IP (`ratelimits` vo `wrangler.jsonc`), len z vlastnej stránky (cudzí web nemôže míňať náš limit), správa najviac 1000 znakov.
 - Keď AI neodpovedá alebo je limit, appka správu vráti do políčka a ukáže hlášku; vždy sa dá prejsť na formulár.
 - Štatistika: `reg_start` s `via: ai`, `reg_ai_done` (pri botovi `demo: true`), `reg_ai_demo` (prepnutie na bota), `reg_ai_form` (Pokračovať na formulár), `reg_ai_error`, `reg_ai_to_form` (Radšej vyplním formulár), `reg_done` s `flow: ai` → [[Štatistika používania]].
 
+## Náhradná verzia s Claudom (nepoužíva sa)
+V `supabase/functions/ai-onboarding` ostáva predchádzajúca verzia cez Claude (Anthropic) — lepšia slovenčina, ale **platená** (API kľúč, kredit vopred; rozhovor rádovo 10–20 centov s Opus 5.5, pod 1 cent s Haiku 5.5). Nie je nasadená. Tabuľka `ai_onboarding_calls` (migrácia `ai-onboarding`) patrí k nej a teraz sa nepoužíva.
+
 ## Ako to vyskúšať
-1. Supabase → SQL Editor: spustiť `supabase/migration-2026-10-10-ai-onboarding.sql` (hotovo 10. 10.) a `supabase/migration-2026-10-10-student-phone.sql` (telefón).
-2. Otvoriť náhľad vetvy na Cloudflare → Vytvoriť účet → „Hľadám prácu — porozprávam sa s AI". Bez kľúča beží skúšobný bot.
-3. Skutočná AI (neskôr, platené): kľúč z platform.claude.com → Supabase → Edge Functions → Secrets ako `ANTHROPIC_API_KEY` → nasadiť funkciu `ai-onboarding`.
+1. Migrácie `ai-onboarding` a `student-phone` sú spustené (10. 10.).
+2. Otvoriť náhľad vetvy na Cloudflare → Vytvoriť účet → „Hľadám prácu — porozprávam sa s AI". AI funguje len na Cloudflare (náhľad alebo web), na vlastnom počítači beží skúšobný bot.
+3. Na konci použiť testovací e-mail — registrácia je skutočná (vytvorí účet).
 
 ## Pred prípadným spustením naostro
-- Doplniť **Anthropic** do dokumentu o ochrane osobných údajov ako sprostredkovateľa (rozhovor ide do USA) a **telefón** ako nový osobný údaj (na čo slúži, kto ho vidí) → [[Otvorené otázky a nezrovnalosti]].
+- Doplniť do dokumentu o ochrane osobných údajov, že rozhovor spracúva AI na Cloudflare (Workers AI), a **telefón** ako nový osobný údaj (na čo slúži, kto ho vidí) → [[Otvorené otázky a nezrovnalosti]].
+- Overiť, ako model zvláda slovenčinu na skutočných rozhovoroch; prípadne vymeniť model.
 - Vyhodnotiť štatistiku: koľko ľudí rozhovor dokončí oproti formuláru, koľko prepne na formulár.
 
 Súvisí: [[Registrácia študenta]], [[Obrazovky hosťa a študenta]], [[Architektúra]]

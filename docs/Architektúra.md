@@ -14,6 +14,7 @@ tags: [robiq, architektúra]
 | **Právne stránky** | podmienky, ochrana osobných údajov | `robiq-app/podmienky.html`, `ochrana-osobnych-udajov.html` |
 | **Databáza** | PostgreSQL v Supabase — tabuľky, pravidlá prístupu, funkcie, triggery | `supabase/schema.sql` + migrácie |
 | **Dizajn** | klikateľný prototyp a dizajnový systém (zadanie) | `design_handoff_robiq/` |
+| **Worker (test)** | kód na Cloudflare len pre adresy `/api/…` — zatiaľ AI pri registrácii rozhovorom | `worker/index.js` → [[Registrácia rozhovorom s AI (test)]] |
 | **Lokálny server** | na spustenie appky na vlastnom počítači (Windows) | `tools/serve.ps1` → http://localhost:8765 |
 
 ## Ako to do seba zapadá
@@ -46,7 +47,7 @@ flowchart TB
 - **Bez build kroku:** čo je v `robiq-app/`, to sa nasadí.
 
 ## Nasadenie
-- Web beží na **Cloudflare** (projekt „robiq", Workers Builds). Pri každom pushi na GitHub Cloudflare spustí `wrangler`, ktorý podľa `wrangler.jsonc` nahrá statické súbory z `robiq-app/`. Bez tohto súboru build zlyhá („Missing entry-point… or assets directory").
+- Web beží na **Cloudflare** (projekt „robiq", Workers Builds). Pri každom pushi na GitHub Cloudflare spustí `wrangler`, ktorý podľa `wrangler.jsonc` nahrá statické súbory z `robiq-app/`. Bez tohto súboru build zlyhá („Missing entry-point… or assets directory"). V testovacej vetve AI registrácie nahrá aj `worker/index.js` (beží len pre `/api/…`) s väzbou na Workers AI.
 - Push do `main` = nasadenie na web; push do inej vetvy = len náhľadová verzia.
 - Bezpečnostné hlavičky sú v `robiq-app/_headers`.
 - Neexistujúca adresa → `robiq-app/404.html` (nastavenie `not_found_handling` vo `wrangler.jsonc`); appka, ktorá sa nevie spustiť, ukáže „Niečo sa pokazilo" — [[Chybové stránky]].
@@ -60,7 +61,7 @@ flowchart TB
 | api.statistics.sk (RPO) | overenie IČO firmy |
 | jsDelivr | knižnica supabase-js |
 | cdnfonts.com | písma Satoshi a Open Sauce One |
-| Anthropic (Claude) | **len test:** bot v registrácii rozhovorom — funkcia `ai-onboarding` → [[Registrácia rozhovorom s AI (test)]]; platí sa za použitie |
+| Cloudflare Workers AI | **len test:** bot v registrácii rozhovorom — `worker/index.js` → [[Registrácia rozhovorom s AI (test)]]; zadarmo 10 000 Neurons denne |
 | Brevo | e-maily (potvrdenie registrácie, obnova hesla, upozornenia, hlásenie o páde) — bezplatne **300 e-mailov denne spolu**; pri raste prvý limit, na ktorý appka narazí |
 
 Súvisí: [[app.js – mapa kódu]], [[Dátový model]]

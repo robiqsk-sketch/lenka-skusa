@@ -1,4 +1,6 @@
-// Robiq — TEST: registrácia študenta rozhovorom s AI (obrazovka „aiob" v app.js).
+// Robiq — TEST, NÁHRADNÁ VERZIA (nepoužíva sa): rozhovor pri registrácii cez Claude (Anthropic, platené — treba API kľúč).
+// Appka teraz volá /api/ai-onboarding vo worker/index.js (Cloudflare Workers AI, zadarmo). Táto funkcia ostáva pre prípad,
+// že by sme chceli prejsť na Claude: nasadiť ju a v app.js → aiSend volať sb.functions.invoke('ai-onboarding', …).
 // Appka pošle celý doterajší rozhovor { messages: [{ role: "user" | "assistant", content }] } s anon kľúčom.
 // Funkcia sa opýta Clauda a vráti { reply, profile, done }: ďalšiu vetu bota a to, čo z rozhovoru zatiaľ vyplynulo o tom,
 // akú prácu hľadá (zručnosti, hodiny, dni, časy, krátke „o mne"; mesto len ak ho sám spomenie).

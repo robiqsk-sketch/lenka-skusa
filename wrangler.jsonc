@@ -1,10 +1,25 @@
 // Cloudflare Workers Builds (projekt „robiq"): nasadzuje statické súbory z robiq-app/ — bez build kroku.
 // Bezpečnostné hlavičky sú v robiq-app/_headers.
+// TEST (registrácia rozhovorom s AI): worker/index.js beží len pre /api/* a volá Cloudflare Workers AI (binding AI, bez kľúča).
 {
   "name": "robiq",
   "compatibility_date": "2026-09-21",
+  "main": "worker/index.js",
   "assets": {
     "directory": "./robiq-app",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],                       // kód beží len pre /api/…, ostatné sú rovno súbory
     "not_found_handling": "404-page"                      // unknown address → robiq-app/404.html (with status 404)
+  },
+  "ai": { "binding": "AI" },
+  "ratelimits": [
+    { "name": "AI_LIMIT", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }   // AI: 10 správ za minútu z jednej IP
+  ],
+  // Náhľady vetiev (wrangler preview) väzby nededia — preto ešte raz:
+  "previews": {
+    "ai": { "binding": "AI" },
+    "ratelimits": [
+      { "name": "AI_LIMIT", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }
+    ]
   }
 }

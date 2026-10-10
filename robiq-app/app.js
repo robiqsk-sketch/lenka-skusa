@@ -1862,8 +1862,8 @@ function availSummary() {                                  // l.1558–1563
 }
 
 // ─── AIOB — TEST: student registration — first a chat with AI about what they look for, then a form with the required data ───
-// Chat: the conversation goes to the Supabase function `ai-onboarding` (Claude), which answers with the next line and what it
-// has gathered so far (skills, hours, days, times, a short "about me"). It fills the same state as the classic steps,
+// Chat: the end of the conversation + what we know so far go to /api/ai-onboarding (worker/index.js → Cloudflare Workers AI),
+// which answers with the next line and the updated profile (skills, hours, days, times, a short "about me"). It fills the same state as the classic steps,
 // so „Radšej vyplním formulár" continues there. Form: name, birth date, phone, city, e-mail, password, consent —
 // none of it goes to the AI. Then registerStudent() as usual.
 const AI_HELLO = 'Ahoj! Som Robiq. Povedz mi, akú brigádu hľadáš — čo ti ide, čo by ťa bavilo, alebo čo už máš za sebou.';
@@ -1881,6 +1881,10 @@ function aiFormProblem() {                                 // why the form canno
   if (!state.obTerms) return 'Potvrď, že máš 16+ a súhlasíš s podmienkami.';
   return '';
 }
+const aiKnown = () => ({                                 // what the AI should keep — it only gets the end of the conversation
+  skills: state.obSkills, hours: state.aiTime ? state.obHours : -1,
+  avail_days: state.aiTime ? state.availDays : [], avail_times: state.aiTime ? state.availTimes : [], city: state.aiCity, bio: state.bio,
+});
 function applyAiProfile(p) {                               // only what the bot knows overwrites the state; unknown (null / empty) keeps it
   if (!p || typeof p !== 'object') return;
   if (Array.isArray(p.skills) && p.skills.length) state.obSkills = p.skills
@@ -1900,9 +1904,15 @@ async function aiSend() {
   state.aiMsgs.push({ role: 'user', content: txt.slice(0, 1000) });
   state.aiDraft = ''; state.aiBusy = true; setErr('aiob-err', ''); render();
   if (!state.aiDemo) {
-    const { data, error } = await sb.functions.invoke('ai-onboarding', { body: { messages: state.aiMsgs.slice(-40) } });
+    let data = null, status = 0;
+    try {
+      const r = await fetch('/api/ai-onboarding', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: state.aiMsgs.slice(-12), profile: aiKnown() }) });
+      status = r.status;
+      if (r.ok) data = await r.json();
+    } catch (e) { console.warn('ai-onboarding', e); }
     state.aiBusy = false;
-    if (!error && data && typeof data.reply === 'string') {
+    if (data && typeof data.reply === 'string') {
       state.aiReal = true;
       state.aiMsgs.push({ role: 'assistant', content: data.reply.slice(0, 2000) });
       applyAiProfile(data.profile);
@@ -1910,15 +1920,14 @@ async function aiSend() {
       state.aiFocus = true; render();
       return;
     }
-    const status = error?.context?.status;
     if (state.aiReal || status === 429) {                   // the AI works, it just did not answer now
       state.aiMsgs.pop(); state.aiDraft = txt;             // the message was not answered — give it back to send again
       state.aiFocus = true; render();
       setErr('aiob-err', status === 429 ? 'Veľa správ naraz — skús to o chvíľu.' : 'AI teraz neodpovedá. Skús to znova, alebo vyplň formulár.');
-      track('reg_ai_error', { status: status || 0 });
+      track('reg_ai_error', { status });
       return;
     }
-    state.aiDemo = true; track('reg_ai_demo', { status: status || 0 });   // AI not available at all yet → the scripted bot takes this conversation
+    state.aiDemo = true; track('reg_ai_demo', { status });   // AI not available (own computer, daily free limit used up…) → the scripted bot takes this conversation
   } else await new Promise(r => setTimeout(r, 450));        // a short "typing" pause, so it reads like a chat
   state.aiBusy = false;
   const wasDone = state.aiDone;
@@ -1928,7 +1937,7 @@ async function aiSend() {
 }
 
 // ─── Scripted bot without AI (demo) ───
-// Used while the `ai-onboarding` function is not deployed or has no key: the same questions in a fixed order, and the answers
+// Used when /api/ai-onboarding does not answer at the first message (app run on your own computer, Workers AI off or its daily free limit used up): the same questions in a fixed order, and the answers
 // are searched for key words (skills, numbers, days, times of day). Enough to try the flow; it does not understand corrections.
 const DEMO_SKILLS = [
   ['barist', 'Barista'], ['kaviar', 'Barista'], ['kavu', 'Barista'], ['casn', 'Čašník / Servírka'], ['servir', 'Čašník / Servírka'], ['obsluh', 'Čašník / Servírka'],
