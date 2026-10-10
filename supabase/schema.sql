@@ -80,7 +80,9 @@ create table public.students (
   commute      text not null default '30km' check (commute in ('city', '15km', '30km', 'any')),   -- kam je ochotný dochádzať
   bio          text not null default '',
   avatar_path  text,                                -- cesta v neverejnom bucket-e avatars: <uid>/avatar.<ext>
-  updated_at   timestamptz not null default now()
+  updated_at   timestamptz not null default now(),
+  phone        text not null default '',            -- z testu registrácie s AI (vetva claude/practical-fermi-k5e1jz); appka v main ho nepoužíva
+  fields       text[] not null default '{}'         -- akú prácu hľadá (zoznam odvetví ako pri firmách) — registrácia v3, firma ho vidí pri kandidátovi
 );
 
 create table public.companies (
@@ -231,11 +233,13 @@ begin
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'fields', '[]'::jsonb)) x), '{}'),
             coalesce(d->>'contact_name', ''), nullif(d->>'city_id', '')::int);
   else
-    insert into students (id, name, birth, skills, hours, avail_days, avail_times, city_id, commute)
+    insert into students (id, name, birth, skills, hours, avail_days, avail_times, city_id, commute, bio, phone, fields)
     values (new.id, coalesce(d->>'name', ''), nullif(d->>'birth', '')::date, coalesce(d->'skills', '[]'::jsonb), coalesce((d->>'hours')::smallint, 1),
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'avail_days',  '[]'::jsonb)) x), '{}'),
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'avail_times', '[]'::jsonb)) x), '{}'),
-            nullif(d->>'city_id', '')::int, coalesce(nullif(d->>'commute', ''), '30km'));
+            nullif(d->>'city_id', '')::int, coalesce(nullif(d->>'commute', ''), '30km'), left(coalesce(d->>'bio', ''), 500),
+            left(coalesce(d->>'phone', ''), 20),
+            coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'fields', '[]'::jsonb)) x), '{}'));
   end if;
   return new;
 end $$;
@@ -384,13 +388,13 @@ revoke all on function public.count_view(bigint) from public;
 grant execute on function public.count_view(bigint) to anon, authenticated;
 
 -- ─────────────────────────── Kandidáti pre firmy ───────────────────────────
--- Firma vidí o študentovi len meno, zručnosti, hodiny a fotku — a len ak študent dal záujem o jej inzerát.
+-- Firma vidí o študentovi len meno, zručnosti, hodiny, mesto, fotku, akú prácu hľadá, dni a časti dňa — a len ak študent dal záujem o jej inzerát.
 -- Funkcia (nie pohľad): security-definer pohľad by Supabase Advisor označil ako riziko; pravidlá sú tu rovnaké.
 
 create or replace function public.candidate_profiles(p_ids uuid[])
-returns table (id uuid, name text, skills jsonb, hours smallint, avatar_path text, city text)
+returns table (id uuid, name text, skills jsonb, hours smallint, avatar_path text, city text, fields text[], avail_days text[], avail_times text[])
 language sql stable security definer set search_path = public as $$
-  select s.id, s.name, s.skills, s.hours, s.avatar_path, c.name
+  select s.id, s.name, s.skills, s.hours, s.avatar_path, c.name, s.fields, s.avail_days, s.avail_times
   from public.students s left join public.cities c on c.id = s.city_id
   where s.id = any(p_ids) and (s.id = auth.uid() or public.is_my_candidate(s.id))
 $$;

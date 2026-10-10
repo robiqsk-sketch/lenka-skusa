@@ -18,9 +18,11 @@ tags: [robiq, slovník]
 | **Návrh (navrhovaný kandidát)** | anonymný študent, ktorý sedí na inzerát podľa skóre | `suggest_candidates` |
 | **Zhoda** | obojstranný záujem na ten istý inzerát → otvorí sa chat | `matches` |
 | **Gate** | výzva na prihlásenie, keď hosť klikne „Mám záujem" — len v registrácii v1 (v2 ide hosť rovno na registráciu) | – |
-| **Registrácia v1 / v2** | v1: tri kroky so zručnosťami a časom (schovaná); v2: jedna obrazovka, profil sa dopĺňa neskôr | prepínač `REG_V2` v `app.js` |
+| **Registrácia v1 / v2 / v3** | v1: tri kroky so zručnosťami a časom (schovaná); v2: jedna obrazovka, profil sa dopĺňa neskôr (schovaná); v3: v2 + odvetvie, „Doplniť profil / Preskočiť" a učenie z lajkov | prepínače `REG_V2`, `REG_V3` v `app.js` |
+| **Odvetvie (študent)** | akú prácu študent hľadá — rovnaký zoznam ako odvetvia firiem | `students.fields` |
+| **Robiq si všimol** | návrh doplniť profil podľa inzerátov, o ktoré mal študent záujem; uloží sa len potvrdené | `learnProposals` (appka) |
 | **Nedoplnený profil** | študent (v2) bez zručností, času alebo mesta — svieti mu Profil, upozornenie nad feedom a karta na jeho konci | `profileTodo` (appka) |
-| **Doplniť profil** | pôvodné kroky 2 a 3 registrácie otvorené z appky, ukladajú sa do profilu | – |
+| **Doplniť profil** | zručnosti, čas a miesto po malých krokoch (jedna otázka na obrazovku), otvorené z appky; ukladajú sa do profilu | – |
 | **Dochádzanie** | ako ďaleko je študent ochotný cestovať | `students.commute` |
 | **Overená firma** | IČO nájdené v Registri právnických osôb | `companies.verified` |
 | **Oficiálny vs. zobrazovaný názov** | z registra vs. zvolený firmou | `legal_name` vs. `name` |

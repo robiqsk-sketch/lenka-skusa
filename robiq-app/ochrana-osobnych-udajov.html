@@ -195,6 +195,7 @@
 <li><strong>e-mailová adresa</strong> – slúži ako prihlasovacie meno, na kontakt a na upozornenia na novú zhodu alebo správu (e-mailové upozornenia si kedykoľvek vypneš v menu účtu → E-maily)</li>
 <li><strong>heslo</strong> – ukladá ho prihlasovacia služba Supabase Auth výlučne v podobe kryptografického odtlačku (hash). My tvoje heslo nikdy nevidíme a nevieme ho zistiť.</li>
 <li><strong>meno a priezvisko</strong></li>
+<li><strong>akú prácu hľadáš</strong> – aspoň jedno odvetvie zo zoznamu (rovnakého, aký majú firmy, napr. Gastro, Sklad a logistika). Predvyplní sa podľa inzerátu, na ktorý si klikol „Mám záujem“, zmeniť ho môžeš v profile. Firma ho uvidí pri tvojom profile, keď prejavíš záujem o jej inzerát.</li>
 </ul>
 <p><strong>V onboardingu a v profile (dobrovoľné, môžeš ich kedykoľvek zmeniť alebo vymazať):</strong></p>
 <ul>
@@ -213,6 +214,7 @@
 <p><strong>Vzniká pri používaní aplikácie:</strong></p>
 <ul>
 <li><strong>prejavené záujmy</strong> – o ktoré inzeráty si klikol „Mám záujem“ a kedy</li>
+<li><strong>návrhy na doplnenie profilu</strong> – keď prejavíš záujem o viac inzerátov, aplikácia sa pozrie, čo majú spoločné (odvetvie firmy, víkendy / poobedia / večery, mesto), a navrhne ti to uložiť do profilu. Je to obyčajné spočítanie, nie AI. <strong>Do profilu sa uloží len to, čo potvrdíš</strong>; čo odmietneš, ti na tomto zariadení už nenavrhne.</li>
 <li><strong>preskočené inzeráty</strong> – ktoré inzeráty si preskočil (slúži len na to, aby sa ti tá istá karta nezobrazovala stále dokola; vidíš to len ty)</li>
 <li><strong>záujem firiem o teba</strong> – ktorá firma o teba prejavila záujem a kedy</li>
 <li><strong>zhody</strong> – kedy vznikla zhoda, s ktorou firmou a na ktorý inzerát</li>
@@ -337,7 +339,7 @@
 </tbody>
 </table></div>
 <p><strong>Čo nerobíme:</strong> neposielame newsletter z aplikácie, nerobíme marketingové profilovanie, nepredávame ani neposkytujeme údaje inzerentom mimo popísaných prípadov a nepoužívame údaje na trénovanie žiadneho AI modelu.</p>
-<p><strong>Ak niektorý údaj neposkytneš:</strong> e-mail, heslo a meno sú nevyhnutné na vznik účtu – bez nich sa registrovať nedá. Všetko ostatné je dobrovoľné; bez zručností a dostupnosti ťa však firmy ťažšie nájdu a bez dátumu narodenia neuvidíš inzeráty označené „Len 18+“.</p>
+<p><strong>Ak niektorý údaj neposkytneš:</strong> e-mail, heslo, meno, dátum narodenia a aspoň jedno odvetvie práce sú nevyhnutné na vznik účtu – bez nich sa registrovať nedá. Všetko ostatné je dobrovoľné; bez zručností a dostupnosti ťa však firmy ťažšie nájdu a bez dátumu narodenia neuvidíš inzeráty označené „Len 18+“.</p>
 <hr />
 <h2 id="sek-5-kto-ktore-udaje-vidi">5. Kto ktoré údaje vidí</h2>
 <p>Prístup k údajom je vynútený priamo v databáze (pravidlá RLS – row level security), nie iba v rozhraní aplikácie.</p>
@@ -360,7 +362,7 @@
 <td>áno</td>
 </tr>
 <tr>
-<td>Meno, zručnosti, hodiny, dostupnosť a mesto brigádnika</td>
+<td>Meno, akú prácu hľadá, zručnosti, hodiny, dostupnosť a mesto brigádnika</td>
 <td>nie</td>
 <td>len svoje</td>
 <td><strong>len tých brigádnikov, ktorí prejavili záujem o jej inzerát</strong></td>
@@ -520,6 +522,7 @@
 <li><strong>prihlasovací token</strong>, vďaka ktorému zostaneš prihlásený a nemusíš zadávať heslo pri každom otvorení aplikácie. Zmizne, keď sa odhlásiš alebo vymažeš údaje stránky v prehliadači.</li>
 <li><strong>tvoje nastavenia zobrazenia</strong> – či chceš svetlý alebo tmavý režim a ktoré jednorazové upozornenia v aplikácii si už zavrel (napr. o šifrovaní chatu alebo o zapnutí upozornení). Neobsahujú žiadny identifikátor.</li>
 <li><strong>inzerát, o ktorý si prejavil záujem ešte bez účtu</strong> – len jeho číslo a čas, aby sme záujem odoslali hneď po registrácii, aj keď sa medzitým stránka znovu načíta (prihlásenie cez Google, potvrdzovací e-mail). Zmaže sa po odoslaní záujmu, keď registráciu zrušíš, pri odhlásení, a po dni sa už nepoužije.</li>
+<li><strong>stav ponúk na doplnenie profilu</strong> – či ti aplikácia po registrácii ešte má ponúknuť doplnenie profilu (pri registrácii s potvrdzovacím e-mailom sa to ukáže až po prvom prihlásení) a ktoré návrhy z tvojich záujmov si odmietol. Neobsahuje žiadny identifikátor.</li>
 </ul>
 <p>Ak si zapneš upozornenia, prehliadač si navyše uloží malý program aplikácie (service worker), ktorý upozornenie zobrazí aj vtedy, keď Robiq nemáš otvorený, a prihlásenie k odberu u doručovacej služby (kapitola 6). Obe zmiznú, keď upozornenia vypneš alebo sa odhlásiš.</p>
 <p>Všetko uvedené je podľa § 109 ods. 8 zákona č. 452/2021 Z. z. nevyhnutne potrebné na poskytnutie služby alebo funkcie, ktorú si výslovne vyžiadal, a preto na to nepotrebujeme tvoj súhlas.</p>

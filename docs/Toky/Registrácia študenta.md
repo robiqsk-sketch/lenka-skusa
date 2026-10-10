@@ -3,10 +3,21 @@ tags: [robiq, tok, študent]
 ---
 # Registrácia študenta
 
-← [[00 Mapa systému]] · kód: `app.js` → `REG_V2`, `openJoin`, `obJoin`, `registerStudent`, `sendPending`, `profileTodo` · v1: `renderOb`, `obStep1–3`
+← [[00 Mapa systému]] · kód: `app.js` → `REG_V2`, `REG_V3`, `openJoin`, `obJoin`, `registerStudent`, `sendPending`, `profileTodo`, `offerScreen`, `learnProposals` · v1: `renderOb`, `obStep1–3`
 
-Od 10. 10. 2026 beží **verzia 2**: registrácia je jedna krátka obrazovka a všetko ostatné si študent **doplní neskôr v appke**.
-Pôvodná trojkroková registrácia (**verzia 1**) je v kóde **schovaná, nie zmazaná** — zapne sa späť prepínačom `REG_V2 = false` na začiatku `app.js`.
+Od 10. 10. 2026 beží **verzia 3** — verzia 2 (jedna krátka obrazovka, profil sa dopĺňa neskôr) a k tomu **odvetvie pri registrácii**, ponuka **„Doplniť profil / Preskočiť"** hneď po nej a **učenie z ponúk, ktoré sa študentovi páčia**.
+Staršie verzie sú v kóde **schované, nie zmazané** — prepínače na začiatku `app.js`: `REG_V3 = … false` vráti presne verziu 2, `REG_V2 = false` pôvodnú trojkrokovú verziu 1.
+
+## Verzia 3 — čo pribudlo
+Tok: páči sa ti ponuka → **Mám záujem** → registrácia (alebo prihlásenie) → **Doplniť profil / Preskočiť** → feed. Kto preskočí, tomu profil dopĺňa Robiq podľa toho, čo lajkuje.
+
+1. **Akú prácu hľadáš?** — na registračnej obrazovke čipy s odvetviami (rovnaký zoznam ako pri firmách: Gastro, Retail, Sklad a logistika…), aspoň jedno. Predvyplní sa odvetvie firmy z inzerátu, na ktorý hosť klikol — väčšinou stačí nič nemeniť. Ukladá sa do `students.fields`, upraviť sa dá v profile.
+2. **Hneď po registrácii** (`offerScreen`): „✓ Záujem o … je odoslaný", **Chceš ponuky na mieru?** → **Doplniť profil** (malé kroky nižšie) alebo **Preskočiť**. Pri registrácii s potvrdzovacím e-mailom sa ukáže pri prvom prihlásení (značka v prehliadači `robiq_offer`).
+3. **Robiq si všimol, čo ťa baví** (`learnProposals`) — po 3 záujmoch sa pozrie na lajknuté inzeráty a ak sa niečo opakuje aspoň 2×, navrhne to: **odvetvie** firmy, **víkendy / poobedia / večery** (podľa typu brigády) a **mesto** („Trnava a okolie"). Navrhuje len to, čo v profile chýba. Okno s čipmi: každý sa dá vypnúť, **Uložiť do profilu** uloží len zapnuté, vypnuté už na tomto zariadení neponúkne (`robiq_learn_no`). „Teraz nie" → znova najskôr po ďalších 3 záujmoch. Nie je to AI — obyčajné počítanie.
+4. **Firma vidí viac** — pri kandidátovi aj **„Hľadá: Gastro, Eventy"** a **dni / časti dňa** (aj keď ich študent len potvrdil z návrhu). „Profil ešte nedoplnený" ostáva len pri kandidátovi, o ktorom nevieme nič. Funkcia `candidate_profiles`, migrácia `student-fields`.
+
+> [!warning] Čo ostáva otvorené
+> Kto preskočí doplnenie a lajkne menej ako 3 ponuky, o tom firma vie len meno a odvetvie z registrácie. Ďalší krok môže byť jedna otázka pri záujme ([[Nápady – doplnenie profilu]], nápad 1).
 
 ## Prečo verzia 2
 Hosť, ktorý klikne „Mám záujem", chce dať najavo záujem o konkrétnu brigádu — nie vypĺňať 50 zručností a kalendár.
@@ -26,7 +37,7 @@ flowchart TD
   CONF -->|nie| APP
   UP --> APP[Appka → Objavuj<br/>záujem sa odošle sám]
   APP --> T[Profil nedoplnený:<br/>svieti záložka Profil, pruh nad feedom,<br/>karta na konci feedu]
-  T -->|Doplniť| W["Doplniť profil — pôvodné kroky 2 a 3<br/>zručnosti → čas a miesto → Uložiť"]
+  T -->|Doplniť| W["Doplniť profil — malé kroky, jedna otázka na obrazovku<br/>zručnosti → hodiny → dni → časť dňa → miesto → Uložiť"]
 ```
 
 ## Obrazovka registrácie (v2)
@@ -53,8 +64,23 @@ Zmaže sa po odoslaní, pri „← Späť" z registrácie a pri odhlásení. Uve
 - na konci feedu karta **„Nemáš dokončený profil"** s tým, čo chýba,
 - v profile karta s percentami a riadkami Čo ti ide · Kedy máš čas · Kde môžeš pracovať.
 
-Percentá: účet = 25 %, každá doplnená časť ďalších 25 %. Tlačidlá **Doplniť** otvoria **pôvodné kroky 2 a 3 z v1** (zatiaľ bez zmeny — [[Nápady – doplnenie profilu|nápady, ako to spraviť inak]]):
-krok 1/2 zručnosti, krok 2/2 hodiny, dni, časy a mesto → **Uložiť**. Nič nie je povinné a ukladá sa aj pri „← Späť" — vyplnené sa nestratí.
+Percentá: účet = 25 %, každá doplnená časť ďalších 25 %.
+
+**Doplniť** ide po **malých krokoch — na každej obrazovke jedna otázka** (bodky dole ukazujú, koľko krokov ešte zostáva):
+
+| Časť | Kroky |
+|---|---|
+| Čo ti ide | zručnosti (pôvodný krok 2 registrácie, bez zmeny) |
+| Kedy máš čas | Koľko hodín týždenne? → Ktoré dni? → Kedy počas dňa? |
+| Kde môžeš pracovať | mesto + ako ďaleko dochádzaš |
+
+- Riadok v profile alebo čip na konci feedu otvorí **len svoju časť** (napr. „Kedy máš čas" = 3 kroky).
+- Tlačidlo **Doplniť / Doplniť profil** prejde **všetky časti, ktoré chýbajú**, za sebou.
+- Posledný krok má **Uložiť**; „← Späť" ide o krok späť, z prvého kroku späť do appky. Nič nie je povinné a ukladá sa aj pri odchode cez „← Späť" — vyplnené sa nestratí.
+- Prečo: pôvodný krok 3 mal hodiny, dni, časy, mesto aj dochádzanie na jednej obrazovke — priveľa naraz.
+- V profile cez **Upraviť** je naďalej všetko na jednej stránke (tam človek mení jednu vec, nie vypĺňa od nuly).
+
+Iné spôsoby, ako sa na to pýtať: [[Nápady – doplnenie profilu]].
 
 Prečo „veľa ponúk" záleží na profile: feed radí ponuky podľa mesta a firma vidí študenta v [[Návrhy kandidátov (párovanie)|návrhoch]] až od skóre 30 —
 prázdny profil ho skoro nikdy nedosiahne.

@@ -890,6 +890,25 @@ input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer;
 .join-job .f b { color: var(--ink); font-weight: 700; }
 .join-job .heart { display: flex; color: var(--accent); }
 .join-terms { margin-top: 16px; }
+/* v3: „Akú prácu hľadáš?“ on the registration (the companies' field list, several allowed) */
+.join-fields { margin: 4px 0 2px; }
+.join-fields .label { margin-bottom: 8px; }
+.join-fields .tchip { padding: 7px 13px; font-size: var(--text-sm); }
+/* v3: right after the registration — „Doplniť profil / Preskočiť“ */
+.offer-screen { display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.offer-screen h2 { margin: 6px 0 0; font-size: var(--text-2xl); }
+.offer-screen .desc { margin: 0 auto 8px; max-width: 34ch; line-height: 1.5; }
+.offer-sent { display: inline-flex; align-self: center; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 99px; background: rgba(21,128,61,.1); color: var(--ok); font-size: var(--text-sm); font-weight: 700; }
+.offer-screen .secondary { margin: 0; }
+.offer-note { margin: 4px auto 0; max-width: 36ch; font-size: var(--text-xs); line-height: 1.5; color: var(--muted); }
+/* v3: „Robiq si všimol, čo ťa baví“ — suggestions learned from liked postings, each can be switched off */
+.gate.learn .ic { background: rgba(var(--tint),.12); color: var(--accent); }
+.learn-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 22px; }
+.learn-chips button { min-height: 40px; padding: 0 14px; border-radius: 99px; border: 1px dashed var(--line2); background: var(--card); color: var(--muted); font-size: var(--text-sm); font-weight: 700; cursor: pointer; font-family: inherit; text-decoration: line-through; }
+.learn-chips button.on { border: 1px solid var(--accent); background: rgba(var(--tint),.12); color: var(--accent-ink); text-decoration: none; }
+/* „Doplniť profil“ in small steps: one question per screen, a little air below it */
+.desc.step-note.center.fill-q { margin-bottom: 18px; }
+.fill-q ~ .commute, .fill-q ~ .times { margin-bottom: 22px; }   /* last thing above „Späť / Pokračovať“ */
 .ob-alt .divider { margin: 22px 0 16px; }
 .ob-alt .secondary.google { margin-bottom: 4px; }
 .ob-login { text-align: center; }

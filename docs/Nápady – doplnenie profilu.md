@@ -5,8 +5,8 @@ tags: [robiq, nápady, študent]
 
 ← [[00 Mapa systému]] · súvisí: [[Registrácia študenta]], [[Návrhy kandidátov (párovanie)]]
 
-Stav: **návrhy na rozhodnutie** (10. 10. 2026). Dnes „Doplniť profil" otvára pôvodné kroky 2 a 3 registrácie —
-stenu ~50 zručností a kalendár. Funguje to, ale je to formulár, nie zážitok. Tu sú spôsoby, ako sa dopýtať na
+Stav: **návrhy na rozhodnutie** (10. 10. 2026). Dnes „Doplniť profil" ide po malých krokoch (zručnosti, hodiny, dni, časť dňa, miesto) —
+zručnosti sú stále stena ~50 čipov. Funguje to, ale je to formulár, nie zážitok. Tu sú spôsoby, ako sa dopýtať na
 **čo študentovi ide, kedy má čas, kde chce pracovať a aký je** inak. Každý nápad hovorí, čo do profilu naplní.
 
 ## 1. Jedna otázka po každom záujme ⭐
@@ -16,7 +16,7 @@ Po kliknutí „Mám záujem" vyskočí malá karta s **jednou otázkou k tomu i
 - **Prečo:** otázka má zmysel práve teraz („firma sa ťa na to aj tak spýta"), je jedna a dá sa preskočiť. Za 5 záujmov je profil plný bez jediného formulára.
 - **Treba:** ku každej zručnosti jednu ľudskú otázku (zoznam v `data.js`) a vybrať ju podľa názvu/popisu inzerátu — rovnako ako to už robí párovanie (prvých 5 písmen).
 
-## 2. Robiq sa učí z feedu ⭐
+## 2. Robiq sa učí z feedu ⭐ — v appke od 10. 10. (registrácia v3)
 Každé „Mám záujem" a „Nezaujíma ma" niečo prezrádza: typ práce, víkendy vs. poobedia, mesto. Po 3–4 záujmoch:
 **„Vyzerá to, že ťa ťahá gastro cez víkendy v Trnave. Mám si to zapamätať?"** → *Áno · Upraviť*.
 - **Plní:** dni/časy (z typov inzerátov), mesto (z miest inzerátov), oblasť zručností.
