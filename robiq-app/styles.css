@@ -898,7 +898,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer;
 .offer-screen { display: flex; flex-direction: column; gap: 12px; text-align: center; }
 .offer-screen h2 { margin: 6px 0 0; font-size: var(--text-2xl); }
 .offer-screen .desc { margin: 0 auto 8px; max-width: 34ch; line-height: 1.5; }
-.offer-sent { display: inline-flex; align-self: center; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 99px; background: rgba(21,128,61,.1); color: var(--ok); font-size: var(--text-sm); font-weight: 700; }
 .offer-screen .secondary { margin: 0; }
 .offer-note { margin: 4px auto 0; max-width: 36ch; font-size: var(--text-xs); line-height: 1.5; color: var(--muted); }
 /* v3: „Robiq si všimol, čo ťa baví“ — suggestions learned from liked postings, each can be switched off */

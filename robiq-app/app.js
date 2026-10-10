@@ -20,7 +20,7 @@ const initialState = () => ({
   skillsOpen: [],                                          // skill groups showing all their chips (registration step 2)
   obFill: false, fillSteps: [], fillIdx: 0,                // v2 „Doplniť profil“: the small steps of this run (FILL_PARTS) and the current one
   fields: [],                                              // v3: what kind of work the student wants (FIELDS, same list as companies)
-  obOffer: false, sentJobT: '',                            // v3: „Doplniť profil / Preskočiť“ after the registration; the posting whose interest was just sent
+  obOffer: false,                                          // v3: „Doplniť profil / Preskočiť“ after the registration
   learn: null, learnNextAt: 3,                             // v3: open „Robiq si všimol“ suggestions; how many interests before the next offer
   obFrom: 'pick', todoNudgeOff: false,                     // v2: where „← Späť“ on the registration goes; „Doplň profil“ above the feed closed until the next visit
   profEdit: false, birth: '', bio: '', obTerms: false,
@@ -554,7 +554,6 @@ function sendPending() {                                   // l.1498–1503: the
   state.pendingJob = null; pendingSave(null);
   const j = id && isStudent() ? state.postings.find(p => p.id === id) : null;
   if (!j || state.likedIds.includes(j.id)) return;
-  state.sentJobT = j.t;                                    // v3: the „Doplniť profil / Preskočiť“ screen confirms it
   setTimeout(async () => { await act(j, 'like'); if (state.likedIds.includes(j.id)) showToast(`${j.t} — záujem odoslaný. ✓`); }, 40);
 }
 function openJoin(from) {                                  // v2 registration, one screen; „← Späť“ returns to `from` (app · pick)
@@ -1938,10 +1937,9 @@ function obJoin() {
   bindTerms(obEl, 'obTerms');
   obEl.onclick = e => { const el = e.target.closest('button[data-sfield]'); if (el) editorClick(el); };   // v3: kind of work
 }
-// v3: right after the registration (maybeOffer) — the interest is sent; fill in the profile now, or skip it.
+// v3: right after the registration (maybeOffer) — fill in the profile now, or skip it.
 function offerScreen() {
   obEl.innerHTML = `<div class="offer-screen">
-    ${state.sentJobT ? `<div class="offer-sent">${icon('heart', 16)}Záujem o „${esc(state.sentJobT)}“ je odoslaný</div>` : ''}
     <h2>Chceš ponuky na mieru?</h2>
     <p class="desc">Povedz nám, čo ti ide a kedy máš čas — zaberie to minútku a firma ťa lepšie spozná.</p>
     <button class="primary" data-go="offerFill">Doplniť profil</button>
