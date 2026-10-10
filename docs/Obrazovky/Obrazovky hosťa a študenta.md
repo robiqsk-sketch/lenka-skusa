@@ -25,7 +25,7 @@ Hosť vidí len Objavuj a tlačidlá na prihlásenie/registráciu.
 - Menu karty: nahlásiť inzerát, **zablokovať firmu** (jej ponuky zmiznú; uloží sa do `blocks`).
 - Poradie: pozri [[Návrhy kandidátov (párovanie)]] → časť Poradie ponúk.
 - Hosť pri „Mám záujem" → rovno **registrácia** (tlačidlo „Odoslať záujem", odvetvie predvyplnené podľa inzerátu); záujem sa po nej odošle sám (v1: výzva na prihlásenie, *gate*). Po registrácii obrazovka **Doplniť profil / Preskočiť** (v3). → [[Registrácia študenta]]
-- **Robiq si všimol, čo ťa baví** (v3) — po 3. záujme (a potom najskôr po ďalších 3) okno s návrhmi z lajknutých inzerátov: odvetvie, víkendy/poobedia/večery, mesto; každý čip sa dá vypnúť, uloží sa len zapnuté.
+- **Poradie podľa záujmov** (v3) — ponuky podobné tým, o ktoré mal študent záujem (odvetvie firmy, typ, mesto), a ponuky v jeho odvetví idú vyššie, podobné preskočeným nižšie; profil sa z toho nemení. → [[Návrhy kandidátov (párovanie)]] → Poradie ponúk
 
 ## Správy (`zhody`)
 Zoznam zhôd a chat. Pri novej zhode banner **„Máte zhodu!"**. → [[Záujem, zhoda a chat]]

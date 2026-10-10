@@ -21,7 +21,6 @@ const initialState = () => ({
   obFill: false, fillSteps: [], fillIdx: 0,                // v2 „Doplniť profil“: the small steps of this run (FILL_PARTS) and the current one
   fields: [],                                              // v3: what kind of work the student wants (FIELDS, same list as companies)
   obOffer: false,                                          // v3: „Doplniť profil / Preskočiť“ after the registration
-  learn: null, learnNextAt: 3,                             // v3: open „Robiq si všimol“ suggestions; how many interests before the next offer
   obFrom: 'pick', todoNudgeOff: false,                     // v2: where „← Späť“ on the registration goes; „Doplň profil“ above the feed closed until the next visit
   profEdit: false, birth: '', bio: '', obTerms: false,
   cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
@@ -46,9 +45,10 @@ let order = [];                                            // guest feed order (
 // until then the Profil tab glows, a nudge sits above the feed and its end says so (profileTodo).
 // false = version 1: sign-up prompt → account type → 3 steps incl. skills and time. Hidden, not deleted.
 const REG_V2 = true;
-// Version 3 (10. 10. 2026), on top of v2: the registration also asks what kind of work (field, FIELDS); right after it
-// „Doplniť profil / Preskočiť“ (offerScreen); a student who skips gets suggestions learned from the postings they liked
-// (learnProposals) and companies see field, days and times at a candidate. false = exactly version 2.
+// Version 3 (10. 10. 2026), on top of v2: the registration's 2nd step asks what kind of work (field, FIELDS); right after it
+// „Doplniť profil / Preskočiť“ (offerScreen) — „Doplniť“ is up to 10 short questions, one per screen; the feed order
+// follows the student's interests (feedAffinity, nothing saved to the profile); companies see field, days and times
+// at a candidate. false = exactly version 2.
 const REG_V3 = REG_V2 && true;
 
 // ═══════════ Theme (light / dark) ═══════════
@@ -245,7 +245,7 @@ function jobFromRow(p) {                                   // posting row (+comp
     posted: ago(p.created_at), lg: colorFor(c.name), logo: c.logo_url, ini: firmIni(c.name),
     badges: c.verified ? ['✓ Overená firma'] : [], tags: p.types || [], desc: p.description || '', only18: p.only18,
     legal: c.legal_name || '',                             // official name from the register — shown in the detail
-    cfields: c.fields || [],                               // the company's fields — v3 prefills the student's choice and learns from it
+    cfields: c.fields || [],                               // the company's fields — v3 prefills the student's choice and orders the feed by it
     photos: p.photos || [], cityId: p.city_id || null, city: p.cities?.name || cityName(p.city_id), remote: !!p.remote, address: p.address || '',
   };
 }
@@ -400,7 +400,7 @@ async function loadCandidates() {                          // students who liked
   state.candidates = rows.filter(r => profiles[r.student_id]).map(r => {
     const s = profiles[r.student_id];
     // No skills = the student has not filled in the profile yet (registration v2) — the hours are then only the database default.
-    // v3: the field from the registration and days / times (filled in or learned from liked postings) still tell the company something.
+    // v3: the field from the registration and days / times still tell the company something when the skills are missing.
     const skills = s.skills || [], fields = s.fields || [], days = s.avail_days || [], times = s.avail_times || [];
     const avail = [days.length === 7 ? 'každý deň' : days.join(', '), times.map(t => t.toLowerCase()).join(', ')].filter(Boolean).join(' · ');
     const known = skills.length || fields.length || avail;
@@ -561,7 +561,7 @@ function openJoin(from) {                                  // v2 registration, o
   if (!state.pendingJob) { const id = pendingLoad(); state.pendingJob = id ? state.postings.find(p => p.id === id) || null : null; }
   if (REG_V3 && !state.fields.length && state.pendingJob) state.fields = state.pendingJob.cfields.filter(f => FIELDS.includes(f));   // v3: the posting's field preselected
 }
-// v3: right after the registration — „Doplniť profil“ now, or „Preskočiť“ (Robiq then learns from liked postings).
+// v3: right after the registration — „Doplniť profil“ now, or „Preskočiť“.
 // A flag in the browser carries it over the e-mail confirmation, which opens the app again (maybe in a new tab).
 const OFFER_KEY = 'robiq_offer';
 function offerLater() { try { localStorage.setItem(OFFER_KEY, '1'); } catch {} }
@@ -573,43 +573,14 @@ function maybeOffer() {
   Object.assign(state, { screen: 'ob', obOffer: true, obFill: false });
   render(); track('offer_shown');
 }
-// v3: Robiq learns from the postings the student liked — the most common field, kind of time and city (each at least
-// twice among them). Only what the profile still misses and nothing the student turned down on this device; saved only
-// what they confirm. Offered after a „Mám záujem“, at most every 3 interests (maybeLearn).
-const LEARN_NO_KEY = 'robiq_learn_no';
-const learnDeclined = () => { try { return JSON.parse(localStorage.getItem(LEARN_NO_KEY)) || []; } catch { return []; } };
-const WHEN_LEARN = {                                       // posting type → label · what it fills in
-  'Víkendy': ['Víkendy (So, Ne)', () => { state.availDays = [...new Set([...state.availDays, 'So', 'Ne'])]; }],
-  'Poobede': ['Poobedia', () => { if (!state.availTimes.includes('Poobede')) state.availTimes.push('Poobede'); }],
-  'Večery':  ['Večery', () => { if (!state.availTimes.includes('Večer')) state.availTimes.push('Večer'); }],
-};
-function learnProposals() {
-  if (!REG_V3 || !state.authed || !isStudent()) return [];
-  const liked = state.postings.filter(p => state.likedIds.includes(p.id)), no = learnDeclined(), out = [];
-  const mostCommon = list => {                             // the most frequent value, if it is there at least twice
-    const n = {}; let best = null;
-    for (const x of list) { n[x] = (n[x] || 0) + 1; if (best === null || n[x] > n[best]) best = x; }
-    return best !== null && n[best] >= 2 ? best : null;
-  };
-  const f = mostCommon(liked.flatMap(p => p.cfields.filter(x => FIELDS.includes(x))));
-  if (f && !state.fields.includes(f)) out.push({ k: 'field:' + f, label: f, apply: () => { state.fields.push(f); } });
-  const w = !timeSet() && mostCommon(liked.flatMap(p => p.tags.filter(t => WHEN_LEARN[t])));
-  if (w) out.push({ k: 'when:' + w, label: WHEN_LEARN[w][0], apply: WHEN_LEARN[w][1] });
-  const c = !state.cityId && mostCommon(liked.filter(p => !p.remote && p.cityId).map(p => p.cityId));
-  if (c) out.push({ k: 'city:' + c, label: cityName(c) + ' a okolie', apply: () => { state.cityId = c; } });
-  return out.filter(p => !no.includes(p.k)).map(p => ({ ...p, on: true }));
-}
-function maybeLearn() {
-  if (state.learn || state.likedIds.length < state.learnNextAt) return;
-  const items = learnProposals();
-  if (!items.length) return;
-  state.learn = items; render(); track('learn_shown', { n: items.length });
-}
 // What the student has not filled in yet. Robiq orders offers and companies find students by exactly these —
 // without them there are few offers. Empty for companies, guests and in version 1 (there they are part of the registration).
 const TODO = { skills: 'Čo ti ide', time: 'Kedy máš čas', place: 'Kde môžeš pracovať' };
 // „Doplniť profil“ goes through small steps, one question per screen (FILL_STEP in the OB section draws them).
-const FILL_PARTS = { skills: ['skills'], time: ['hours', 'days', 'times'], place: ['place'] };
+// v3: up to 10 questions — time, place, then the skills group by group (v2: all skills on one screen, ~50 chips).
+const FILL_PARTS = REG_V3
+  ? { time: ['hours', 'days', 'times'], place: ['city', 'commute'], skills: ['g0', 'g2', 'g1', 'g3', 'custom'] }
+  : { skills: ['skills'], time: ['hours', 'days', 'times'], place: ['place'] };
 const timeSet = () => state.availDays.length > 0 || state.availTimes.length > 0;
 function profileTodo() {
   if (!REG_V2 || !state.authed || !isStudent()) return [];
@@ -632,7 +603,6 @@ async function act(job, dir) {                             // l.1219–1235
       state.myInterests.push({ postingId: job.id, t: job.t, f: job.f, pay: job.pay, lg: job.lg, ini: job.ini });
       render();
       await checkMatch(job.id, state.uid);
-      maybeLearn();                                        // v3: „Robiq si všimol, čo ťa baví“
     } else {
       const { error } = await sb.from('skips').insert({ posting_id: job.id, student_id: state.uid });
       if (error) throw error;
@@ -706,7 +676,7 @@ const go = {
   // opens just that part; otherwise every part that is missing, one after another.
   fillProfile: el => {
     const part = el?.dataset.part, todo = profileTodo();
-    const steps = (part ? [part] : todo.length ? todo : Object.keys(FILL_PARTS)).flatMap(p => FILL_PARTS[p]);
+    const steps = (part ? [part] : Object.keys(FILL_PARTS).filter(p => !todo.length || todo.includes(p))).flatMap(p => FILL_PARTS[p]);
     Object.assign(state, { screen: 'ob', obFill: true, fillSteps: steps, fillIdx: 0, accMenu: false });
     window.scrollTo(0, 0); track('profile_fill_start', { part: part || 'all' });
   },
@@ -714,18 +684,6 @@ const go = {
   // v3: after the registration
   offerFill: () => { state.obOffer = false; go.fillProfile(); track('offer_fill'); },
   offerSkip: () => { Object.assign(state, { obOffer: false, screen: 'app', tab: 0 }); track('offer_skip'); },
-  // v3: „Robiq si všimol“ — chips on/off, save what stays on (the rest is not offered again on this device)
-  learnToggle: el => { const p = state.learn?.[+el.dataset.i]; if (p) p.on = !p.on; },
-  learnLater: () => { state.learn = null; state.learnNextAt = state.likedIds.length + 3; },
-  learnSave: async () => {
-    const items = state.learn || [];
-    state.learn = null; state.learnNextAt = state.likedIds.length + 3;
-    const off = items.filter(p => !p.on).map(p => p.k), on = items.filter(p => p.on);
-    if (off.length) try { localStorage.setItem(LEARN_NO_KEY, JSON.stringify([...learnDeclined(), ...off])); } catch {}
-    if (!on.length) return;
-    on.forEach(p => p.apply());
-    if (await saveStudent()) { showToast('Uložené do profilu. ✓'); track('learn_saved', { n: on.length }); }
-  },
   pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },  goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
   // "← Späť" on login and account-type screens: login → feed; pick → wherever it was opened from
   back:        () => { state.screen = state.screen === 'pick' ? (state.pickFrom || 'app') : 'app'; },
@@ -939,7 +897,7 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' || state.screen !== 'app') return;
   const close = [['report', () => { state.report = null; }], ['photoEdit', () => { state.photoEdit = null; }],
     ['delAccount', () => { state.delAccount = false; }], ['delIdx', () => { state.delIdx = null; }],
-    ['gate', () => { state.gate = false; state.pendingJob = null; }], ['learn', () => { go.learnLater(); }], ['detail', () => { state.detail = null; }],
+    ['gate', () => { state.gate = false; state.pendingJob = null; }], ['detail', () => { state.detail = null; }],
     ['accMenu', () => { state.accMenu = false; }], ['rowMenu', () => { state.rowMenu = null; }]]
     .find(([k]) => state[k] !== null && state[k] !== false);
   if (close) { close[1](); render(); }
@@ -1072,11 +1030,27 @@ function isAdult() { const a = ageOf(state.birth); return a !== null && a >= 18;
 function remaining() {                                     // l.1243–1245
   const adult = isAdult();
   const inv = id => state.invitedPostingIds.includes(id) ? 1 : 0, near = j => inReach(j) ? 1 : 0;
+  const like = feedAffinity();
   return state.postings
     .filter(j => !state.skippedIds.includes(j.id) && !state.blockedFirms.includes(j.companyId) && (!j.only18 || adult) && matchesFilters(j))
     .sort((a, b) => (isFull(a) - isFull(b)) || (state.authed   // full postings last
-      ? (inv(b) - inv(a)) || (near(b) - near(a)) || (b.id - a.id)   // invitations, then within reach, then newest
+      ? (inv(b) - inv(a)) || (near(b) - near(a)) || (like(b) - like(a)) || (b.id - a.id)   // invitations, within reach, what the student likes, newest
       : order.indexOf(a.id) - order.indexOf(b.id)));
+}
+// v3: the feed follows the student's taste — a basic score, computed here and never saved to the profile.
+// Each posting has features: the company's fields, its types (víkendy, poobede…) and its city. A liked posting adds +2 to
+// each of its features, a skipped one −1, the fields chosen at registration +3; a posting's score is the sum over its
+// features. Postings already liked get no boost (they are done), so new similar ones come first.
+function feedAffinity() {
+  if (!REG_V3 || !state.authed || !isStudent()) return () => 0;
+  const feats = p => [...p.cfields.map(f => 'f:' + f), ...p.tags.map(t => 't:' + t), ...(p.cityId && !p.remote ? ['c:' + p.cityId] : [])];
+  const w = {}, add = (key, n) => { w[key] = (w[key] || 0) + n; };
+  for (const p of state.postings) {
+    if (state.likedIds.includes(p.id)) feats(p).forEach(f => add(f, 2));
+    else if (state.skippedIds.includes(p.id)) feats(p).forEach(f => add(f, -1));
+  }
+  state.fields.forEach(f => add('f:' + f, 3));
+  return p => state.likedIds.includes(p.id) ? 0 : feats(p).reduce((sum, f) => sum + (w[f] || 0), 0);
 }
 function aiJob() { return remaining().find(j => !state.likedIds.includes(j.id) && !isFull(j)) || null; }
 
@@ -1708,12 +1682,6 @@ function layers() {                                        // banner l.946, toas
     <div><b>Máš zhodu!</b><span class="s">${esc(state.bannerName)} má o teba záujem.</span></div>
     <button data-go="bannerGo">Napísať správu</button></div>`;
   if (state.toast) h += `<div class="toast">${esc(state.toast)}</div>`;
-  if (state.learn) h += `<div class="overlay" data-go="learnLater"><div class="gate learn" data-go="noop">
-    <div class="ic">${icon('sparkles', 22)}</div>
-    <div class="h">Robiq si všimol, čo ťa baví</div>
-    <div class="p">Podľa ponúk, o ktoré máš záujem. Uložiť si to do profilu?</div>
-    <div class="learn-chips">${state.learn.map((p, i) => `<button type="button" class="${p.on ? 'on' : ''}" data-go="learnToggle" data-i="${i}" aria-pressed="${p.on}">${p.on ? '✓ ' : ''}${esc(p.label)}</button>`).join('')}</div>
-    <div class="col"><button class="b1" data-go="learnSave">Uložiť do profilu</button><button class="b3" data-go="learnLater">Teraz nie</button></div></div></div>`;
   if (state.delIdx !== null && state.offers[state.delIdx]) h += `<div class="overlay del" data-go="delCancel"><div class="delm" data-go="noop">
     <div class="h">Zmazať „${esc(state.offers[state.delIdx].t)}"?</div>
     <div class="p">Inzerát aj jeho zhody sa nedajú vrátiť. Ak ho chcete len stiahnuť, použite Pozastaviť.</div>
@@ -1783,8 +1751,8 @@ function maxBirth() { const d = new Date(); d.setFullYear(d.getFullYear() - MIN_
 const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('sk-SK'); };
 function obCanContinue() {
   if (state.obFill) return true;                           // filling in the profile later: every part is optional
-  if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && isOldEnough() && (!REG_V3 || state.fields.length > 0) && (!REG_V2 || state.obTerms);
-  if (state.obStep === 2) return state.obSkills.length > 0;
+  if (state.obStep === 1) return state.obName.trim() && (state.oauth || (state.obEmail.trim() && state.obPass.length >= 6)) && isOldEnough() && (!REG_V2 || state.obTerms);
+  if (state.obStep === 2) return REG_V2 ? state.fields.length > 0 : state.obSkills.length > 0;   // v3: kind of work · v1: skills
   return state.obTerms && !!state.cityId;                  // step 3: city (required) + terms/privacy consent (also for Google sign-ups)
 }
 // Consent line for the last registration step (student and company). Links open in a new tab so the form is not lost.
@@ -1804,7 +1772,6 @@ function obStep1Problem() {                                // why step 1 cannot 
   if (!state.oauth && state.obPass.length < 6) return 'Heslo musí mať aspoň 6 znakov.';
   if (!state.birth) return 'Zadaj dátum narodenia.';
   if (!isOldEnough()) return AGE_BLOCKED;
-  if (REG_V3 && !state.fields.length) return 'Vyber, akú prácu hľadáš.';
   if (REG_V2 && !state.obTerms) return TERMS_MISSING;     // v2: the consent is on this one screen
   return '';
 }
@@ -1825,13 +1792,18 @@ async function leaveFill(done) {                           // end of „Doplniť
   track('profile_filled', { left });
 }
 document.getElementById('ob-next').addEventListener('click', async () => {           // l.1566–1570
-  if (state.obFill) { if (state.fillIdx < state.fillSteps.length - 1) state.fillIdx++; else await leaveFill(true); render(); return; }
+  if (state.obFill) {                                      // v3 saves after every question — leaving halfway keeps the answers
+    if (state.fillIdx < state.fillSteps.length - 1) { if (!REG_V3 || await saveStudent()) state.fillIdx++; } else await leaveFill(true);
+    render(); return;
+  }
   if (!obCanContinue()) {
+    if (REG_V3 && state.obStep === 2) setErr('ob-err', 'Vyber, akú prácu hľadáš.');
     if (state.obStep === 1) { const pr = obStep1Problem(); setErr('ob-err', pr === AGE_BLOCKED ? '' : pr); if (state.birth && !isOldEnough()) track('reg_blocked', { reason: 'age' }); }
     if (state.obStep === 3) setErr('ob-err', !state.cityId ? 'Vyber svoje mesto zo zoznamu.' : TERMS_MISSING);
     return;
   }
   if (state.obStep === 1 && !state.oauth && await emailTaken(state.obEmail, 'ob-err', 'ob-next', EMAIL_TAKEN_S)) { track('reg_blocked', { reason: 'email_taken' }); return; }
+  if (REG_V3 && state.obStep === 1) { state.obStep = 2; render(); track('reg_step', { role: 'student', step: 2 }); return; }   // v3: kind of work next
   if (!REG_V2 && state.obStep < 3) { state.obStep++; render(); track('reg_step', { role: 'student', step: state.obStep }); return; }
   await registerStudent();
 });
@@ -1893,6 +1865,7 @@ function renderStepChrome(prefix, step, lastLabel, canContinue, total = 3) {
   const dots = document.getElementById(prefix + '-dots');
   while (dots.children.length < total) dots.appendChild(document.createElement('span'));
   dots.style.visibility = total > 1 ? '' : 'hidden';       // hidden, not removed: „Späť“ and the button keep their places
+  dots.classList.toggle('many', total > 5);                // up to 10 questions: smaller dots so they fit between the buttons
   dots.setAttribute('aria-label', `Krok ${step} z ${total}`);
   [...dots.children].forEach((d, i) => { d.hidden = i >= total; d.classList.toggle('on', step >= i + 1); d.classList.toggle('cur', step === i + 1); });
   const next = document.getElementById(prefix + '-next');
@@ -1900,18 +1873,19 @@ function renderStepChrome(prefix, step, lastLabel, canContinue, total = 3) {
   next.style.opacity = canContinue ? 1 : .45;
 }
 function renderOb() {
-  document.getElementById('ob-alt').hidden = !REG_V2 || state.obFill || state.obOffer || state.oauth;   // Google + „Už mám účet“ under the v2 registration
+  document.getElementById('ob-alt').hidden = !REG_V2 || state.obFill || state.obOffer || state.oauth || state.obStep !== 1;   // Google + „Už mám účet“ under the v2 registration (its 1st step)
   document.querySelector('#scr-ob .foot').hidden = state.obOffer;   // the offer has its own two buttons
   if (state.obOffer) { offerScreen(); return; }            // v3: right after the registration
   if (state.obFill) {                                      // v2 „Doplniť profil“: one small step per screen
     renderStepChrome('ob', state.fillIdx + 1, 'Uložiť', true, state.fillSteps.length);
     FILL_STEP[state.fillSteps[state.fillIdx]]();
+    fillNextLabel();
     return;
   }
-  if (REG_V2) renderStepChrome('ob', 1, state.pendingJob ? 'Odoslať záujem' : 'Vytvoriť účet', obCanContinue(), 1);
+  if (REG_V2) renderStepChrome('ob', state.obStep, state.pendingJob ? 'Odoslať záujem' : 'Vytvoriť účet', obCanContinue(), REG_V3 ? 2 : 1);   // v3: + kind of work
   else renderStepChrome('ob', state.obStep, 'Hotovo — pozri ponuky', obCanContinue());
   if (state.obStep === 1) (REG_V2 ? obJoin : obStep1)();
-  if (state.obStep === 2) obStep2();
+  if (state.obStep === 2) (REG_V2 ? joinField : obStep2)();
   if (state.obStep === 3) obStep3();
 }
 const obEl = document.getElementById('ob-step');
@@ -1927,7 +1901,6 @@ function obJoin() {
       <input class="input" id="ob-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
       <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ob-birth" type="date" value="${esc(state.birth)}" max="${maxBirth()}" autocomplete="bday"></label>
       <div class="ob-age-note" id="ob-age-note"></div>
-      ${REG_V3 ? `<div class="join-fields"><div class="label">Akú prácu hľadáš?</div>${fieldsEditor()}</div>` : ''}
       ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
       <input class="input" id="ob-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
       <input class="input" id="ob-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
@@ -1935,16 +1908,21 @@ function obJoin() {
     <div class="join-terms">${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}</div>`;
   bindStep1();
   bindTerms(obEl, 'obTerms');
-  obEl.onclick = e => { const el = e.target.closest('button[data-sfield]'); if (el) editorClick(el); };   // v3: kind of work
+  obEl.onclick = null;
+}
+// v3, step 2 — what kind of work (after the name and contacts), preselected from the posting's company.
+function joinField() {
+  obEl.innerHTML = `<p class="desc step-note center fill-q">Akú prácu hľadáš?</p><div class="join-fields">${fieldsEditor()}</div>`;
+  obEl.onclick = e => { const el = e.target.closest('button[data-sfield]'); if (el) { editorClick(el); setErr('ob-err', ''); } };
 }
 // v3: right after the registration (maybeOffer) — fill in the profile now, or skip it.
 function offerScreen() {
   obEl.innerHTML = `<div class="offer-screen">
     <h2>Chceš ponuky na mieru?</h2>
-    <p class="desc">Povedz nám, čo ti ide a kedy máš čas — zaberie to minútku a firma ťa lepšie spozná.</p>
+    <p class="desc">Pár krátkych otázok — kedy máš čas, kde a čo ti ide. Firma ťa tak lepšie spozná.</p>
     <button class="primary" data-go="offerFill">Doplniť profil</button>
     <button class="secondary" data-go="offerSkip">Preskočiť</button>
-    <p class="offer-note">Keď preskočíš, Robiq si všíma, aké ponuky ťa zaujímajú, a navrhne ti, čo si uložiť.</p>
+    <p class="offer-note">Keď preskočíš, ponuky ti zoradíme podľa toho, čo ťa zaujme.</p>
   </div>`;
   obEl.onclick = null;
 }
@@ -2015,47 +1993,75 @@ const FILL_STEP = {
   days:  () => fillStep('Ktoré dni môžeš pracovať?', daysEditor()),
   times: () => fillStep('Kedy počas dňa?', timesEditor()),
   place: () => fillStep('Kde môžeš pracovať?', placeEditor(false)),
+  // v3: the place in two questions, the skills group by group
+  city:    () => fillStep('Kde bývaš?', cityRow()),
+  commute: () => fillStep('Ako ďaleko môžeš dochádzať?', commuteRow()),
+  g0:      () => fillStep('V čom už máš skúsenosti?', skillsEditor(0)),
+  g2:      () => fillStep('Aké jazyky ovládaš?', skillsEditor(2)),
+  g1:      () => fillStep('Čo zvládaš na počítači?', skillsEditor(1)),
+  g3:      () => fillStep('Čo o tebe platí?', skillsEditor(3)),
+  custom:  () => fillStep('Ešte niečo, čo vieš?', skillsEditor('custom')),
 };
+// v3: a question nobody answered can be skipped — the button says „Preskočiť“ instead of „Pokračovať“
+const FILL_ANSWERED = { days: () => state.availDays.length, times: () => state.availTimes.length, city: () => state.cityId,
+  g0: () => groupHas(0), g1: () => groupHas(1), g2: () => groupHas(2), g3: () => groupHas(3), custom: () => state.obSkills.some(x => isCustomSkill(x.n)) };
+function fillNextLabel() {
+  const step = state.fillSteps[state.fillIdx], answered = FILL_ANSWERED[step];
+  if (REG_V3 && answered && state.fillIdx < state.fillSteps.length - 1) document.getElementById('ob-next').textContent = answered() ? 'Pokračovať' : 'Preskočiť';
+}
 
 // ─── Shared editors: onboarding steps 2–3 and the profile in edit mode ───
 const SKILLS_SHOWN = 6;                                   // in the profile editor; registration shows 4 (less on one screen)
-function skillsEditor() {                                  // l.126–162, logic l.1256–1296
+// only: nothing = all groups (profile, v1 step 2); a GROUPS index = just that group, everything shown (v3 question);
+// 'custom' = just „Niečo iné?“ with the skills the student typed in.
+const RELATED_ALL = Object.values(RELATED).flat();
+const isCustomSkill = n => !SKILLS.includes(n) && !RELATED_ALL.includes(n);
+const groupHas = gi => state.obSkills.some(x => GROUPS[gi].items.includes(x.n));
+function skillsEditor(only) {                              // l.126–162, logic l.1256–1296
   const selNames = state.obSkills.map(x => x.n);
+  const mine = n => only === undefined ? true : only === 'custom' ? isCustomSkill(n)
+    : GROUPS[only].items.includes(n) || GROUPS[only].items.some(g => (RELATED[g] || []).includes(n));
   const rows = state.obSkills.map((x, i) => {
+    if (!mine(x.n)) return '';
     const isLang = LANGS.includes(x.n), speakOn = x.speak !== false;
     const lvls = (isLang ? LANG_LVLS : LVLS).map((L, li) => `<button type="button" class="${x.lvl === li + 1 ? 'on' : ''}" data-lvl="${i}:${li + 1}">${L}</button>`).join('');
     return `<div class="sel-row"><div class="sel-name">${esc(x.n)}</div>
       <button type="button" class="speak ${speakOn ? 'on' : ''}" data-speak="${i}" style="display:${isLang ? 'inline-block' : 'none'}">${speakOn ? '✓ Rozprávam' : 'Rozprávam'}</button>
       <div class="lvls">${lvls}</div><button type="button" class="remove" aria-label="Odstrániť" data-remove="${i}">${icon('x', 14)}</button></div>`;
   }).join('');
-  const groups = GROUPS.map(gr => {
+  const groups = only === 'custom' ? '' : GROUPS.map((gr, gi) => {
+    if (only !== undefined && gi !== only) return '';
     const sugg = [];
     state.obSkills.forEach(x => { if (!gr.items.includes(x.n)) return;
       (RELATED[x.n] || []).forEach(r => { if (!selNames.includes(r) && !SKILLS.includes(r) && !sugg.includes(r)) sugg.push(r); }); });
     // A group shows its first SKILLS_SHOWN skills; the rest is one tap away ("Ďalšie") — ~50 chips at once was a wall.
     const left = gr.items.filter(n => !selNames.includes(n)), open = state.skillsOpen.includes(gr.g);
-    const max = state.screen === 'ob' ? 4 : SKILLS_SHOWN;
+    const max = only !== undefined ? Infinity : state.screen === 'ob' ? 4 : SKILLS_SHOWN;   // one group per question: all of it
     const shown = open ? left : left.slice(0, max), hidden = left.length - shown.length;
     const chips = shown.map(n => `<button type="button" class="chip" data-add="${esc(n)}">＋ ${esc(n)}</button>`)
       .concat(sugg.map(n => `<button type="button" class="chip sugg" data-add="${esc(n)}">${icon('sparkles', 13)}${esc(n)}</button>`))
       .concat(hidden ? [`<button type="button" class="chip more" data-more="${esc(gr.g)}">Ďalšie (${hidden})</button>`]
             : open && left.length > max ? [`<button type="button" class="chip more" data-more="${esc(gr.g)}">Menej</button>`] : []);
-    return chips.length ? `<div><div class="group-title">${gr.g}</div><div class="chips">${chips.join('')}</div></div>` : '';
+    return chips.length ? `<div>${only === undefined ? `<div class="group-title">${gr.g}</div>` : ''}<div class="chips">${chips.join('')}</div></div>` : '';
   }).join('');
-  return `${rows ? `<div class="sel-list">${rows}</div>` : ''}
-    <div class="groups">${groups}
-      <div><div class="group-title">Niečo iné?</div>
+  const custom = only !== undefined && only !== 'custom' ? '' : `
+      <div>${only === undefined ? '<div class="group-title">Niečo iné?</div>' : ''}
         <div class="custom-row"><input class="input" id="custom" placeholder="Napíš vlastnú zručnosť a stlač Enter…" value="${esc(state.customSkill)}"><button type="button" class="add-btn" id="add-custom">Pridať</button></div>
-        <div class="hint">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami. Nepíš sem citlivé údaje (zdravie, náboženstvo, politické názory).</div></div></div>`;
+        <div class="hint">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami. Nepíš sem citlivé údaje (zdravie, náboženstvo, politické názory).</div></div>`;
+  return `${rows ? `<div class="sel-list">${rows}</div>` : ''}
+    <div class="groups">${groups}${custom}</div>`;
 }
 // "Kde môžeš pracovať?" — city (fixed list with suggestions) + how far the student travels. Onboarding step 3 and the profile.
 function placeEditor(label = true) {                       // label = false: the question is already the step's title („Doplniť profil“)
   return `${label ? '<div class="label">Kde môžeš pracovať?</div>' : ''}
-    <div class="place-row"><input class="input" id="city" placeholder="Tvoje mesto" value="${esc(cityName(state.cityId))}" autocomplete="off">
-      ${state.cityId ? '<span class="ok">✓</span>' : ''}</div>
-    <div class="commute">${COMMUTES.map(([k, l]) => `<button type="button" class="${state.commute === k ? 'on' : ''}" data-commute="${k}">${l}</button>`).join('')}</div>
+    ${cityRow()}
+    ${commuteRow()}
     <div class="hint" id="city-hint">${state.cityId ? '' : 'Vyber mesto zo zoznamu — podľa neho ťa firmy nájdu.'}</div>`;
 }
+// The two halves, also one per question in „Doplniť profil“ (v3)
+const cityRow = () => `<div class="place-row"><input class="input" id="city" placeholder="Tvoje mesto" value="${esc(cityName(state.cityId))}" autocomplete="off">
+      ${state.cityId ? '<span class="ok">✓</span>' : ''}</div>`;
+const commuteRow = () => `<div class="commute">${COMMUTES.map(([k, l]) => `<button type="button" class="${state.commute === k ? 'on' : ''}" data-commute="${k}">${l}</button>`).join('')}</div>`;
 function availabilityEditor() {                            // l.169–188, logic l.1542–1563 — all on one page (profile, v1 step 3)
   return `${hoursEditor()}
     <div class="label">Ktoré dni?</div>
@@ -2105,6 +2111,7 @@ function bindEditors() {
     const hint = document.getElementById('city-hint'); if (hint) hint.textContent = c ? '' : 'Vyber mesto zo zoznamu — podľa neho ťa firmy nájdu.';
     const ok = city.parentElement.querySelector('.ok'); if (ok && !c) ok.remove();
     const next = document.getElementById('ob-next'); if (next && state.screen === 'ob') next.style.opacity = obCanContinue() ? 1 : .45;
+    if (state.obFill) fillNextLabel();                     // „Kde bývaš?“ — picking the city makes it „Pokračovať“
   });
   const bio = document.getElementById('p-bio');
   if (bio) bio.addEventListener('input', () => { state.bio = bio.value; });

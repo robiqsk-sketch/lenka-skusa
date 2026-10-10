@@ -14,9 +14,8 @@ Zámerne **anonymná**: ukladá sa len názov udalosti, rola (hosť/študent/fir
 | `visit` | otvorenie appky |
 | `detail_open` | otvorenie detailu inzerátu |
 | `gate_shown` | hosť klikol „Mám záujem" (v2 ho to pošle na registráciu, v1 dostal výzvu) — v admine „„Mám záujem" bez účtu" |
-| `reg_start`, `reg_step`, `reg_done`, `reg_blocked` | priebeh registrácie (kde ľudia odpadávajú a prečo). Registrácia študenta v2 je jedna obrazovka — `reg_step` neposiela, admin kroky, do ktorých nikto neprišiel, vynechá |
+| `reg_start`, `reg_step`, `reg_done`, `reg_blocked` | priebeh registrácie (kde ľudia odpadávajú a prečo). Registrácia študenta v2 je jedna obrazovka — `reg_step` neposiela, admin kroky, do ktorých nikto neprišiel, vynechá; v3 posiela `reg_step` 2 (odvetvie) |
 | `offer_shown`, `offer_fill`, `offer_skip` | v3: obrazovka po registrácii — ukázaná / Doplniť profil / Preskočiť |
-| `learn_shown`, `learn_saved` | v3: „Robiq si všimol" — ukázané (`n` = počet návrhov) / uložené (`n` = koľko potvrdil) |
 | `profile_fill_start`, `profile_filled` | študent otvoril „Doplniť profil" (`part` = skills / time / place, alebo all = všetko, čo chýba) / uložil ho (`left` = koľko častí ešte chýba) |
 | `login`, `login_google_click`, `password_reset_sent` | prihlasovanie |
 | `report` | odoslané nahlásenie |
