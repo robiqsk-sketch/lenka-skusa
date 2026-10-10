@@ -29,7 +29,7 @@ flowchart TD
   F[Hosť vo feede] -->|„Mám záujem" na inzeráte| J
   H[Hlavička: Vytvoriť účet] --> P[Výber typu účtu] -->|Hľadám prácu| J
   E[Koniec feedu: Vytvoriť profil] --> J
-  J["Registrácia — jedna obrazovka<br/>karta inzerátu · meno · dátum narodenia · e-mail · heslo · súhlas<br/>alebo Google · alebo Už mám účet"]
+  J["Registrácia — jedna obrazovka<br/>meno · dátum narodenia · akú prácu hľadáš · e-mail · heslo · súhlas<br/>alebo Google · alebo Už mám účet"]
   J -->|e-mail| SU[signUp — trigger handle_new_user<br/>vytvorí profil len s menom a dátumom]
   J -->|Google| UP[profil sa zapíše priamo<br/>profiles + students]
   SU --> CONF{Treba potvrdiť e-mail?}
@@ -40,8 +40,8 @@ flowchart TD
   T -->|Doplniť| W["Doplniť profil — malé kroky, jedna otázka na obrazovku<br/>zručnosti → hodiny → dni → časť dňa → miesto → Uložiť"]
 ```
 
-## Obrazovka registrácie (v2)
-- Hore **karta inzerátu**, na ktorý hosť klikol (logo, názov, firma, plat) — aby bolo jasné, prečo sa registruje. Keď prišiel z hlavičky, karta nie je.
+## Obrazovka registrácie (v2 / v3)
+- Vo v3 **bez karty inzerátu** hore (zrušená 10. 10.); inzerát sa prejaví predvyplneným odvetvím a tlačidlom „Odoslať záujem". Vo v2 bola hore **karta inzerátu**, na ktorý hosť klikol (logo, názov, firma, plat). Keď prišiel z hlavičky, karta nie je.
 - Polia: **meno a priezvisko · dátum narodenia · e-mail · heslo** (pri Google len e-mail z Googlu) a **súhlas** s podmienkami (16+).
   To je minimum, ktoré zamestnávateľ potrebuje: kto to je a koľko má rokov (16+ je podmienka Robiqu, 18+ niektorých inzerátov).
 - Tlačidlo **„Odoslať záujem"** (z inzerátu) alebo **„Vytvoriť účet"** (z hlavičky). Bez bodiek krokov — je len jeden.
