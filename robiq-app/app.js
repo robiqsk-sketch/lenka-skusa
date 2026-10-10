@@ -2004,7 +2004,7 @@ const FILL_STEP = {
 };
 // v3: a question nobody answered can be skipped — the button says „Preskočiť“ instead of „Pokračovať“
 const FILL_ANSWERED = { days: () => state.availDays.length, times: () => state.availTimes.length, city: () => state.cityId,
-  g0: () => groupHas(0), g1: () => groupHas(1), g2: () => groupHas(2), g3: () => groupHas(3), custom: () => state.obSkills.some(x => isCustomSkill(x.n)) };
+  g0: () => groupHas(0), g1: () => groupHas(1), g2: () => groupHas(2), g3: () => groupHas(3), custom: () => state.obSkills.some(x => isCustomSkill(x.n) && x.g === undefined) };
 function fillNextLabel() {
   const step = state.fillSteps[state.fillIdx], answered = FILL_ANSWERED[step];
   if (REG_V3 && answered && state.fillIdx < state.fillSteps.length - 1) document.getElementById('ob-next').textContent = answered() ? 'Pokračovať' : 'Preskočiť';
@@ -2013,16 +2013,17 @@ function fillNextLabel() {
 // ─── Shared editors: onboarding steps 2–3 and the profile in edit mode ───
 const SKILLS_SHOWN = 6;                                   // in the profile editor; registration shows 4 (less on one screen)
 // only: nothing = all groups (profile, v1 step 2); a GROUPS index = just that group, everything shown (v3 question);
-// 'custom' = just „Niečo iné?“ with the skills the student typed in.
+// 'custom' = just „Niečo iné?“ with the skills the student typed in. The experience question (group 0) has its own
+// field too — what is typed there is kept with that group ({ g: 0 } on the skill) and shown only there.
 const RELATED_ALL = Object.values(RELATED).flat();
 const isCustomSkill = n => !SKILLS.includes(n) && !RELATED_ALL.includes(n);
-const groupHas = gi => state.obSkills.some(x => GROUPS[gi].items.includes(x.n));
+const groupHas = gi => state.obSkills.some(x => GROUPS[gi].items.includes(x.n) || x.g === gi);
 function skillsEditor(only) {                              // l.126–162, logic l.1256–1296
   const selNames = state.obSkills.map(x => x.n);
-  const mine = n => only === undefined ? true : only === 'custom' ? isCustomSkill(n)
-    : GROUPS[only].items.includes(n) || GROUPS[only].items.some(g => (RELATED[g] || []).includes(n));
+  const mine = x => only === undefined ? true : only === 'custom' ? isCustomSkill(x.n) && x.g === undefined
+    : GROUPS[only].items.includes(x.n) || x.g === only || GROUPS[only].items.some(g => (RELATED[g] || []).includes(x.n));
   const rows = state.obSkills.map((x, i) => {
-    if (!mine(x.n)) return '';
+    if (!mine(x)) return '';
     const isLang = LANGS.includes(x.n), speakOn = x.speak !== false;
     const lvls = (isLang ? LANG_LVLS : LVLS).map((L, li) => `<button type="button" class="${x.lvl === li + 1 ? 'on' : ''}" data-lvl="${i}:${li + 1}">${L}</button>`).join('');
     return `<div class="sel-row"><div class="sel-name">${esc(x.n)}</div>
@@ -2044,9 +2045,10 @@ function skillsEditor(only) {                              // l.126–162, logic
             : open && left.length > max ? [`<button type="button" class="chip more" data-more="${esc(gr.g)}">Menej</button>`] : []);
     return chips.length ? `<div>${only === undefined ? `<div class="group-title">${gr.g}</div>` : ''}<div class="chips">${chips.join('')}</div></div>` : '';
   }).join('');
-  const custom = only !== undefined && only !== 'custom' ? '' : `
+  const own = only === 0 ? 'Napíš inú skúsenosť…' : 'Napíš vlastnú zručnosť a stlač Enter…';   // the experience question: own ones too
+  const custom = only !== undefined && only !== 'custom' && only !== 0 ? '' : `
       <div>${only === undefined ? '<div class="group-title">Niečo iné?</div>' : ''}
-        <div class="custom-row"><input class="input" id="custom" placeholder="Napíš vlastnú zručnosť a stlač Enter…" value="${esc(state.customSkill)}"><button type="button" class="add-btn" id="add-custom">Pridať</button></div>
+        <div class="custom-row"><input class="input" id="custom" placeholder="${own}" value="${esc(state.customSkill)}"><button type="button" class="add-btn" id="add-custom">Pridať</button></div>
         <div class="hint">Všetko, čo sem napíšeš, použije Robiq pri AI párovaní s ponukami. Nepíš sem citlivé údaje (zdravie, náboženstvo, politické názory).</div></div>`;
   return `${rows ? `<div class="sel-list">${rows}</div>` : ''}
     <div class="groups">${groups}${custom}</div>`;
@@ -2126,8 +2128,11 @@ function bindEditors() {
     try { await removeAvatar(); render(); showToast('Fotka odstránená.'); } catch (err) { fail(err); }
   });
 }
-function addSkill(n) { if (!state.obSkills.some(x => x.n === n)) { state.obSkills.push({ n, lvl: 2, speak: true }); state.customSkill = ''; } render(); }
-function addCustom() { const n = state.customSkill.trim(); if (n) addSkill(n); }
+function addSkill(n, g) { if (!state.obSkills.some(x => x.n === n)) { state.obSkills.push({ n, lvl: 2, speak: true, ...(g !== undefined ? { g } : {}) }); state.customSkill = ''; } render(); }
+function addCustom() {                                    // typed in on the experience question → stays with that group
+  const n = state.customSkill.trim(); if (!n) return;
+  addSkill(n, state.obFill && state.fillSteps[state.fillIdx] === 'g0' && isCustomSkill(n) ? 0 : undefined);
+}
 function availSummary() {                                  // l.1558–1563
   const d = state.availDays, t = state.availTimes;
   if (!d.length && !t.length) return 'Vyber si dni a časy, kedy môžeš pracovať.';

@@ -71,7 +71,7 @@ create table public.profiles (
 create table public.students (
   id           uuid primary key references public.profiles (id) on delete cascade,
   name         text not null default '',
-  skills       jsonb not null default '[]',        -- [{ n, lvl, speak }]
+  skills       jsonb not null default '[]',        -- [{ n, lvl, speak, g? }] — g: 0 = vlastná skúsenosť dopísaná pri otázke o skúsenostiach
   hours        smallint not null default 1,        -- index do HOURS (0–3)
   avail_days   text[] not null default '{}',
   avail_times  text[] not null default '{}',

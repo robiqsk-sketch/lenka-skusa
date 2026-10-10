@@ -74,7 +74,7 @@ Percentá: účet = 25 %, každá doplnená časť ďalších 25 %.
 |---|---|
 | Kedy máš čas | 1 Koľko hodín týždenne? → 2 Ktoré dni? → 3 Kedy počas dňa? |
 | Kde môžeš pracovať | 4 Kde bývaš? → 5 Ako ďaleko môžeš dochádzať? |
-| Čo ti ide | 6 V čom už máš skúsenosti? (pracovné pozície) → 7 Aké jazyky ovládaš? → 8 Čo zvládaš na počítači? → 9 Čo o tebe platí? → 10 Ešte niečo, čo vieš? (vlastná zručnosť) |
+| Čo ti ide | 6 V čom už máš skúsenosti? (pracovné pozície + vlastné, dopísané ručne — ostanú pri tejto otázke, nie v „Ešte niečo“) → 7 Aké jazyky ovládaš? → 8 Čo zvládaš na počítači? → 9 Čo o tebe platí? → 10 Ešte niečo, čo vieš? (vlastná zručnosť) |
 
 Spolu **10 otázok** (v3; vo v2 boli zručnosti jedna obrazovka so všetkými ~50 čipmi a miesto jedna obrazovka). Každá otázka ukazuje len svoju skupinu zručností — celú, bez „Ďalšie" — a pri vybraných úroveň.
 
