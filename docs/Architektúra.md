@@ -60,6 +60,7 @@ flowchart TB
 | api.statistics.sk (RPO) | overenie IČO firmy |
 | jsDelivr | knižnica supabase-js |
 | cdnfonts.com | písma Satoshi a Open Sauce One |
+| Anthropic (Claude) | **len test:** bot v registrácii rozhovorom — funkcia `ai-onboarding` → [[Registrácia rozhovorom s AI (test)]]; platí sa za použitie |
 | Brevo | e-maily (potvrdenie registrácie, obnova hesla, upozornenia, hlásenie o páde) — bezplatne **300 e-mailov denne spolu**; pri raste prvý limit, na ktorý appka narazí |
 
 Súvisí: [[app.js – mapa kódu]], [[Dátový model]]

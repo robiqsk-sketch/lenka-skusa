@@ -231,11 +231,11 @@ begin
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'fields', '[]'::jsonb)) x), '{}'),
             coalesce(d->>'contact_name', ''), nullif(d->>'city_id', '')::int);
   else
-    insert into students (id, name, birth, skills, hours, avail_days, avail_times, city_id, commute)
+    insert into students (id, name, birth, skills, hours, avail_days, avail_times, city_id, commute, bio)
     values (new.id, coalesce(d->>'name', ''), nullif(d->>'birth', '')::date, coalesce(d->'skills', '[]'::jsonb), coalesce((d->>'hours')::smallint, 1),
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'avail_days',  '[]'::jsonb)) x), '{}'),
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'avail_times', '[]'::jsonb)) x), '{}'),
-            nullif(d->>'city_id', '')::int, coalesce(nullif(d->>'commute', ''), '30km'));
+            nullif(d->>'city_id', '')::int, coalesce(nullif(d->>'commute', ''), '30km'), left(coalesce(d->>'bio', ''), 500));
   end if;
   return new;
 end $$;
@@ -926,3 +926,14 @@ create table if not exists public.crash_reports (
 alter table public.crash_reports enable row level security;   -- bez pravidiel → anon / authenticated nič
 revoke all on public.crash_reports from anon, authenticated;
 create index if not exists crash_reports_created_idx on public.crash_reports (created_at desc);
+
+-- TEST: registrácia rozhovorom s AI — počítadlo volaní funkcie ai-onboarding (limit na IP / deň). Len hash IP, týždeň dozadu.
+create table if not exists public.ai_onboarding_calls (
+  id         bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  ip_hash    text not null
+);
+alter table public.ai_onboarding_calls enable row level security;   -- bez pravidiel → anon / authenticated nič
+revoke all on public.ai_onboarding_calls from anon, authenticated;
+create index if not exists ai_onboarding_calls_ip_idx on public.ai_onboarding_calls (ip_hash, created_at desc);
+create index if not exists ai_onboarding_calls_created_idx on public.ai_onboarding_calls (created_at desc);

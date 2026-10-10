@@ -141,7 +141,7 @@ h2 b { font-weight: 700; color: inherit; }                  /* was purple — he
 /* Installed on a phone (standalone), the page runs under the status bar / notch — keep content and the sticky bar below it. */
 .a-content { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
 /* Rules further down that set `padding` again must keep these env() insets — otherwise the Dynamic Island covers the top bar in the home-screen app */
-#scr-login, #scr-reset, #scr-pick, #scr-ob, #scr-fob { padding-top: calc(28px + env(safe-area-inset-top, 0px)); padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+#scr-login, #scr-reset, #scr-pick, #scr-ob, #scr-fob, #scr-aiob { padding-top: calc(28px + env(safe-area-inset-top, 0px)); padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
 
 .a-hdr {
   position: relative; z-index: 30; width: 100%; max-width: 1040px; margin: 0 auto 20px; height: 60px;   /* prototype: 64px */
@@ -748,6 +748,22 @@ html.crashed .screen:not(#scr-crash) { display: none !important; }
 .choice .txt b { font-size: var(--text-md); font-weight: 700; color: var(--ink); }
 .choice .txt span { font-size: var(--text-base); line-height: 1.5; color: var(--ink2); }
 #scr-pick .link-row { margin-top: 22px; }
+.choice .txt small { font-size: var(--text-sm); color: var(--ink2); }
+
+/* ═══════════ AIOB — TEST: registration as a chat with AI ═══════════ */
+.ai-chat { border: 1px solid var(--line2); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; background: var(--card); }
+.ai-msgs { height: min(52vh, 440px); overflow: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+.ai-msgs .msg { max-width: 85%; white-space: pre-wrap; }
+.ai-msgs .msg.typing { color: var(--ink2); letter-spacing: .2em; }
+.ai-chat .chat-input { padding: 12px; }
+.ai-chat .chat-input button:disabled { opacity: .45; cursor: default; }
+.ai-sum { margin-top: 18px; padding: 14px 16px; border-radius: 16px; background: var(--fill2); border: 1px solid var(--line); font-size: var(--text-sm); color: var(--ink2); line-height: 1.6; }
+.ai-sum b { color: var(--ink); font-weight: 700; }
+.ai-sum .row { display: flex; gap: 8px; } .ai-sum .row > span:first-child { min-width: 92px; color: var(--muted); }
+.ai-sum .bio { margin-top: 6px; font-style: italic; color: var(--ink); }
+.ai-finish { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+.ai-finish .next { width: 100%; margin-top: 6px; }
+
 
 /* ═══════════ OB — l.97–194 ═══════════ */
 .s1-row { display: flex; gap: 22px; align-items: center; margin-bottom: 26px; }

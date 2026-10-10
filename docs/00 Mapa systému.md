@@ -37,6 +37,7 @@ flowchart LR
 
 ### Toky (ako veci prebiehajú)
 - [[Registrácia študenta]]
+- [[Registrácia rozhovorom s AI (test)]] — skúšobná verzia: profil vznikne z rozhovoru s botom
 - [[Registrácia firmy a overenie IČO]]
 - [[Prihlásenie a obnova hesla]]
 - [[Záujem, zhoda a chat]] — jadro celej appky

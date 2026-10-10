@@ -35,4 +35,6 @@ flowchart TD
 Ak účet existuje, ale chýba profil alebo zručnosti (napr. prihlásenie cez Google, prerušená registrácia),
 appka zostane zamknutá a pokračuje tam, kde sa skončilo (`profileUnfinished` → `resumeOnboarding`).
 
+Druhý, skúšobný spôsob — profil z rozhovoru s botom: [[Registrácia rozhovorom s AI (test)]].
+
 Súvisí: [[Prihlásenie a obnova hesla]], [[Obrazovky hosťa a študenta]], [[Registrácia firmy a overenie IČO]]

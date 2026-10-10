@@ -5,7 +5,7 @@ const CFG = window.ROBIQ_CONFIG;
 const sb = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
 
 // ═══════════ State ═══════════
-// `screen` decides which <section> is visible: app · login · pick · ob · fob
+// `screen` decides which <section> is visible: app · login · pick · ob · fob · aiob (TEST: registration as a chat with AI)
 const initialState = () => ({
   screen: 'app', authed: false, role: 'student', uid: null, pendingJob: null, gate: false, isAdmin: false,
   oauth: false, oauthEmail: '', oauthRole: null,           // signed in (Google) but registration unfinished → finish it in-app; oauthRole = role already chosen, if any
@@ -19,6 +19,7 @@ const initialState = () => ({
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   skillsOpen: [],                                          // skill groups showing all their chips (registration step 2)
   profEdit: false, birth: '', bio: '', obTerms: false,
+  aiMsgs: [], aiBusy: false, aiDone: false, aiDraft: '', aiCity: '', aiFocus: false,   // TEST aiob: chat [{ role, content }], waiting for the reply, bot says the profile is complete, typed text, city as the bot heard it
   cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
   matches: [], activeChat: 0, draft: '', myInterests: [],
@@ -591,6 +592,9 @@ const go = {
   goRegister:  () => openPick('login'),                   // from the login card
   goSignup:    () => openPick('app'),                     // from the feed header
   pickStudent: () => { state.screen = 'ob';  state.obStep = 1; track('reg_start', { role: 'student' }); },
+  pickAi:      () => { state.screen = 'aiob'; state.aiFocus = true; track('reg_start', { role: 'student', via: 'ai' }); },
+  aiBack:      () => { state.screen = 'pick'; },
+  aiClassic:   () => { state.screen = 'ob'; state.obStep = 1; track('reg_ai_to_form'); },   // what the bot collected stays filled in
   pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },  goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
   // "← Späť" on login and account-type screens: login → feed; pick → wherever it was opened from
   back:        () => { state.screen = state.screen === 'pick' ? (state.pickFrom || 'app') : 'app'; },
@@ -816,7 +820,7 @@ document.getElementById('a-layers').addEventListener('click', e => {
 
 // ═══════════ Render ═══════════
 function render() {
-  for (const s of ['app', 'login', 'reset', 'pick', 'ob', 'fob']) document.getElementById('scr-' + s).hidden = state.screen !== s;
+  for (const s of ['app', 'login', 'reset', 'pick', 'ob', 'fob', 'aiob']) document.getElementById('scr-' + s).hidden = state.screen !== s;
   // Login screen is dark on phones: page background + Safari bar colour follow it
   const dark = state.screen === 'login' && matchMedia('(max-width: 640px)').matches;
   document.documentElement.classList.toggle('dark', dark);
@@ -830,6 +834,7 @@ function render() {
   if (state.screen === 'app') renderApp();
   if (state.screen === 'ob')  renderOb();
   if (state.screen === 'fob') renderFob();
+  if (state.screen === 'aiob') renderAiob();
 }
 
 // ─── APP ───
@@ -1641,25 +1646,26 @@ async function emailTaken(email, errId, btnId, msg) {
   return !!data;
 }
 const signUpTaken = (data, error) => (error && /already registered/i.test(error.message)) || (!error && data?.user?.identities?.length === 0);
-async function registerStudent() {
-  const btn = document.getElementById('ob-next'); btn.disabled = true; setErr('ob-err', '');
+async function registerStudent(ui = { btn: 'ob-next', err: 'ob-err' }) {   // ui: the button + error line of the screen it runs from (ob, or aiob with ai: true)
+  const via = ui.ai ? 'ai' : null;
+  const btn = document.getElementById(ui.btn); btn.disabled = true; setErr(ui.err, '');
   if (state.oauth) {                                       // account exists (Google) — create the profile rows directly
     // upsert: a profile row left behind by an interrupted registration must not block finishing it
     const p = await sb.from('profiles').upsert({ id: state.uid, role: 'student' }, { onConflict: 'id', ignoreDuplicates: true });
     const s = p.error ? p : await sb.from('students').upsert({ id: state.uid, name: state.obName.trim(), birth: state.birth || null,
-      skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute });
+      skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute, bio: state.bio.trim() });
     btn.disabled = false;
-    if (s.error) { setErr('ob-err', skError(s.error)); return; }
+    if (s.error) { setErr(ui.err, skError(s.error)); return; }
     await finishStudentReg();
-    track('reg_done', { role: 'student', via: 'google' });
+    track('reg_done', { role: 'student', via: 'google', ...(via && { flow: via }) });
     return;
   }
   const { data, error } = await sb.auth.signUp({ email: state.obEmail.trim(), password: state.obPass,
-    options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute } } });
+    options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute, bio: state.bio.trim() } } });
   btn.disabled = false;
-  if (signUpTaken(data, error)) { state.obStep = 1; render(); setErr('ob-err', EMAIL_TAKEN_S); return; }   // back to the e-mail field
-  if (error) { setErr('ob-err', skError(error)); return; }
-  track('reg_done', { role: 'student', via: 'email' });
+  if (signUpTaken(data, error)) { if (state.screen === 'ob') state.obStep = 1; render(); setErr(ui.err, EMAIL_TAKEN_S); return; }   // back to the e-mail field
+  if (error) { setErr(ui.err, skError(error)); return; }
+  track('reg_done', { role: 'student', via: 'email', ...(via && { flow: via }) });
   if (!data.session) {                                    // e-mail confirmation is on
     state.screen = 'login'; render();
     setErr('login-err', 'Poslali sme ti potvrdzovací e-mail. Po potvrdení sa prihlás.');
@@ -1845,6 +1851,108 @@ function availSummary() {                                  // l.1558–1563
   const dd = d.length === 7 ? 'každý deň' : (d.length ? d.join(', ') : 'dni podľa dohody');
   return dd + (t.length ? ' · ' + t.join(', ').toLowerCase() : '');
 }
+
+// ─── AIOB — TEST: student registration as a chat with AI ───
+// The conversation goes to the Supabase function `ai-onboarding` (Claude), which answers with the next line and the whole profile
+// gathered so far. The profile fills the same state as the classic steps, so „Radšej vyplním formulár" continues there.
+// E-mail, password and consent never go to the AI — the student fills them in below the chat, then registerStudent() as usual.
+const AI_HELLO = 'Ahoj! Som Robiq. Pomôžem ti vytvoriť profil, aby ťa firmy s brigádami našli — stačí sa so mnou porozprávať. Ako sa voláš?';
+const aiReady = () => !!state.obName.trim() && isOldEnough() && state.obSkills.length > 0 && !!state.cityId;
+const aiCanFinish = () => aiReady() && (state.oauth || (!!state.obEmail.trim() && state.obPass.length >= 6)) && state.obTerms;
+function applyAiProfile(p) {                               // only what the bot knows overwrites the state; unknown (null / empty) keeps it
+  if (!p || typeof p !== 'object') return;
+  if (typeof p.name === 'string' && p.name.trim()) state.obName = p.name.trim().slice(0, 80);
+  if (typeof p.birth === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.birth) && ageOf(p.birth) !== null) state.birth = p.birth;
+  if (Array.isArray(p.skills) && p.skills.length) state.obSkills = p.skills
+    .filter(x => x && typeof x.n === 'string' && x.n.trim()).slice(0, 20)
+    .map(x => ({ n: x.n.trim().slice(0, 30), lvl: [1, 2, 3].includes(x.lvl) ? x.lvl : 2, speak: x.speak !== false }));
+  if ([0, 1, 2, 3].includes(p.hours)) state.obHours = p.hours;
+  if (Array.isArray(p.avail_days) && p.avail_days.length) state.availDays = DAYS.filter(d => p.avail_days.includes(d));
+  if (Array.isArray(p.avail_times) && p.avail_times.length) state.availTimes = TIMES.map(t => t[0]).filter(t => p.avail_times.includes(t));
+  if (typeof p.city === 'string' && p.city.trim()) { state.aiCity = p.city.trim(); const c = cityByName(p.city); if (c) state.cityId = c.id; }
+  if (COMMUTES.some(c => c[0] === p.commute)) state.commute = p.commute;
+  if (typeof p.bio === 'string' && p.bio.trim()) state.bio = p.bio.trim().slice(0, 500);
+}
+async function aiSend() {
+  const txt = state.aiDraft.trim();
+  if (!txt || state.aiBusy) return;
+  if (!state.aiMsgs.length) state.aiMsgs.push({ role: 'assistant', content: AI_HELLO });
+  state.aiMsgs.push({ role: 'user', content: txt.slice(0, 1000) });
+  state.aiDraft = ''; state.aiBusy = true; setErr('aiob-err', ''); render();
+  const { data, error } = await sb.functions.invoke('ai-onboarding', { body: { messages: state.aiMsgs.slice(-40) } });
+  state.aiBusy = false;
+  if (error || !data || typeof data.reply !== 'string') {
+    const status = error?.context?.status;
+    state.aiMsgs.pop(); state.aiDraft = txt;               // the message was not answered — give it back to send again
+    state.aiFocus = true; render();
+    setErr('aiob-err', status === 429 ? 'Veľa správ naraz — skús to o chvíľu.' : 'AI teraz neodpovedá. Skús to znova, alebo vyplň formulár.');
+    track('reg_ai_error', { status: status || 0 });
+    return;
+  }
+  state.aiMsgs.push({ role: 'assistant', content: data.reply.slice(0, 2000) });
+  applyAiProfile(data.profile);
+  if (data.done && !state.aiDone) { state.aiDone = true; track('reg_ai_done'); }
+  state.aiFocus = true; render();
+}
+function aiSummary() {                                     // what the bot has understood so far — the student sees it and can correct it in the chat
+  const rows = [
+    ['Meno', esc(state.obName.trim())],
+    ['Narodenie', state.birth ? fmtDate(state.birth) : ''],
+    ['Vie', state.obSkills.map(x => esc(x.n) + ` <span style="color:var(--muted)">(${(LANGS.includes(x.n) ? LANG_LVLS : LVLS)[x.lvl - 1]})</span>`).join(', ')],
+    ['Čas', state.aiMsgs.length > 4 ? `${HOURS[state.obHours]} · ${esc(availSummary())}` : ''],
+    ['Mesto', state.cityId ? `${esc(cityName(state.cityId))} · ${commuteLabel(state.commute).toLowerCase()}` : esc(state.aiCity)],
+  ].filter(r => r[1]);
+  if (!rows.length) return '';
+  return `<div class="ai-sum"><div class="label" style="margin-bottom:6px">Tvoj profil</div>
+    ${rows.map(([k, v]) => `<div class="row"><span>${k}</span><b>${v}</b></div>`).join('')}
+    ${state.bio ? `<div class="bio">„${esc(state.bio)}"</div>` : ''}</div>`;
+}
+function renderAiob() {
+  const msgs = [{ role: 'assistant', content: AI_HELLO }, ...state.aiMsgs.slice(state.aiMsgs.length ? 1 : 0)];
+  const box = document.getElementById('ai-msgs');
+  box.innerHTML = msgs.map(m => `<div class="msg ${m.role === 'user' ? 'me' : 'them'}">${esc(m.content)}</div>`).join('')
+    + (state.aiBusy ? '<div class="msg them typing">…</div>' : '');
+  box.scrollTop = box.scrollHeight;
+  const draft = document.getElementById('ai-draft');
+  if (draft.value !== state.aiDraft) draft.value = state.aiDraft;
+  document.getElementById('ai-send').disabled = state.aiBusy;
+  if (state.aiFocus && !state.aiBusy) { state.aiFocus = false; draft.focus({ preventScroll: true }); }   // after a reply only — not on every re-render (phone keyboard)
+  // Below the chat: the profile so far; once it is enough (or the bot says so) the last fields to create the account
+  const tooYoung = state.birth && !isOldEnough();
+  const finish = !(aiReady() || state.aiDone) || tooYoung ? '' : `<div class="ai-finish">
+    ${state.cityId ? '' : placeEditor()}
+    ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
+    <input class="input" id="ai-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
+    <input class="input" id="ai-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
+    ${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}
+    <button class="next" id="ai-finish" style="opacity:${aiCanFinish() ? 1 : .45}">Hotovo — pozri ponuky</button></div>`;
+  const prof = document.getElementById('ai-profile');
+  prof.innerHTML = aiSummary() + (tooYoung ? `<div class="ob-age-note err" style="margin-top:14px">${AGE_BLOCKED}</div>` : '') + finish;
+  if (!finish) return;
+  const upd = () => { document.getElementById('ai-finish').style.opacity = aiCanFinish() ? 1 : .45; setErr('aiob-err', ''); };
+  const em = document.getElementById('ai-email'); if (em) em.addEventListener('input', () => { state.obEmail = em.value; upd(); });
+  const pw = document.getElementById('ai-pass');  if (pw) pw.addEventListener('input', () => { state.obPass = pw.value; upd(); });
+  bindTerms(prof, 'obTerms');
+  if (!state.cityId) {
+    prof.onclick = e => { const el = e.target.closest('button[data-commute]'); if (el) editorClick(el); };
+    const city = document.getElementById('city'); if (state.aiCity) city.value = state.aiCity;   // as the bot heard it — the list below offers the right one
+    bindEditors();
+    document.getElementById('city').addEventListener('input', () => { if (state.cityId) render(); else upd(); });
+  } else prof.onclick = null;
+  document.getElementById('ai-finish').addEventListener('click', async () => {
+    if (!aiCanFinish()) {
+      setErr('aiob-err', !state.cityId ? 'Vyber svoje mesto zo zoznamu.'
+        : !state.oauth && !state.obEmail.trim() ? 'Zadaj e-mail.'
+        : !state.oauth && state.obPass.length < 6 ? 'Heslo musí mať aspoň 6 znakov.'
+        : 'Potvrď, že máš 16+ a súhlasíš s podmienkami.');
+      return;
+    }
+    if (!state.oauth && await emailTaken(state.obEmail, 'aiob-err', 'ai-finish', EMAIL_TAKEN_S)) { track('reg_blocked', { reason: 'email_taken' }); return; }
+    await registerStudent({ btn: 'ai-finish', err: 'aiob-err', ai: true });
+  });
+}
+document.getElementById('ai-draft').addEventListener('input', e => { state.aiDraft = e.target.value; });
+document.getElementById('ai-form').addEventListener('submit', e => { e.preventDefault(); aiSend(); });
 
 // ─── FOB — company registration — l.230–291 ───
 const ICO_RE = /^[0-9]{8}$/;                               // Slovak IČO: 8 digits

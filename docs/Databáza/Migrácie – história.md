@@ -36,3 +36,4 @@ Každá zmena sa zároveň zapíše ako samostatná migrácia `supabase/migratio
 | 26. 9. | `rpo-timeout` | limit príkazu pre neprihlásených (anon) 3 s → 10 s, aby pomalý register nekončil „nedostupný" | [[Registrácia firmy a overenie IČO]] |
 | 29. 9. | `stats-excluded` | tabuľka `stats_excluded` + `is_stats_excluded`; `analytics_summary` nezarátava vlastné účty (Lenka, Robiq) | [[Štatistika používania]] |
 | 7. 10. | `crash-reports` | tabuľka `crash_reports` — hlásenia o páde appky (zapisuje len funkcia `crash-report`), e-mail adminom najviac raz za 30 min | [[Chybové stránky]] |
+| 10. 10. | `ai-onboarding` | **test:** tabuľka `ai_onboarding_calls` (limit volaní AI) + `handle_new_user` berie z registrácie aj „o mne“ (bio) | [[Registrácia rozhovorom s AI (test)]] |
