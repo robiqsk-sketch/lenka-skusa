@@ -1915,12 +1915,12 @@ function renderOb() {
   if (state.obStep === 3) obStep3();
 }
 const obEl = document.getElementById('ob-step');
-// v2: the whole registration on one screen — the posting the guest clicked „Mám záujem“ on, then only what an employer
-// needs to know about who they are: name and age (16+, 18+ postings). No photo, skills or time here.
+// v2: the whole registration on one screen — the posting the guest clicked „Mám záujem“ on (v2 only; v3 has no card),
+// then only what an employer needs to know about who they are: name and age (16+, 18+ postings). No photo, skills or time here.
 function obJoin() {
   const j = state.pendingJob;
   obEl.innerHTML = `
-    ${j ? `<div class="join-job"><div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
+    ${j && !REG_V3 ? `<div class="join-job"><div class="lg" style="${logoStyle(j)}">${logoText(j)}</div>
       <div class="name"><div class="t">${esc(j.t)}</div><div class="f">${esc(j.f)} · <b>${esc(j.pay)}/hod</b></div></div>
       <span class="heart">${icon('heart', 18)}</span></div>` : ''}
     <div class="col">
