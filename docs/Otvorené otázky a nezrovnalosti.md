@@ -9,6 +9,7 @@ Sem si zapisuj veci, ktoré nesedia alebo treba doriešiť. Keď sa niečo vyrie
 
 ## Treba urobiť
 - [ ] **Registrácia rozhovorom s AI (test)** — ak pôjde do `main`: doplniť Anthropic do ochrany osobných údajov ako sprostredkovateľa (prenos do USA) a vyhodnotiť štatistiku → [[Registrácia rozhovorom s AI (test)]].
+- [ ] **Telefón študenta (test)** — zbiera sa vo formulári po rozhovore s AI, ale zatiaľ ho nevidí nikto okrem študenta. Rozhodnúť, kto ho uvidí (napr. firma až po zhode), a doplniť do ochrany osobných údajov — bez účelu by sme ho zbierať nemali.
 - [ ] **Nástup brigády** — firma ho pri inzeráte nevie zadať (v databáze je všade „ihneď"), preto sa na kartách zatiaľ nezobrazuje. Ak ho chceme ukazovať, treba pridať pole do formulára Nový inzerát.
 - [ ] **Notifikácie** — appka zatiaľ žiadne neposiela (prepínač v menu bol len atrapa, odstránený 26. 9.).
 - [ ] **Ochrana pred uniknutými heslami** — zapnúť ručne v Supabase → Authentication → Settings (kontrola hesiel cez HaveIBeenPwned).

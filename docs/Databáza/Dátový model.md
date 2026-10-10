@@ -41,7 +41,7 @@ erDiagram
 |---|---|---|
 | `profiles` | rola používateľa | len vlastník |
 | `ai_onboarding_calls` | **test:** počítadlo volaní AI pri registrácii rozhovorom (odtlačok IP + čas) | nikto, len funkcia `ai-onboarding` |
-| `students` | meno, zručnosti (s úrovňou), hodiny, dni a časy, dátum narodenia, mesto + dochádzanie, bio, cesta k fotke | len vlastník; firma časť cez funkciu |
+| `students` | meno, zručnosti (s úrovňou), hodiny, dni a časy, dátum narodenia, mesto + dochádzanie, bio, cesta k fotke, telefón (test) | len vlastník; firma časť cez funkciu |
 | `companies` | zobrazovaný názov, **oficiálny názov z registra** (`legal_name`), IČO, odvetvia, kontaktná osoba, popis, logo, sídlo, **overená** | všetci (verejné) |
 | `postings` | inzerát: názov, plat, počet miest (`need`/`taken`), typy, len 18+, mesto/remote, adresa, popis, poznámka pre AI, fotky, stav (`active`, `blocked`) | aktívne všetci |
 | `interests` | študent → „Mám záujem" o inzerát | študent svoje, firma na svoje inzeráty |

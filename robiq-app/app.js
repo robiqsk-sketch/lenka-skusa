@@ -20,7 +20,8 @@ const initialState = () => ({
   skillsOpen: [],                                          // skill groups showing all their chips (registration step 2)
   profEdit: false, birth: '', bio: '', obTerms: false,
   aiMsgs: [], aiBusy: false, aiDone: false, aiDraft: '', aiCity: '', aiFocus: false, aiTime: false,   // TEST aiob: chat [{ role, content }], waiting for the reply, bot says the profile is complete, typed text, city as the bot heard it, hours/days known
-  aiReal: false, aiDemo: false, aiDemoStep: 0,               // the AI answered at least once · scripted bot without AI (function not deployed / no key yet) · its current question
+  aiReal: false, aiDemo: false, aiDemoStep: 0, aiPhase: 'chat',   // the AI answered at least once · scripted bot without AI (function not deployed / no key yet) · its current question · chat → form
+  phone: '',                                               // TEST: student's phone (aiob form, profile); null = the DB has no phone column yet
   cityId: null, commute: '30km',                           // student: home city (table cities) + how far they travel
   avatarPath: null, obPhotoFile: null, obPhotoPreview: '',
   matches: [], activeChat: 0, draft: '', myInterests: [],
@@ -325,7 +326,8 @@ async function loadStudent() {
   }
   state.invitedPostingIds = (invites || []).map(x => x.posting_id);
   if (s) Object.assign(state, { obName: s.name, obSkills: s.skills || [], obHours: s.hours, availDays: s.avail_days || [],
-    availTimes: s.avail_times || [], birth: s.birth || '', bio: s.bio || '', avatarPath: s.avatar_path || null, cityId: s.city_id || null, commute: s.commute || '30km' });
+    availTimes: s.avail_times || [], birth: s.birth || '', bio: s.bio || '', avatarPath: s.avatar_path || null, cityId: s.city_id || null, commute: s.commute || '30km',
+    phone: 'phone' in s ? s.phone || '' : null });
   await resolveAvatars([state.avatarPath]);
   state.likedIds = (ints || []).map(i => i.posting_id);
   state.myInterests = (ints || []).filter(i => i.postings).map(i => ({
@@ -594,7 +596,8 @@ const go = {
   goSignup:    () => openPick('app'),                     // from the feed header
   pickStudent: () => { state.screen = 'ob';  state.obStep = 1; track('reg_start', { role: 'student' }); },
   pickAi:      () => { state.screen = 'aiob'; state.aiFocus = true; track('reg_start', { role: 'student', via: 'ai' }); },
-  aiBack:      () => { state.screen = 'pick'; },
+  aiBack:      () => { if (state.aiPhase === 'form') state.aiPhase = 'chat'; else state.screen = 'pick'; setErr('aiob-err', ''); },
+  aiToForm:    () => { state.aiPhase = 'form'; track('reg_ai_form', { demo: state.aiDemo }); },
   aiClassic:   () => { state.screen = 'ob'; state.obStep = 1; track('reg_ai_to_form'); },   // what the bot collected stays filled in
   pickFirm:    () => { state.screen = 'fob'; state.fobStep = 1; track('reg_start', { role: 'firm' }); },  goLogin:     () => { state.screen = 'login'; setErr('login-err', ''); },
   // "← Späť" on login and account-type screens: login → feed; pick → wherever it was opened from
@@ -768,7 +771,7 @@ async function sendMsg(listKey, idxKey, draftKey) {
 async function saveStudent() {
   try {
     const { error } = await sb.from('students').update({ name: state.obName.trim(), skills: state.obSkills, hours: state.obHours,
-      avail_days: state.availDays, avail_times: state.availTimes, birth: state.birth || null, bio: state.bio, city_id: state.cityId, commute: state.commute, updated_at: new Date().toISOString() }).eq('id', state.uid);
+      avail_days: state.availDays, avail_times: state.availTimes, birth: state.birth || null, bio: state.bio, city_id: state.cityId, commute: state.commute, ...(state.phone !== null && { phone: phoneClean(state.phone) }), updated_at: new Date().toISOString() }).eq('id', state.uid);
     if (error) throw error;
   } catch (e) { fail(e); }
 }
@@ -1056,6 +1059,9 @@ function profile() {                                       // l.515–635
     ${s.birth
       ? `<div class="p-birth"><div class="l">Dátum narodenia<small>nedá sa zmeniť</small></div><div class="v">${esc(fmtDate(s.birth))}</div></div>`
       : `<div class="p-birth"><div class="l">Dátum narodenia<small>nastavíš len raz</small></div><input type="date" id="p-birth" value="" max="${maxBirth()}"></div>`}
+    ${s.phone !== null && s.phone !== undefined ? `<div class="p-bio-edit"><div class="label" style="margin-bottom:8px">Telefón</div>
+      <input class="input" id="p-phone" type="tel" value="${esc(s.phone)}" placeholder="napr. 0912 345 678" autocomplete="tel">
+      <div class="hint" style="margin-top:6px">Zatiaľ ho vidíš len ty.</div></div>` : ''}
     <div class="p-bio-edit"><div class="label" style="margin-bottom:8px">Bio</div>
       <textarea id="p-bio" rows="3" maxlength="240" placeholder="Napíš pár viet o sebe — čo študuješ, čo ťa baví, kedy máš čas…">${esc(s.bio)}</textarea>
       <div class="hint" style="margin-top:6px">Nepíš sem citlivé údaje — zdravie, náboženstvo, politické názory, rodné číslo.</div></div>
@@ -1654,7 +1660,7 @@ async function registerStudent(ui = { btn: 'ob-next', err: 'ob-err' }) {   // ui
     // upsert: a profile row left behind by an interrupted registration must not block finishing it
     const p = await sb.from('profiles').upsert({ id: state.uid, role: 'student' }, { onConflict: 'id', ignoreDuplicates: true });
     const s = p.error ? p : await sb.from('students').upsert({ id: state.uid, name: state.obName.trim(), birth: state.birth || null,
-      skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute, bio: state.bio.trim() });
+      skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute, bio: state.bio.trim(), ...(state.phone && { phone: state.phone }) });
     btn.disabled = false;
     if (s.error) { setErr(ui.err, skError(s.error)); return; }
     await finishStudentReg();
@@ -1662,7 +1668,7 @@ async function registerStudent(ui = { btn: 'ob-next', err: 'ob-err' }) {   // ui
     return;
   }
   const { data, error } = await sb.auth.signUp({ email: state.obEmail.trim(), password: state.obPass,
-    options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute, bio: state.bio.trim() } } });
+    options: { data: { role: 'student', name: state.obName.trim(), birth: state.birth, skills: state.obSkills, hours: state.obHours, avail_days: state.availDays, avail_times: state.availTimes, city_id: state.cityId, commute: state.commute, bio: state.bio.trim(), phone: state.phone || '' } } });
   btn.disabled = false;
   if (signUpTaken(data, error)) { if (state.screen === 'ob') state.obStep = 1; render(); setErr(ui.err, EMAIL_TAKEN_S); return; }   // back to the e-mail field
   if (error) { setErr(ui.err, skError(error)); return; }
@@ -1833,6 +1839,8 @@ function bindEditors() {
   });
   const bio = document.getElementById('p-bio');
   if (bio) bio.addEventListener('input', () => { state.bio = bio.value; });
+  const phone = document.getElementById('p-phone');
+  if (phone) phone.addEventListener('input', () => { state.phone = phone.value; });
   const photo = document.getElementById('p-photo');
   if (photo) photo.addEventListener('change', async e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
@@ -1853,26 +1861,37 @@ function availSummary() {                                  // l.1558–1563
   return dd + (t.length ? ' · ' + t.join(', ').toLowerCase() : '');
 }
 
-// ─── AIOB — TEST: student registration as a chat with AI ───
-// The conversation goes to the Supabase function `ai-onboarding` (Claude), which answers with the next line and the whole profile
-// gathered so far. The profile fills the same state as the classic steps, so „Radšej vyplním formulár" continues there.
-// E-mail, password and consent never go to the AI — the student fills them in below the chat, then registerStudent() as usual.
-const AI_HELLO = 'Ahoj! Som Robiq. Pomôžem ti vytvoriť profil, aby ťa firmy s brigádami našli — stačí sa so mnou porozprávať. Ako sa voláš?';
-const aiReady = () => !!state.obName.trim() && isOldEnough() && state.obSkills.length > 0 && !!state.cityId;
-const aiCanFinish = () => aiReady() && (state.oauth || (!!state.obEmail.trim() && state.obPass.length >= 6)) && state.obTerms;
+// ─── AIOB — TEST: student registration — first a chat with AI about what they look for, then a form with the required data ───
+// Chat: the conversation goes to the Supabase function `ai-onboarding` (Claude), which answers with the next line and what it
+// has gathered so far (skills, hours, days, times, a short "about me"). It fills the same state as the classic steps,
+// so „Radšej vyplním formulár" continues there. Form: name, birth date, phone, city, e-mail, password, consent —
+// none of it goes to the AI. Then registerStudent() as usual.
+const AI_HELLO = 'Ahoj! Som Robiq. Povedz mi, akú brigádu hľadáš — čo ti ide, čo by ťa bavilo, alebo čo už máš za sebou.';
+const phoneClean = v => { const p = (v || '').replace(/[\s\-\/().]/g, '').replace(/^00/, '+'); return /^0\d{9}$/.test(p) ? '+421' + p.slice(1) : p; };   // 0912 345 678 → +421912345678
+const phoneOk = v => /^\+\d{9,14}$/.test(phoneClean(v));
+const aiChatEnough = () => state.obSkills.length > 0;    // „Pokračovať" shows once there is at least one skill
+function aiFormProblem() {                                 // why the form cannot be sent yet ('' = it can)
+  if (!state.obName.trim()) return 'Napíš svoje meno.';
+  if (!state.birth) return 'Zadaj dátum narodenia.';
+  if (!isOldEnough()) return AGE_BLOCKED;
+  if (!phoneOk(state.phone)) return 'Zadaj telefónne číslo, napr. 0912 345 678.';
+  if (!state.cityId) return 'Vyber svoje mesto zo zoznamu.';
+  if (!state.oauth && !state.obEmail.trim()) return 'Zadaj e-mail.';
+  if (!state.oauth && state.obPass.length < 6) return 'Heslo musí mať aspoň 6 znakov.';
+  if (!state.obTerms) return 'Potvrď, že máš 16+ a súhlasíš s podmienkami.';
+  return '';
+}
 function applyAiProfile(p) {                               // only what the bot knows overwrites the state; unknown (null / empty) keeps it
   if (!p || typeof p !== 'object') return;
-  if (typeof p.name === 'string' && p.name.trim()) state.obName = p.name.trim().slice(0, 80);
-  if (typeof p.birth === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.birth) && ageOf(p.birth) !== null) state.birth = p.birth;
   if (Array.isArray(p.skills) && p.skills.length) state.obSkills = p.skills
     .filter(x => x && typeof x.n === 'string' && x.n.trim()).slice(0, 20)
     .map(x => ({ n: x.n.trim().slice(0, 30), lvl: [1, 2, 3].includes(x.lvl) ? x.lvl : 2, speak: x.speak !== false }));
   if ([0, 1, 2, 3].includes(p.hours)) { state.obHours = p.hours; state.aiTime = true; }
-  if (Array.isArray(p.avail_days) && p.avail_days.length) state.availDays = DAYS.filter(d => p.avail_days.includes(d));
-  if (Array.isArray(p.avail_times) && p.avail_times.length) state.availTimes = TIMES.map(t => t[0]).filter(t => p.avail_times.includes(t));
+  if (Array.isArray(p.avail_days) && p.avail_days.length) { state.availDays = DAYS.filter(d => p.avail_days.includes(d)); state.aiTime = true; }
+  if (Array.isArray(p.avail_times) && p.avail_times.length) { state.availTimes = TIMES.map(t => t[0]).filter(t => p.avail_times.includes(t)); state.aiTime = true; }
   if (typeof p.city === 'string' && p.city.trim()) { state.aiCity = p.city.trim(); const c = cityByName(p.city); if (c) state.cityId = c.id; }
   if (COMMUTES.some(c => c[0] === p.commute)) state.commute = p.commute;
-  if (typeof p.bio === 'string' && p.bio.trim()) state.bio = p.bio.trim().slice(0, 500);
+  if (typeof p.bio === 'string' && p.bio.trim()) state.bio = p.bio.trim().slice(0, 240);
 }
 async function aiSend() {
   const txt = state.aiDraft.trim();
@@ -1902,14 +1921,15 @@ async function aiSend() {
     state.aiDemo = true; track('reg_ai_demo', { status: status || 0 });   // AI not available at all yet → the scripted bot takes this conversation
   } else await new Promise(r => setTimeout(r, 450));        // a short "typing" pause, so it reads like a chat
   state.aiBusy = false;
+  const wasDone = state.aiDone;
   state.aiMsgs.push({ role: 'assistant', content: demoReply(txt) });
-  if (state.aiDone && state.aiDemoStep === 6) { state.aiDemoStep = 7; track('reg_ai_done', { demo: true }); }
+  if (state.aiDone && !wasDone) track('reg_ai_done', { demo: true });
   state.aiFocus = true; render();
 }
 
 // ─── Scripted bot without AI (demo) ───
 // Used while the `ai-onboarding` function is not deployed or has no key: the same questions in a fixed order, and the answers
-// are searched for key words (skills, numbers, days, a city from the list). Enough to try the flow; it does not understand corrections.
+// are searched for key words (skills, numbers, days, times of day). Enough to try the flow; it does not understand corrections.
 const DEMO_SKILLS = [
   ['barist', 'Barista'], ['kaviar', 'Barista'], ['kavu', 'Barista'], ['casn', 'Čašník / Servírka'], ['servir', 'Čašník / Servírka'], ['obsluh', 'Čašník / Servírka'],
   ['restaurac', 'Čašník / Servírka'], ['predava', 'Predaj'], ['predaj', 'Predaj'], ['obchod', 'Predaj'], ['poklad', 'Pokladňa'], ['sklad', 'Sklad'],
@@ -1923,57 +1943,30 @@ const DEMO_SKILLS = [
   ['komunik', 'Komunikatívnosť'], ['spolahl', 'Spoľahlivosť'], ['v time', 'Práca v tíme'], ['timov', 'Práca v tíme'], ['kondic', 'Fyzická kondícia'],
   ['flexib', 'Flexibilita'], ['pod tlakom', 'Práca pod tlakom'], ['organiz', 'Organizovanosť'], ['rychlo sa uc', 'Rýchle učenie'],
 ];
-const DEMO_MONTHS = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
 const DEMO_DAYS = [['pondel', 'Po'], ['utor', 'Ut'], ['stred', 'St'], ['stvrt', 'Št'], ['piat', 'Pi'], ['sobot', 'So'], ['nedel', 'Ne']];
 const demoDay = w => ({ po: 'Po', ut: 'Ut', st: 'St', pi: 'Pi', so: 'So', ne: 'Ne' })[w] || (DEMO_DAYS.find(([k]) => w.startsWith(k)) || [])[1] || null;
-function demoDate(txt) {                                   // "14. 5. 2006", "14/05/2006", "2006-05-14", "14. mája 2006" → ISO, or null
-  const f = fold(txt);
-  let d, m, y, r;
-  if ((r = f.match(/(\d{4})-(\d{1,2})-(\d{1,2})/))) [, y, m, d] = r;
-  else if ((r = f.match(/(\d{1,2})\s*[.\/-]\s*(\d{1,2})\s*[.\/-]?\s*(\d{4})/))) [, d, m, y] = r;
-  else if ((r = f.match(/(\d{1,2})\.?\s*([a-z]+)\s*(\d{4})/))) { d = r[1]; y = r[3]; m = DEMO_MONTHS.findIndex(x => r[2].startsWith(x)) + 1; if (!m) return null; }
-  else return null;
-  const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`, dt = new Date(iso + 'T12:00:00');
-  return !isNaN(dt) && dt.getDate() === +d && dt.getMonth() + 1 === +m && +y > 1900 ? iso : null;
-}
 function demoReply(txt) {
   const f = ' ' + fold(txt).replace(/[^a-z0-9]+/g, ' ').trim() + ' ';   // " robila som v kaviarni po anglicky "
   const has = (...words) => words.some(w => f.includes(w));
   const step = state.aiDemoStep;
-  if (step === 0) {                                        // name (the hello asks for it)
-    const name = txt.replace(/^(ahoj|čau|cau|dobrý deň|dobry den|zdravím|zdravim)[\s,!.]*/i, '')
-      .replace(/^(ja\s+)?(sa\s+)?(volám sa|volam sa|moje meno je|meno je|volám|volam|som)\s+/i, '').replace(/[.!?,]+$/, '').trim()
-      .split(/\s+/).slice(0, 4).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    if (!/\p{L}/u.test(name)) return 'Ako sa voláš? Napíš meno a priezvisko.';
-    state.obName = name.slice(0, 80); state.aiDemoStep = 1;
-    return `Teší ma, ${name.split(' ')[0]}! Aký je tvoj dátum narodenia? Napíš celý, napr. 14. 5. 2006.`;
-  }
-  if (step === 1) {                                        // birth date, 16+
-    const iso = demoDate(txt);
-    if (!iso) return 'Tomu dátumu nerozumiem — napíš ho, prosím, ako 14. 5. 2006.';
-    state.birth = iso;
-    if (!isOldEnough()) return AGE_BLOCKED;
-    state.aiDemoStep = 2;
-    return 'Super. Čo ti ide, alebo akú prácu by ťa bavilo robiť? Napíš aj, čo už máš za sebou — napr. kaviareň, sklad, angličtina.';
-  }
-  if (step === 2) {                                        // skills (+ one level for the whole answer)
+  if (step === 0) {                                        // skills (+ one level for the whole answer) — the hello asks for them
     const lvl = has('plynul', 'vyborn', 'perfekt', ' top ', 'skvel', 'roky', 'dlho') ? 3 : has('zaklad', 'trochu', 'zaciat', 'slab') ? 1 : 2;
     let found = [...new Set(DEMO_SKILLS.filter(([k]) => f.includes(k)).map(([, n]) => n))];
     if (!found.length && txt.length <= 30) found = [txt.charAt(0).toUpperCase() + txt.slice(1)];   // short answer outside the list → own skill
     if (!found.length) return 'Nenašiel som to v zozname — skús to napísať kratšie, napr. „barista, sklad, angličtina“.';
     for (const n of found) if (!state.obSkills.some(x => x.n === n)) state.obSkills.push({ n, lvl, speak: true });
-    state.aiDemoStep = 3;
+    state.aiDemoStep = 1;
     return `Zapísal som: ${found.join(', ')}. Koľko hodín týždenne môžeš pracovať? Asi 5, 10, 20, alebo fulltime cez leto?`;
   }
-  if (step === 3) {                                        // hours
+  if (step === 1) {                                        // hours
     const n = +(f.match(/\d+/) || [])[0];
     if (has('full', 'leto', 'cely den')) state.obHours = 3;
     else if (n) state.obHours = n <= 7 ? 0 : n <= 14 ? 1 : n < 30 ? 2 : 3;
     else return 'Napíš to číslom, napr. 10 — alebo „fulltime cez leto“.';
-    state.aiTime = true; state.aiDemoStep = 4;
+    state.aiTime = true; state.aiDemoStep = 2;
     return 'Ktoré dni a kedy počas dňa? Napr. „víkendy poobede“ alebo „po–pi večer“.';
   }
-  if (step === 4) {                                        // days + times of day
+  if (step === 2) {                                        // days + times of day
     const days = new Set(), times = new Set();
     if (has('vikend')) { days.add('So'); days.add('Ne'); }
     if (has('cez tyzden', 'pracovn')) DAYS.slice(0, 5).forEach(d => days.add(d));
@@ -1991,44 +1984,33 @@ function demoReply(txt) {
     if (!days.size && !times.size) return 'Nerozumel som — napíš dni a čas, napr. „víkendy poobede“ alebo „každý deň večer“.';
     if (days.size) state.availDays = DAYS.filter(d => days.has(d));
     if (times.size) state.availTimes = TIMES.map(t => t[0]).filter(t => times.has(t));
-    state.aiDemoStep = 5;
-    return 'Dobre. V akom meste bývaš a ako ďaleko môžeš dochádzať? Napr. „Žilina, do 15 km“.';
+    state.aiDemoStep = 3;
+    return 'Dobre. Ešte pár slov o sebe — čo by mala firma o tebe vedieť? Ak nechceš, napíš „nie“.';
   }
-  if (step === 5) {                                        // city from the list + commute
-    const chunks = txt.split(/,|;| a /).map(x => x.replace(/^\s*(bývam\s+)?(v|vo|z|zo)\s+/i, '').trim()).filter(Boolean);
-    let c = chunks.map(cityByName).find(Boolean);
-    if (!c) c = [...CITIES].filter(x => x.name.length >= 4).sort((a, b) => b.name.length - a.name.length)
-      .find(x => f.includes(' ' + fold(x.name).replace(/[^a-z0-9]+/g, ' ') + ' '));
-    if (c) state.cityId = c.id; else state.aiCity = chunks[0] || '';
-    if (has('len ', 'iba ') && has('mest')) state.commute = 'city';
-    else if (/ 15( |km)/.test(f)) state.commute = '15km';
-    else if (/ 30( |km)/.test(f)) state.commute = '30km';
-    else if (has('cele slovensko', 'kdekolvek', 'hocikde', 'vsade')) state.commute = 'any';
-    state.aiDemoStep = 6;
-    return (c ? '' : 'To mesto som v zozname nenašiel — vyberieš ho dole. ')
-      + 'Ešte pár slov o sebe — čo by mala firma o tebe vedieť? Ak nechceš, napíš „nie“.';
+  if (step === 3) {                                        // short "about me", optional
+    if (!/^(nie|nechcem|preskoč|preskoc|nič|nic|-)\b/i.test(txt.trim())) state.bio = txt.trim().slice(0, 240);
+    state.aiDone = true; state.aiDemoStep = 4;
+    return 'Super, mám to. Klikni dole na „Pokračovať“ a doplň pár povinných údajov.';
   }
-  if (step === 6) {                                        // short "about me", optional
-    if (!/^(nie|nechcem|preskoč|preskoc|nič|nic|-)\b/i.test(txt.trim())) state.bio = txt.trim().slice(0, 300);
-    state.aiDone = true;
-    return 'Hotovo! Tvoj profil je dole — skontroluj ho a dokonči registráciu.';
-  }
-  return 'Profil máš hotový dole. Ak chceš niečo zmeniť, klikni na „Radšej vyplním formulár“ — všetko tam už bude vyplnené.';
+  return 'Klikni dole na „Pokračovať“. Ak chceš niečo zmeniť, pôjde to neskôr v profile.';
 }
+
 function aiSummary() {                                     // what the bot has understood so far — the student sees it and can correct it in the chat
   const rows = [
-    ['Meno', esc(state.obName.trim())],
-    ['Narodenie', state.birth ? fmtDate(state.birth) : ''],
     ['Vie', state.obSkills.map(x => esc(x.n) + ` <span style="color:var(--muted)">(${(LANGS.includes(x.n) ? LANG_LVLS : LVLS)[x.lvl - 1]})</span>`).join(', ')],
     ['Čas', state.aiTime ? `${HOURS[state.obHours]} · ${esc(availSummary())}` : ''],
-    ['Mesto', state.cityId ? `${esc(cityName(state.cityId))} · ${commuteLabel(state.commute).toLowerCase()}` : esc(state.aiCity)],
   ].filter(r => r[1]);
   if (!rows.length) return '';
-  return `<div class="ai-sum"><div class="label" style="margin-bottom:6px">Tvoj profil</div>
+  return `<div class="ai-sum"><div class="label" style="margin-bottom:6px">Čo hľadáš</div>
     ${rows.map(([k, v]) => `<div class="row"><span>${k}</span><b>${v}</b></div>`).join('')}
     ${state.bio ? `<div class="bio">„${esc(state.bio)}"</div>` : ''}</div>`;
 }
 function renderAiob() {
+  const form = state.aiPhase === 'form';
+  document.getElementById('ai-chat-phase').hidden = form;
+  document.getElementById('ai-form-phase').hidden = !form;
+  document.getElementById('ai-links').hidden = form;
+  if (form) { aiFormStep(); return; }
   const msgs = [{ role: 'assistant', content: AI_HELLO }, ...state.aiMsgs.slice(state.aiMsgs.length ? 1 : 0)];
   const box = document.getElementById('ai-msgs');
   box.innerHTML = msgs.map(m => `<div class="msg ${m.role === 'user' ? 'me' : 'them'}">${esc(m.content)}</div>`).join('')
@@ -2039,37 +2021,47 @@ function renderAiob() {
   if (draft.value !== state.aiDraft) draft.value = state.aiDraft;
   document.getElementById('ai-send').disabled = state.aiBusy;
   if (state.aiFocus && !state.aiBusy) { state.aiFocus = false; draft.focus({ preventScroll: true }); }   // after a reply only — not on every re-render (phone keyboard)
-  // Below the chat: the profile so far; once it is enough (or the bot says so) the last fields to create the account
-  const tooYoung = state.birth && !isOldEnough();
-  const finish = !(aiReady() || state.aiDone) || tooYoung ? '' : `<div class="ai-finish">
-    ${state.cityId ? '' : placeEditor()}
-    ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
-    <input class="input" id="ai-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
-    <input class="input" id="ai-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
-    ${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}
-    <button class="next" id="ai-finish" style="opacity:${aiCanFinish() ? 1 : .45}">Hotovo — pozri ponuky</button></div>`;
-  const prof = document.getElementById('ai-profile');
-  prof.innerHTML = aiSummary() + (tooYoung ? `<div class="ob-age-note err" style="margin-top:14px">${AGE_BLOCKED}</div>` : '') + finish;
-  if (!finish) return;
-  const upd = () => { document.getElementById('ai-finish').style.opacity = aiCanFinish() ? 1 : .45; setErr('aiob-err', ''); };
-  const em = document.getElementById('ai-email'); if (em) em.addEventListener('input', () => { state.obEmail = em.value; upd(); });
-  const pw = document.getElementById('ai-pass');  if (pw) pw.addEventListener('input', () => { state.obPass = pw.value; upd(); });
-  bindTerms(prof, 'obTerms');
-  if (!state.cityId) {
-    prof.onclick = e => { const el = e.target.closest('button[data-commute]'); if (el) editorClick(el); };
-    const city = document.getElementById('city'); if (state.aiCity) city.value = state.aiCity;   // as the bot heard it — the list below offers the right one
-    bindEditors();
-    document.getElementById('city').addEventListener('input', () => { if (state.cityId) render(); else upd(); });
-  } else prof.onclick = null;
+  // Below the chat: what the bot understood so far + „Pokračovať" to the form (once there is a skill; highlighted when the bot is done)
+  document.getElementById('ai-profile').innerHTML = aiSummary() + (aiChatEnough()
+    ? `<button class="next ai-next" data-go="aiToForm" style="opacity:${state.aiDone ? 1 : .8}">Pokračovať</button>` : '');
+}
+const aiFormEl = document.getElementById('ai-form-phase');
+function aiFormStep() {                                    // the required data — an ordinary form, nothing from here goes to the AI
+  const skills = state.obSkills.map(x => esc(x.n)).join(', ');
+  aiFormEl.innerHTML = `
+    <div class="ai-recap">Hľadáš: <b>${skills}</b>${state.aiTime ? ` · ${HOURS[state.obHours]}` : ''}</div>
+    <div class="ai-fields">
+      <input class="input" id="ai-name" placeholder="Meno a priezvisko" value="${esc(state.obName)}" autocomplete="name">
+      <label class="ob-birth"><span>Dátum narodenia</span><input class="input" id="ai-birth" type="date" value="${esc(state.birth)}" max="${maxBirth()}" autocomplete="bday"></label>
+      <div class="ob-age-note" id="ai-age-note"></div>
+      <input class="input" id="ai-phone" type="tel" placeholder="Telefón, napr. 0912 345 678" value="${esc(state.phone)}" autocomplete="tel">
+      <div class="ai-place">${placeEditor()}</div>
+      ${state.oauth ? `<div class="oauth-note" style="margin:0;text-align:left">Účet cez Google: <b>${esc(state.oauthEmail)}</b></div>` : `
+      <input class="input" id="ai-email" type="email" placeholder="E-mail" value="${esc(state.obEmail)}" autocomplete="email">
+      <input class="input" id="ai-pass" type="password" placeholder="Heslo (aspoň 6 znakov)" value="${esc(state.obPass)}" autocomplete="new-password">`}
+      ${TERMS_HTML('obTerms', `Mám 16 rokov alebo viac, súhlasím s ${TERMS_LINK} a beriem na vedomie ${PRIVACY_LINK}.`)}
+      <button class="next" id="ai-finish">Hotovo — pozri ponuky</button>
+    </div>`;
+  const upd = () => {
+    document.getElementById('ai-finish').style.opacity = aiFormProblem() ? .45 : 1;
+    const a = ageOf(state.birth), note = document.getElementById('ai-age-note');
+    note.textContent = a !== null && a < MIN_AGE ? AGE_BLOCKED : '';   // only when it blocks
+    note.classList.toggle('err', a !== null && a < MIN_AGE);
+    setErr('aiob-err', '');
+  };
+  const bind = (id, key) => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => { state[key] = el.value; upd(); }); };
+  bind('ai-name', 'obName'); bind('ai-birth', 'birth'); bind('ai-phone', 'phone'); bind('ai-email', 'obEmail'); bind('ai-pass', 'obPass');
+  const city = document.getElementById('city'); if (!state.cityId && state.aiCity) city.value = state.aiCity;   // as the bot heard it — the list offers the right one
+  aiFormEl.onclick = e => { const el = e.target.closest('button[data-commute]'); if (el) editorClick(el); };
+  bindEditors();
+  city.addEventListener('input', upd);
+  bindTerms(aiFormEl, 'obTerms');
+  upd();
   document.getElementById('ai-finish').addEventListener('click', async () => {
-    if (!aiCanFinish()) {
-      setErr('aiob-err', !state.cityId ? 'Vyber svoje mesto zo zoznamu.'
-        : !state.oauth && !state.obEmail.trim() ? 'Zadaj e-mail.'
-        : !state.oauth && state.obPass.length < 6 ? 'Heslo musí mať aspoň 6 znakov.'
-        : 'Potvrď, že máš 16+ a súhlasíš s podmienkami.');
-      return;
-    }
+    const pr = aiFormProblem();
+    if (pr) { if (pr !== AGE_BLOCKED) setErr('aiob-err', pr); else track('reg_blocked', { reason: 'age' }); return; }
     if (!state.oauth && await emailTaken(state.obEmail, 'aiob-err', 'ai-finish', EMAIL_TAKEN_S)) { track('reg_blocked', { reason: 'email_taken' }); return; }
+    state.phone = phoneClean(state.phone);
     await registerStudent({ btn: 'ai-finish', err: 'aiob-err', ai: true });
   });
 }

@@ -59,7 +59,8 @@ Vzniká pri registrácii študenta aj firmy.
 | `avail_times` | onboarding / profil | nie | časy dňa (ráno, poobede, večer, nočné) |
 | `birth` | onboarding krok 1 | **áno** | **dátum narodenia** — vek 16+ (kontroluje appka aj DB trigger), inzeráty „Len 18+" sa mladším neukazujú; po nastavení nemenný |
 | `city_id`, `commute` | onboarding krok 3 / profil | **áno** (mesto) | mesto z pevného zoznamu `cities` + dochádzanie (city / 15km / 30km / any); vzdialenosť sa počíta v DB medzi mestami, bez GPS používateľa; mesto vidí firma v anonymných návrhoch a po záujme |
-| `bio` | profil → Upraviť | nie | voľný text do 240 znakov — **môže obsahovať čokoľvek**, čo človek napíše (škola, záľuby…) |
+| `bio` | profil → Upraviť; registrácia rozhovorom s AI (test) — napíše ho AI z rozhovoru | nie | voľný text do 240 znakov — **môže obsahovať čokoľvek**, čo človek napíše (škola, záľuby…) |
+| `phone` | registrácia rozhovorom s AI (test) — formulár po rozhovore / profil | áno (len v tejto registrácii) | **telefónne číslo**; zatiaľ ho vidí len študent sám (firma číta študentov len cez `candidate_profiles`, bez telefónu); účel a kto ho uvidí treba rozhodnúť |
 | `avatar_path` | onboarding krok 1 / profil | nie | **profilová fotka** v neverejnom bucket-e `avatars`; vidí ju študent a firma, o ktorej inzerát študent prejavil záujem (podpísané URL) |
 | `updated_at` | systém | | |
 

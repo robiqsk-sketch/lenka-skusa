@@ -763,8 +763,14 @@ html.crashed .screen:not(#scr-crash) { display: none !important; }
 .ai-sum b { color: var(--ink); font-weight: 700; }
 .ai-sum .row { display: flex; gap: 8px; } .ai-sum .row > span:first-child { min-width: 92px; color: var(--muted); }
 .ai-sum .bio { margin-top: 6px; font-style: italic; color: var(--ink); }
-.ai-finish { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
-.ai-finish .next { width: 100%; margin-top: 6px; }
+.ai-next { width: 100%; margin-top: 14px; }
+.ai-fields { display: flex; flex-direction: column; gap: 10px; }
+.ai-fields .next { width: 100%; margin-top: 6px; }
+.ai-fields .ai-place { margin-top: 6px; }
+.ai-fields .ai-place .hint:empty { display: none; }
+.ai-recap { margin-bottom: 18px; padding: 12px 14px; border-radius: 14px; background: var(--fill2); border: 1px solid var(--line); font-size: var(--text-sm); color: var(--ink2); line-height: 1.5; }
+.ai-recap b { color: var(--ink); }
+#ai-form-phase[hidden], #ai-chat-phase[hidden], #ai-links[hidden] { display: none; }
 
 
 /* ═══════════ OB — l.97–194 ═══════════ */

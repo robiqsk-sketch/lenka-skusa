@@ -193,18 +193,21 @@
     </main>
   </section>
 
-  <!-- ═══ AIOB — TEST: registrácia študenta rozhovorom s AI (app.js → renderAiob) ═══ -->
+  <!-- ═══ AIOB — TEST: registrácia študenta — najprv rozhovor s AI o tom, čo hľadá, potom formulár s povinnými údajmi (app.js → renderAiob) ═══ -->
   <section class="screen" id="scr-aiob" hidden>
     <main class="card w540">
       <button class="back back-top" data-go="aiBack">← Späť</button>
-      <div class="ai-demo" id="ai-demo" hidden>Skúšobný režim bez AI — bot len prechádza otázky po poradí a v odpovediach hľadá kľúčové slová. Keď bude nastavený kľúč, rozhovor povedie skutočná AI.</div>
-      <div class="ai-chat">
-        <div class="ai-msgs" id="ai-msgs" aria-live="polite"></div>
-        <form class="chat-input" id="ai-form"><input id="ai-draft" placeholder="Napíš odpoveď…" autocomplete="off" maxlength="1000"><button type="submit" id="ai-send">Odoslať</button></form>
+      <div id="ai-chat-phase">
+        <div class="ai-demo" id="ai-demo" hidden>Skúšobný režim bez AI — bot len prechádza otázky po poradí a v odpovediach hľadá kľúčové slová. Keď bude nastavený kľúč, rozhovor povedie skutočná AI.</div>
+        <div class="ai-chat">
+          <div class="ai-msgs" id="ai-msgs" aria-live="polite"></div>
+          <form class="chat-input" id="ai-form"><input id="ai-draft" placeholder="Napíš odpoveď…" autocomplete="off" maxlength="1000"><button type="submit" id="ai-send">Odoslať</button></form>
+        </div>
+        <div id="ai-profile"></div>
       </div>
-      <div id="ai-profile"></div>
+      <div id="ai-form-phase" hidden></div>
       <div class="form-err" id="aiob-err"></div>
-      <div class="link-row"><button class="link" data-go="aiClassic">Radšej vyplním formulár</button></div>
+      <div class="link-row" id="ai-links"><button class="link" data-go="aiClassic">Radšej vyplním formulár</button></div>
     </main>
   </section>
 

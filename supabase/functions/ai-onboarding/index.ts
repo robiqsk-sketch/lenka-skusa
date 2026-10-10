@@ -1,8 +1,8 @@
 // Robiq — TEST: registrácia študenta rozhovorom s AI (obrazovka „aiob" v app.js).
 // Appka pošle celý doterajší rozhovor { messages: [{ role: "user" | "assistant", content }] } s anon kľúčom.
-// Funkcia sa opýta Clauda a vráti { reply, profile, done }: ďalšiu vetu bota a profil, ktorý z rozhovoru zatiaľ vyplynul
-// (meno, dátum narodenia, zručnosti, hodiny, dni, časy, mesto, dochádzanie, krátke „o mne").
-// E-mail, heslo a súhlas s podmienkami sa AI neposielajú — tie vypĺňa študent na konci sám.
+// Funkcia sa opýta Clauda a vráti { reply, profile, done }: ďalšiu vetu bota a to, čo z rozhovoru zatiaľ vyplynulo o tom,
+// akú prácu hľadá (zručnosti, hodiny, dni, časy, krátke „o mne"; mesto len ak ho sám spomenie).
+// Povinné údaje (meno, dátum narodenia, mesto, telefón, e-mail, heslo, súhlas) sa AI neposielajú — vypĺňajú sa vo formulári po rozhovore.
 // Ochrana kreditu: najviac PER_IP_HOUR správ za hodinu z jednej IP a ALL_DAY za deň spolu (tabuľka ai_onboarding_calls).
 // Kľúč: `supabase secrets set ANTHROPIC_API_KEY=...`
 import Anthropic from "npm:@anthropic-ai/sdk";
@@ -31,25 +31,24 @@ const LANGS = ["Angličtina", "Nemčina", "Španielčina", "Francúzština", "Ta
 const DAYS = ["Po", "Ut", "St", "Št", "Pi", "So", "Ne"];
 const TIMES = ["Ráno", "Poobede", "Večer", "Nočné zmeny"];
 
-const SYSTEM = `Si Robiq — priateľský pomocník slovenskej appky na brigády pre študentov. Rozhovorom pomáhaš študentovi vytvoriť profil, aby ho firmy našli. Píšeš po slovensky, tykáš, krátko (1–3 vety), prirodzene, bez emoji a bez odrážok. Pýtaj sa vždy len na jednu-dve veci naraz a nadväzuj na to, čo človek povedal.
+const SYSTEM = `Si Robiq — priateľský pomocník slovenskej appky na brigády pre študentov. Na začiatku registrácie sa so študentom krátko porozprávaš o tom, akú brigádu hľadá, a z rozhovoru poskladáš tú časť profilu, podľa ktorej mu appka nájde ponuky a firmy jeho. Povinné údaje (meno, dátum narodenia, mesto, telefón, e-mail, heslo) vyplní hneď po rozhovore vo formulári — na tie sa nepýtaj.
 
-Čo potrebuješ zistiť (v tomto poradí, ale pružne):
-1. Meno a priezvisko.
-2. Dátum narodenia (presný deň, mesiac, rok). Robiq je len pre ľudí od 16 rokov — ak je mladší, slušne vysvetli, že registrácia zatiaľ nie je možná, a ďalej sa nepýtaj.
-3. Čo mu ide / akú prácu by chcel robiť a aké má skúsenosti — z toho vyvoď zručnosti. Pri každej odhadni úroveň: 1 = základy, 2 = dobré, 3 = top. Pri jazykoch je úroveň 1 = A1–A2, 2 = B1–B2, 3 = C1–C2; ak úroveň nepovedal, opýtaj sa.
-4. Koľko hodín týždenne môže pracovať: 0 = asi 5 h, 1 = asi 10 h, 2 = asi 20 h, 3 = fulltime cez leto.
-5. Ktoré dni (${DAYS.join(", ")}) a kedy počas dňa (Ráno 6–12, Poobede 12–18, Večer 18–23, Nočné zmeny 23–6).
-6. V akom meste býva (do poľa city daj názov obce v 1. páde, napr. „Žilina", nie „v Žiline") a ako ďaleko je ochotný dochádzať: city = len moje mesto, 15km, 30km, any = celé Slovensko.
-7. Voliteľne pár slov o sebe — z rozhovoru napíš krátke „o mne" (1–2 vety v prvej osobe, max 300 znakov), ktoré by zaujalo firmu.
+Píšeš po slovensky, tykáš, krátko (1–3 vety), prirodzene, bez emoji a bez odrážok. Pýtaj sa vždy len na jednu-dve veci naraz a nadväzuj na to, čo človek povedal.
+
+Čo potrebuješ zistiť (pružne, nie ako dotazník):
+1. Akú prácu hľadá, čo mu ide a čo už má za sebou — z toho vyvoď zručnosti. Pri každej odhadni úroveň: 1 = základy, 2 = dobré, 3 = top. Pri jazykoch je úroveň 1 = A1–A2, 2 = B1–B2, 3 = C1–C2; ak úroveň jazyka nepovedal, opýtaj sa.
+2. Koľko hodín týždenne môže pracovať: 0 = asi 5 h, 1 = asi 10 h, 2 = asi 20 h, 3 = fulltime cez leto.
+3. Ktoré dni (${DAYS.join(", ")}) a kedy počas dňa (Ráno 6–12, Poobede 12–18, Večer 18–23, Nočné zmeny 23–6).
+4. Voliteľne pár slov o sebe — z rozhovoru napíš krátke „o mne" (1–2 vety v prvej osobe, max 240 znakov), ktoré by zaujalo firmu.
 
 Zručnosti: použi presne tieto názvy, ak sedia: ${SKILLS.join(", ")}. Jazyky: ${LANGS.join(", ")}. Ak niečo nesedí na žiadnu z nich, použi krátky vlastný názov (max 30 znakov, s veľkým začiatočným písmenom). Pri jazykoch nastav speak = true, ak ním vie rozprávať.
 
 Pravidlá:
 - V poli "profile" vždy vráť CELÝ profil podľa celého doterajšieho rozhovoru (nie len zmeny). Čo nevieš, nechaj null alebo prázdne pole. Nič si nevymýšľaj.
-- Dátum narodenia vo formáte RRRR-MM-DD.
-- Nepýtaj sa na e-mail, heslo, telefón, adresu, rodné číslo ani doklady — tie sa nezadávajú tu. Ak ich niekto napíše, nepoužívaj ich.
-- Keď máš meno, dátum narodenia, aspoň jednu zručnosť, hodiny, dni a mesto, krátko zhrň profil a povedz, že ho môže skontrolovať a dokončiť dole. Vtedy nastav "done": true.
-- Ak sa človek pýta niečo mimo registrácie, krátko odpovedz a vráť sa k profilu.`;
+- Mesto a dochádzanie (city = len moje mesto, 15km, 30km, any = celé Slovensko) vyplň, len ak ich sám spomenie — mesto ako názov obce v 1. páde (napr. „Žilina", nie „v Žiline"). Nepýtaj sa na ne.
+- Nepýtaj sa na meno, vek, e-mail, heslo, telefón, adresu, rodné číslo ani doklady. Ak ich niekto napíše, nepoužívaj ich.
+- Keď máš aspoň jednu zručnosť, hodiny a dni alebo časť dňa, krátko zhrň, čo hľadá, a povedz, nech klikne na „Pokračovať" a doplní pár povinných údajov. Vtedy nastav "done": true.
+- Ak sa človek pýta niečo mimo registrácie, krátko odpovedz a vráť sa k téme.`;
 
 const nullable = (t: object) => ({ anyOf: [t, { type: "null" }] });
 const SCHEMA = {
@@ -58,14 +57,12 @@ const SCHEMA = {
   required: ["reply", "profile", "done"],
   properties: {
     reply: { type: "string", description: "Ďalšia správa pre študenta." },
-    done: { type: "boolean", description: "true, keď je profil dosť úplný na dokončenie registrácie." },
+    done: { type: "boolean", description: "true, keď vieme dosť o tom, čo hľadá, a môže pokračovať na formulár." },
     profile: {
       type: "object",
       additionalProperties: false,
-      required: ["name", "birth", "skills", "hours", "avail_days", "avail_times", "city", "commute", "bio"],
+      required: ["skills", "hours", "avail_days", "avail_times", "city", "commute", "bio"],
       properties: {
-        name: nullable({ type: "string" }),
-        birth: nullable({ type: "string", description: "RRRR-MM-DD" }),
         skills: {
           type: "array",
           items: {

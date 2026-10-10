@@ -80,6 +80,7 @@ create table public.students (
   commute      text not null default '30km' check (commute in ('city', '15km', '30km', 'any')),   -- kam je ochotný dochádzať
   bio          text not null default '',
   avatar_path  text,                                -- cesta v neverejnom bucket-e avatars: <uid>/avatar.<ext>
+  phone        text not null default '',            -- TEST: telefón (registrácia rozhovorom s AI); vidí ho len študent sám
   updated_at   timestamptz not null default now()
 );
 
@@ -231,11 +232,12 @@ begin
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'fields', '[]'::jsonb)) x), '{}'),
             coalesce(d->>'contact_name', ''), nullif(d->>'city_id', '')::int);
   else
-    insert into students (id, name, birth, skills, hours, avail_days, avail_times, city_id, commute, bio)
+    insert into students (id, name, birth, skills, hours, avail_days, avail_times, city_id, commute, bio, phone)
     values (new.id, coalesce(d->>'name', ''), nullif(d->>'birth', '')::date, coalesce(d->'skills', '[]'::jsonb), coalesce((d->>'hours')::smallint, 1),
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'avail_days',  '[]'::jsonb)) x), '{}'),
             coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(d->'avail_times', '[]'::jsonb)) x), '{}'),
-            nullif(d->>'city_id', '')::int, coalesce(nullif(d->>'commute', ''), '30km'), left(coalesce(d->>'bio', ''), 500));
+            nullif(d->>'city_id', '')::int, coalesce(nullif(d->>'commute', ''), '30km'), left(coalesce(d->>'bio', ''), 500),
+            left(coalesce(d->>'phone', ''), 20));
   end if;
   return new;
 end $$;
