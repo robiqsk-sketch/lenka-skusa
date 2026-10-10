@@ -40,7 +40,8 @@ flowchart TD
 Zvlášť od návrhov pre firmu — v `app.js` → `remaining()`:
 1. inzeráty, kde firma študenta **oslovila**,
 2. inzeráty **v dosahu** (podľa mesta a dochádzania),
-3. najnovšie.
+3. **podľa záujmov** (registrácia v3, `feedAffinity`): podobné lajknutým inzerátom a odvetviu z registrácie vyššie, podobné preskočeným nižšie — body za spoločné odvetvie firmy, typ a mesto; do profilu sa nič neukladá,
+4. najnovšie.
 Nič sa neskrýva, okrem preskočených, 18+ pre mladších a zablokovaných firiem. Hosť vidí ponuky v náhodnom poradí.
 
 Súvisí: [[Záujem, zhoda a chat]], [[Obrazovky firmy]]

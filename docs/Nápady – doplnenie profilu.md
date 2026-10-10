@@ -16,7 +16,9 @@ Po kliknutí „Mám záujem" vyskočí malá karta s **jednou otázkou k tomu i
 - **Prečo:** otázka má zmysel práve teraz („firma sa ťa na to aj tak spýta"), je jedna a dá sa preskočiť. Za 5 záujmov je profil plný bez jediného formulára.
 - **Treba:** ku každej zručnosti jednu ľudskú otázku (zoznam v `data.js`) a vybrať ju podľa názvu/popisu inzerátu — rovnako ako to už robí párovanie (prvých 5 písmen).
 
-## 2. Robiq sa učí z feedu ⭐ — v appke od 10. 10. (registrácia v3)
+## 2. Robiq sa učí z feedu ⭐ — 10. 10. vyskúšané a zrušené
+V appke bolo pár hodín ako okno „Robiq si všimol" (uložiť do profilu). Rozhodnutie: profil sa z lajkov **nedopĺňa**, podľa lajkov sa len **radia ponuky** (`feedAffinity`, [[Registrácia študenta]]).
+
 Každé „Mám záujem" a „Nezaujíma ma" niečo prezrádza: typ práce, víkendy vs. poobedia, mesto. Po 3–4 záujmoch:
 **„Vyzerá to, že ťa ťahá gastro cez víkendy v Trnave. Mám si to zapamätať?"** → *Áno · Upraviť*.
 - **Plní:** dni/časy (z typov inzerátov), mesto (z miest inzerátov), oblasť zručností.
