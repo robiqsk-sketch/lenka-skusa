@@ -26,7 +26,7 @@ Zámerne **anonymná**: ukladá sa len názov udalosti, rola (hosť/študent/fir
 Okrem udalostí ukazuje aj počty z tabuliek: noví študenti a firmy, inzeráty, záujmy, zhody, správy.
 
 ## Vlastné účty sa nepočítajú
-Účty v tabuľke `stats_excluded` (Lenkin a Robiq) sa do štatistiky nezarátajú — aby testovanie nekazilo čísla.
+Účty v tabuľke `stats_excluded` (Lenkin, Robiq a [[Testovacie dáta|testovacie účty]] `test.…@robiq.sk`) sa do štatistiky nezarátajú — aby testovanie nekazilo čísla.
 - **Počty z tabuliek:** `analytics_summary` vynechá ich profily, inzeráty a všetko, čo sa ich týka (záujmy, zhody a správy v ich zhodách, aj keď druhá strana je skutočný používateľ).
 - **Udalosti:** sú anonymné, takže databáza nevie, od koho prišli. Preto sa appka po prihlásení spýta `is_stats_excluded` — ak áno, zapamätá si to na zariadení a odvtedy z neho neposiela nič, ani po odhlásení. Návštevy z toho zariadenia pred prvým prihlásením sa ešte zarátali.
 - Ďalší účet sa pridá riadkom do `stats_excluded` (e-mail účtu). Nie je to to isté ako `admins` — vylúčený účet nemusí byť admin.

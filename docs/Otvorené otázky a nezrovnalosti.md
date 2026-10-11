@@ -8,6 +8,7 @@ tags: [robiq, todo]
 Sem si zapisuj veci, ktoré nesedia alebo treba doriešiť. Keď sa niečo vyrieši, odškrtni to alebo riadok zmaž.
 
 ## Treba urobiť
+- [ ] **Pred spustením pre verejnosť zmazať testovacie dáta** — 10 vymyslených firiem, 20 inzerátov a 16 brigádnikov (`test.…@robiq.sk`); postup v [[Testovacie dáta]].
 - [ ] **Ostrá databáza vs. `main`** — test registrácie s AI (vetva `claude/practical-fermi-k5e1jz`) spustil v ostrej databáze migrácie `ai-onboarding` a `student-phone`: tabuľka `ai_onboarding_calls` (nie je v `schema.sql`), `students.phone`, bio a telefón v `handle_new_user` (tie už v `schema.sql` sú). Rozhodnúť: test zahodiť (zmazať tabuľku a stĺpec) alebo ho dokončiť.
 - [ ] **Firma pri študentovi, ktorý všetko preskočí** — vidí len meno a odvetvie. Zvážiť otázku pri záujme ([[Nápady – doplnenie profilu]], nápad 1) alebo odvetvie študenta v bodovaní návrhov (`suggest_candidates`).
 - [ ] **Doplnenie profilu inak** — dnes „Doplniť profil" ide po malých krokoch, zručnosti sú však stále pôvodná stena čipov. Vybrať z [[Nápady – doplnenie profilu]] a prerobiť.

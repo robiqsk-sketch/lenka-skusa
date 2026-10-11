@@ -34,6 +34,7 @@ flowchart LR
 - [[Prístupy a bezpečnosť (RLS)]] — kto čo vidí a smie meniť
 - [[Databázové funkcie]] — logika, ktorá beží v databáze (zhoda, párovanie, admin…)
 - [[Migrácie – história]] — čo sa kedy menilo
+- [[Testovacie dáta]] — vymyslené firmy, inzeráty a brigádnici, aby web nebol prázdny
 
 ### Toky (ako veci prebiehajú)
 - [[Registrácia študenta]] — verzia 2: „Mám záujem" → jedna obrazovka, profil sa dopĺňa neskôr
