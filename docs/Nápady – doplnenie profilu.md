@@ -36,7 +36,9 @@ Namiesto dní + častí dňa jedna **mriežka Po–Ne × ráno / poobede / veče
 - **Plní:** mesto (dochádzanie predvolené „do 30 km", zmení sa v profile).
 - **Pozor:** pri polohe treba vetu do dokumentu o ochrane údajov (dnes sľubuje „tvoju presnú polohu nezisťujeme" — ostane to pravda, ak sa uloží len mesto).
 
-## 5. Mini kvíz „Aký si brigádnik?"
+## 5. Mini kvíz „Aký si brigádnik?" — 11. 10. jednoduchá podoba v appke
+Vo v4 je v „Doplniť profil" 6 otázok Áno / Nie podľa Hollandovho testu (RIASEC); „Áno" pridá vlastnosť do zručností a na konci navrhne odvetvia ([[Registrácia študenta]]). Bez mena typu a zdieľania — to ostáva nápadom.
+
 Päť hravých otázok „toto alebo toto": *s ľuďmi / s vecami · rýchle tempo / pokoj · ráno / noc · stály tím / každý deň niečo nové · rukami / za počítačom*.
 Výsledok s menom a ikonkou — napr. **„Eventový nomád"**, **„Tichý organizátor"** — ktorý sa dá zdieľať.
 - **Plní:** povahu (nové pole, napr. 5 hodnôt) → dá sa použiť pri radení ponúk (event, sklad, gastro, admin) a firme ako „typ".

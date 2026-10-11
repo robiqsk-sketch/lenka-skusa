@@ -19,6 +19,7 @@ const initialState = () => ({
   obStep: 1, obName: '', obEmail: '', obPass: '', obSkills: [], customSkill: '', obHours: 1, availDays: ['So', 'Ne'], availTimes: ['Poobede'],
   skillsOpen: [],                                          // skill groups showing all their chips (registration step 2)
   obFill: false, fillSteps: [], fillIdx: 0,                // v2 „Doplniť profil“: the small steps of this run (FILL_PARTS) and the current one
+  quiz: {}, quizOwn: {}, quizFields: null,                 // v4: this run's yes/no answers and what they added (quizAnswer, quizResult)
   fields: [],                                              // v3: what kind of work the student wants (FIELDS, same list as companies)
   obOffer: false,                                          // v3: „Doplniť profil / Preskočiť“ after the registration
   obFrom: 'pick', todoNudgeOff: false,                     // v2: where „← Späť“ on the registration goes; „Doplň profil“ above the feed closed until the next visit
@@ -50,6 +51,10 @@ const REG_V2 = true;
 // follows the student's interests (feedAffinity, nothing saved to the profile); companies see field, days and times
 // at a candidate. false = exactly version 2.
 const REG_V3 = REG_V2 && true;
+// Version 4 (11. 10. 2026), on top of v3: „Doplniť profil“ asks only the city about the place, and instead of the skill groups
+// 6 simple yes/no questions about the student (QUIZ in data.js). „Áno“ adds traits to the skills, the last screen „Na čo sa
+// hodíš?“ suggests the kind of work — all of it editable in the profile. false = exactly version 3.
+const REG_V4 = REG_V3 && true;
 
 // ═══════════ Theme (light / dark) ═══════════
 // Per-browser preference in localStorage; without one we follow the system setting. Class `theme-dark` on <html> (styles.css tokens).
@@ -575,10 +580,13 @@ function maybeOffer() {
 }
 // What the student has not filled in yet. Robiq orders offers and companies find students by exactly these —
 // without them there are few offers. Empty for companies, guests and in version 1 (there they are part of the registration).
-const TODO = { skills: 'Čo ti ide', time: 'Kedy máš čas', place: 'Kde môžeš pracovať' };
+const TODO = { skills: REG_V4 ? 'Čo ťa baví' : 'Čo ti ide', time: 'Kedy máš čas', place: 'Kde môžeš pracovať' };
 // „Doplniť profil“ goes through small steps, one question per screen (FILL_STEP in the OB section draws them).
 // v3: up to 10 questions — time, place, then the skills group by group (v2: all skills on one screen, ~50 chips).
-const FILL_PARTS = REG_V3
+// v4: time, the city, 6 questions about the student and „Na čo sa hodíš?“ at the end.
+const FILL_PARTS = REG_V4
+  ? { time: ['hours', 'days', 'times'], place: ['city'], skills: [...QUIZ.map((_, i) => 'q' + i), 'result'] }
+  : REG_V3
   ? { time: ['hours', 'days', 'times'], place: ['city', 'commute'], skills: ['g0', 'g2', 'g1', 'g3', 'custom'] }
   : { skills: ['skills'], time: ['hours', 'days', 'times'], place: ['place'] };
 const timeSet = () => state.availDays.length > 0 || state.availTimes.length > 0;
@@ -677,7 +685,7 @@ const go = {
   fillProfile: el => {
     const part = el?.dataset.part, todo = profileTodo();
     const steps = (part ? [part] : Object.keys(FILL_PARTS).filter(p => !todo.length || todo.includes(p))).flatMap(p => FILL_PARTS[p]);
-    Object.assign(state, { screen: 'ob', obFill: true, fillSteps: steps, fillIdx: 0, accMenu: false });
+    Object.assign(state, { screen: 'ob', obFill: true, fillSteps: steps, fillIdx: 0, accMenu: false, quiz: {}, quizOwn: {}, quizFields: null });
     window.scrollTo(0, 0); track('profile_fill_start', { part: part || 'all' });
   },
   todoNudgeClose: () => { state.todoNudgeOff = true; },   // until the next visit — it comes back while the profile is unfinished
@@ -1919,7 +1927,7 @@ function joinField() {
 function offerScreen() {
   obEl.innerHTML = `<div class="offer-screen">
     <h2>Chceš ponuky na mieru?</h2>
-    <p class="desc">Pár krátkych otázok — kedy máš čas, kde a čo ti ide. Firma ťa tak lepšie spozná.</p>
+    <p class="desc">Pár krátkych otázok — kedy máš čas, kde a ${REG_V4 ? 'čo ťa baví' : 'čo ti ide'}. Firma ťa tak lepšie spozná.</p>
     <button class="primary" data-go="offerFill">Doplniť profil</button>
     <button class="secondary" data-go="offerSkip">Preskočiť</button>
     <p class="offer-note">Keď preskočíš, ponuky ti zoradíme podľa toho, čo ťa zaujme.</p>
@@ -1994,17 +2002,45 @@ const FILL_STEP = {
   times: () => fillStep('Kedy počas dňa?', timesEditor()),
   place: () => fillStep('Kde môžeš pracovať?', placeEditor(false)),
   // v3: the place in two questions, the skills group by group
-  city:    () => fillStep('Kde bývaš?', cityRow()),
+  city:    () => fillStep(REG_V4 ? 'V ktorom meste chceš pracovať?' : 'Kde bývaš?', cityRow()),
   commute: () => fillStep('Ako ďaleko môžeš dochádzať?', commuteRow()),
   g0:      () => fillStep('V čom už máš skúsenosti?', skillsEditor(0)),
   g2:      () => fillStep('Aké jazyky ovládaš?', skillsEditor(2)),
   g1:      () => fillStep('Čo zvládaš na počítači?', skillsEditor(1)),
   g3:      () => fillStep('Čo o tebe platí?', skillsEditor(3)),
   custom:  () => fillStep('Ešte niečo, čo vieš?', skillsEditor('custom')),
+  // v4: yes/no about the student (QUIZ), then the kind of work the answers point to
+  ...Object.fromEntries(QUIZ.map((x, i) => ['q' + i, () => fillStep(x.q, quizAnswers(i))])),
+  result:  () => fillStep('Na čo sa hodíš?', quizResult()),
 };
 // v3: a question nobody answered can be skipped — the button says „Preskočiť“ instead of „Pokračovať“
 const FILL_ANSWERED = { days: () => state.availDays.length, times: () => state.availTimes.length, city: () => state.cityId,
-  g0: () => groupHas(0), g1: () => groupHas(1), g2: () => groupHas(2), g3: () => groupHas(3), custom: () => state.obSkills.some(x => isCustomSkill(x.n) && x.g === undefined) };
+  g0: () => groupHas(0), g1: () => groupHas(1), g2: () => groupHas(2), g3: () => groupHas(3), custom: () => state.obSkills.some(x => isCustomSkill(x.n) && x.g === undefined),
+  ...Object.fromEntries(QUIZ.map((_, i) => ['q' + i, () => state.quiz[i] !== undefined])) };
+const quizAnswers = i => `<div class="quiz">${[[true, 'Áno'], [false, 'Nie']].map(([v, l]) =>
+    `<button type="button" class="${state.quiz[i] === v ? 'on' : ''}" data-quiz="${i}:${v ? 1 : 0}" aria-pressed="${state.quiz[i] === v}">${l}</button>`).join('')}</div>
+  ${i === 0 ? '<p class="offer-note quiz-note">Odpovedz, ako to cítiš. Z odpovedí ti poskladáme profil — upraviť si ho môžeš kedykoľvek.</p>' : ''}`;
+function quizAnswer(i, yes) {                              // v4: „Áno“ adds the question's traits, „Nie“ takes back what it added
+  state.quiz[i] = yes;
+  const own = state.quizOwn[i] = state.quizOwn[i] || [];   // only what this question added — not what the student had before
+  if (yes) QUIZ[i].traits.forEach(n => { if (!state.obSkills.some(x => x.n === n)) { state.obSkills.push({ n, lvl: 2, speak: true }); own.push(n); } });
+  else { state.obSkills = state.obSkills.filter(x => !own.includes(x.n)); own.length = 0; }
+  document.getElementById('ob-next').click();              // straight on to the next question, saved like „Pokračovať“
+}
+function quizResult() {                                    // v4: the last screen — the kind of work the „Áno“ answers point to
+  if (!state.quizFields) {                                 // once per run: tick the 3 best-matching fields (the student can untick them)
+    const score = {};
+    QUIZ.forEach((x, i) => { if (state.quiz[i]) x.fields.forEach(f => { score[f] = (score[f] || 0) + 1; }); });
+    state.quizFields = Object.keys(score).sort((a, b) => score[b] - score[a]).slice(0, 3).filter(f => !state.fields.includes(f));
+    state.fields.push(...state.quizFields);
+  }
+  const yes = Object.values(state.quiz).some(Boolean);
+  const traits = [...new Set(QUIZ.flatMap((x, i) => state.quiz[i] ? x.traits : []))].filter(n => state.obSkills.some(x => x.n === n));
+  return `<p class="offer-note quiz-note">${yes ? 'Podľa tvojich odpovedí. Ťuknutím pridáš alebo odoberieš.' : 'Vyber, aká práca ťa láka.'}</p>
+    <div class="join-fields">${fieldsEditor()}</div>
+    ${traits.length ? `<div class="quiz-traits"><div class="label">Do profilu sme pridali</div><div class="p-skills">${traits.map(n => `<span class="p-skill">${esc(n)}</span>`).join('')}</div></div>` : ''}
+    <p class="offer-note quiz-note">Všetko si môžeš kedykoľvek zmeniť v Profile → Upraviť.</p>`;
+}
 function fillNextLabel() {
   const step = state.fillSteps[state.fillIdx], answered = FILL_ANSWERED[step];
   if (REG_V3 && answered && state.fillIdx < state.fillSteps.length - 1) document.getElementById('ob-next').textContent = answered() ? 'Pokračovať' : 'Preskočiť';
@@ -2089,6 +2125,7 @@ function editorClick(el) {                                 // returns true when 
   if (el.dataset.day)    { toggleInList(state.availDays, el.dataset.day); render(); return true; }
   if (el.dataset.commute) { state.commute = el.dataset.commute; render(); return true; }
   if (el.dataset.sfield) { toggleInList(state.fields, el.dataset.sfield); render(); return true; }   // v3: kind of work
+  if (el.dataset.quiz)   { const [i, v] = el.dataset.quiz.split(':'); quizAnswer(+i, v === '1'); return true; }   // v4
   if (el.dataset.time)   { toggleInList(state.availTimes, el.dataset.time); render(); return true; }
   if (el.id === 'add-custom') { addCustom(); return true; }
   return false;

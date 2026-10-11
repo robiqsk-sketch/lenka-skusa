@@ -3,10 +3,31 @@ tags: [robiq, tok, študent]
 ---
 # Registrácia študenta
 
-← [[00 Mapa systému]] · kód: `app.js` → `REG_V2`, `REG_V3`, `openJoin`, `obJoin`, `registerStudent`, `sendPending`, `profileTodo`, `joinField`, `offerScreen`, `feedAffinity` · v1: `renderOb`, `obStep1–3`
+← [[00 Mapa systému]] · kód: `app.js` → `REG_V2`, `REG_V3`, `REG_V4`, `quizAnswer`, `quizResult` (otázky `QUIZ` v `data.js`), `openJoin`, `obJoin`, `registerStudent`, `sendPending`, `profileTodo`, `joinField`, `offerScreen`, `feedAffinity` · v1: `renderOb`, `obStep1–3`
 
 Od 10. 10. 2026 beží **verzia 3** — verzia 2 (krátka registrácia, profil sa dopĺňa neskôr) a k tomu **odvetvie v 2. kroku registrácie**, ponuka **„Doplniť profil / Preskočiť"** hneď po nej (doplnenie = najviac 10 krátkych otázok) a **poradie ponúk podľa toho, čo študenta zaujíma**.
-Staršie verzie sú v kóde **schované, nie zmazané** — prepínače na začiatku `app.js`: `REG_V3 = … false` vráti presne verziu 2, `REG_V2 = false` pôvodnú trojkrokovú verziu 1.
+Od 11. 10. 2026 **verzia 4**: „Doplniť profil" sa z polohy pýta len na mesto a namiesto skupín zručností dáva **6 jednoduchých otázok Áno / Nie o tom, čo ťa baví** — z nich vznikne profil.
+Staršie verzie sú v kóde **schované, nie zmazané** — prepínače na začiatku `app.js`: `REG_V4 = … false` vráti verziu 3, `REG_V3 = … false` presne verziu 2, `REG_V2 = false` pôvodnú trojkrokovú verziu 1.
+
+## Verzia 4 — otázky o tebe
+„Doplniť profil" sa pýta menej na fakty a viac na človeka — aby sme zistili, na čo sa hodí.
+- **Poloha = len mesto:** „V ktorom meste chceš pracovať?". Dochádzanie sa nepýta (ostáva predvolené do 30 km, zmeniť sa dá v profile cez Upraviť).
+- **6 otázok Áno / Nie** (`QUIZ` v `data.js`). Ťuknutie na odpoveď hneď prejde na ďalšiu otázku a uloží. Dá sa Preskočiť aj vrátiť a odpoveď zmeniť.
+- Otázky vychádzajú z **Hollandovho testu záujmov (RIASEC)** — najznámejší test kariérnych záujmov, používa ho napr. americký O*NET (Interest Profiler). Delí záujmy na 6 typov: praktický, skúmavý, umelecký, sociálny, podnikavý, konvenčný. Z každého typu je jedna otázka zrozumiteľná pre brigádu; podnikavý typ nahrádza otázka na tempo (pri brigádach dôležitejšia).
+
+| Otázka | Typ | „Áno" pridá do zručností | Body odvetviam |
+|---|---|---|---|
+| Máš rád/a prácu s ľuďmi? | sociálny | Komunikatívnosť | Gastro, Retail, Eventy |
+| Baví ťa fyzická práca, pri ktorej si stále v pohybe? | praktický | Fyzická kondícia | Sklad a logistika, Manuálna práca |
+| Máš rád/a poriadok a jasné postupy? | konvenčný | Organizovanosť | Administratíva, Sklad a logistika |
+| Baví ťa zisťovať, ako veci fungujú, a riešiť úlohy? | skúmavý | Rýchle učenie | IT a dizajn, Doučovanie |
+| Baví ťa tvoriť — kresliť, fotiť, písať, strihať videá? | umelecký | Kreativita (nová vlastnosť v zozname) | IT a dizajn, Eventy |
+| Zvládaš rýchle tempo, keď je veľa práce naraz? | tempo | Práca pod tlakom | Gastro, Eventy, Retail |
+
+- **Ako z toho vznikne profil:** „Áno" pridá vlastnosť medzi zručnosti (úroveň Dobré) — firma ju vidí pri kandidátovi. „Nie" vezme späť len to, čo pridala tá istá otázka, nie to, čo mal študent už predtým.
+- **Na konci „Na čo sa hodíš?"** — najviac 3 odvetvia s najväčším počtom bodov sa zakliknú k tým z registrácie; študent ich môže odkliknúť alebo pridať iné. Pod nimi vidí, aké vlastnosti sa pridali, a vetu, že všetko zmení v Profile → Upraviť. Uložiť → appka.
+- **Samotné odpovede sa neukladajú** — len vlastnosti a odvetvia, ktoré študent vidí a môže zmeniť. Je to pomôcka na opis a poradie, nie psychologický test; nikoho nevylučuje z ponúk (ochrana údajov, kap. 4 a 9).
+- V profile a na konci feedu sa táto časť volá **Čo ťa baví** (vo v3 „Čo ti ide").
 
 ## Verzia 3 — čo pribudlo
 Tok: páči sa ti ponuka → **Mám záujem** → registrácia (alebo prihlásenie) → **Doplniť profil / Preskočiť** → feed.
@@ -64,7 +85,7 @@ Zmaže sa po odoslaní, pri „← Späť" z registrácie a pri odhlásení. Uve
 - svieti mu záložka **Profil** (žltá bodka),
 - nad feedom pruh **„Profil máš na 25 %"** — dá sa zavrieť, pri ďalšom otvorení appky je späť,
 - na konci feedu karta **„Nemáš dokončený profil"** s tým, čo chýba,
-- v profile karta s percentami a riadkami Čo ti ide · Kedy máš čas · Kde môžeš pracovať.
+- v profile karta s percentami a riadkami Čo ťa baví (v3: Čo ti ide) · Kedy máš čas · Kde môžeš pracovať.
 
 Percentá: účet = 25 %, každá doplnená časť ďalších 25 %.
 
@@ -73,10 +94,11 @@ Percentá: účet = 25 %, každá doplnená časť ďalších 25 %.
 | Časť | Kroky |
 |---|---|
 | Kedy máš čas | 1 Koľko hodín týždenne? → 2 Ktoré dni? → 3 Kedy počas dňa? |
-| Kde môžeš pracovať | 4 Kde bývaš? → 5 Ako ďaleko môžeš dochádzať? |
-| Čo ti ide | 6 V čom už máš skúsenosti? (pracovné pozície + vlastné, dopísané ručne — ostanú pri tejto otázke, nie v „Ešte niečo“) → 7 Aké jazyky ovládaš? → 8 Čo zvládaš na počítači? → 9 Čo o tebe platí? → 10 Ešte niečo, čo vieš? (vlastná zručnosť) |
+| Kde môžeš pracovať | v4: 4 V ktorom meste chceš pracovať? · v3: 4 Kde bývaš? → 5 Ako ďaleko môžeš dochádzať? |
+| Čo ťa baví (v4) | 5–10 šesť otázok Áno / Nie (vyššie) → **Na čo sa hodíš?** (odvetvia, záverečná obrazovka) |
+| Čo ti ide (v3) | 6 V čom už máš skúsenosti? (pracovné pozície + vlastné, dopísané ručne — ostanú pri tejto otázke, nie v „Ešte niečo“) → 7 Aké jazyky ovládaš? → 8 Čo zvládaš na počítači? → 9 Čo o tebe platí? → 10 Ešte niečo, čo vieš? (vlastná zručnosť) |
 
-Spolu **10 otázok** (v3; vo v2 boli zručnosti jedna obrazovka so všetkými ~50 čipmi a miesto jedna obrazovka). Každá otázka ukazuje len svoju skupinu zručností — celú, bez „Ďalšie" — a pri vybraných úroveň.
+Spolu **10 otázok** (v4: + záverečná obrazovka; v3: 10 otázok; vo v2 boli zručnosti jedna obrazovka so všetkými ~50 čipmi a miesto jedna obrazovka). Každá otázka ukazuje len svoju skupinu zručností — celú, bez „Ďalšie" — a pri vybraných úroveň.
 
 - Riadok v profile alebo čip na konci feedu otvorí **len svoju časť** (napr. „Kedy máš čas" = 3 kroky).
 - Tlačidlo **Doplniť / Doplniť profil** prejde **všetky časti, ktoré chýbajú**, za sebou.

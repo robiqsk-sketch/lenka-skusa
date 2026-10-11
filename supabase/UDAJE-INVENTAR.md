@@ -53,13 +53,13 @@ Vzniká pri registrácii študenta aj firmy.
 | Údaj | Odkiaľ | Povinný | Poznámka |
 |---|---|---|---|
 | `name` | registrácia | áno | meno a priezvisko |
-| `skills` | „Doplniť profil" (v1: onboarding krok 2) / profil | nie | zoznam zručností s úrovňou (Základy/Dobré/Top), pri jazykoch úroveň A1–C2 a či ním hovorí; **môže obsahovať vlastný text** používateľa („Niečo iné?") |
+| `skills` | „Doplniť profil" (v1: onboarding krok 2) / profil | nie | zoznam zručností s úrovňou (Základy/Dobré/Top), pri jazykoch úroveň A1–C2 a či ním hovorí; **môže obsahovať vlastný text** používateľa („Niečo iné?"); vo v4 aj vlastnosti pridané z otázok Áno / Nie („Doplniť profil") — samotné odpovede sa neukladajú |
 | `hours` | „Doplniť profil" (v1: onboarding krok 3) / profil | nie | koľko hodín týždenne môže pracovať (4 stupne) |
 | `avail_days` | onboarding / profil | nie | dni v týždni |
 | `avail_times` | onboarding / profil | nie | časy dňa (ráno, poobede, večer, nočné) |
 | `birth` | registrácia | **áno** | **dátum narodenia** — vek 16+ (kontroluje appka aj DB trigger), inzeráty „Len 18+" sa mladším neukazujú; po nastavení nemenný |
 | `city_id`, `commute` | „Doplniť profil" (v1: onboarding krok 3) / profil | nie (v1: áno) | mesto z pevného zoznamu `cities` + dochádzanie (city / 15km / 30km / any); vzdialenosť sa počíta v DB medzi mestami, bez GPS používateľa; mesto vidí firma v anonymných návrhoch a po záujme |
-| `fields` | registrácia (v3, 2. krok) / profil | **áno** (aspoň jedno) | akú prácu hľadá — odvetvia zo zoznamu firiem; vidí ho firma, o ktorej inzerát študent prejavil záujem |
+| `fields` | registrácia (v3, 2. krok) / profil / v4 „Na čo sa hodíš?" na konci „Doplniť profil" | **áno** (aspoň jedno) | akú prácu hľadá — odvetvia zo zoznamu firiem; vidí ho firma, o ktorej inzerát študent prejavil záujem |
 | `phone` | len test registrácie s AI (nie v `main`) | nie | telefón; firma ho nevidí |
 | `bio` | profil → Upraviť | nie | voľný text do 240 znakov — **môže obsahovať čokoľvek**, čo človek napíše (škola, záľuby…) |
 | `avatar_path` | onboarding krok 1 / profil | nie | **profilová fotka** v neverejnom bucket-e `avatars`; vidí ju študent a firma, o ktorej inzerát študent prejavil záujem (podpísané URL) |

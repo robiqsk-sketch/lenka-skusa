@@ -903,6 +903,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer;
 /* „Doplniť profil“ in small steps: one question per screen, a little air below it */
 .desc.step-note.center.fill-q { margin-bottom: 18px; }
 .fill-q ~ .commute, .fill-q ~ .times { margin-bottom: 22px; }   /* last thing above „Späť / Pokračovať“ */
+/* v4: yes/no questions about the student and „Na čo sa hodíš?“ */
+.quiz { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 320px; margin: 4px auto 22px; }
+.quiz button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 14px; padding: 16px 8px; font-size: var(--text-md); font-weight: 700; cursor: pointer; font-family: inherit; }
+.quiz button.on { border-color: var(--accent); background: rgba(var(--tint),.1); color: var(--accent-ink); }
+.quiz-note { text-align: center; margin-bottom: 18px; }
+.quiz-traits { margin: 0 0 14px; text-align: center; }
+.quiz-traits .label { margin-bottom: 8px; }
+.quiz-traits .p-skills { justify-content: center; margin-bottom: 0; }
 .ob-alt .divider { margin: 22px 0 16px; }
 .ob-alt .secondary.google { margin-bottom: 4px; }
 .ob-login { text-align: center; }
