@@ -18,11 +18,11 @@ tags: [robiq, slovník]
 | **Návrh (navrhovaný kandidát)** | anonymný študent, ktorý sedí na inzerát podľa skóre | `suggest_candidates` |
 | **Zhoda** | obojstranný záujem na ten istý inzerát → otvorí sa chat | `matches` |
 | **Gate** | výzva na prihlásenie, keď hosť klikne „Mám záujem" — len v registrácii v1 (v2 ide hosť rovno na registráciu) | – |
-| **Registrácia v1 / v2 / v3** | v1: tri kroky so zručnosťami a časom (schovaná); v2: jedna obrazovka, profil sa dopĺňa neskôr (schovaná); v3: v2 + odvetvie v 2. kroku, „Doplniť profil / Preskočiť" (10 otázok) a poradie ponúk podľa záujmov | prepínače `REG_V2`, `REG_V3` v `app.js` |
+| **Registrácia v1 – v4** | v1: tri kroky so zručnosťami a časom (schovaná); v2: jedna obrazovka, profil sa dopĺňa neskôr (schovaná); v3: v2 + odvetvie v 2. kroku, „Doplniť profil / Preskočiť" (10 otázok) a poradie ponúk podľa záujmov (schovaná); v4: v3, ale v „Doplniť profil" len mesto a 6 otázok Áno / Nie o tom, čo ťa baví | prepínače `REG_V2`, `REG_V3`, `REG_V4` v `app.js` |
 | **Odvetvie (študent)** | akú prácu študent hľadá — rovnaký zoznam ako odvetvia firiem | `students.fields` |
 | **Poradie podľa záujmov** | ponuky podobné lajknutým (a odvetviu z registrácie) idú vo feede vyššie, podobné preskočeným nižšie; profil sa nemení | `feedAffinity` (appka) |
 | **Nedoplnený profil** | študent (v2) bez zručností, času alebo mesta — svieti mu Profil, upozornenie nad feedom a karta na jeho konci | `profileTodo` (appka) |
-| **Doplniť profil** | čas, miesto a zručnosti — najviac 10 krátkych otázok, jedna na obrazovku (v3), otvorené z appky; ukladajú sa do profilu | – |
+| **Doplniť profil** | čas, mesto a 6 otázok Áno / Nie o tom, čo ťa baví, na konci „Na čo sa hodíš?" (v4; v3: čas, miesto a zručnosti po skupinách) — jedna otázka na obrazovku, otvorené z appky; ukladá sa do profilu | `QUIZ` v `data.js` |
 | **Dochádzanie** | ako ďaleko je študent ochotný cestovať | `students.commute` |
 | **Overená firma** | IČO nájdené v Registri právnických osôb | `companies.verified` |
 | **Oficiálny vs. zobrazovaný názov** | z registra vs. zvolený firmou | `legal_name` vs. `name` |

@@ -5,7 +5,7 @@ const GROUPS = [
   { g: 'Pracovné pozície', items: ['Barista','Čašník / Servírka','Predaj','Pokladňa','Sklad','Eventy','Hostesing','Promo akcie','Doučovanie','Kuriér','Rozvoz','Recepcia','Kuchyňa','Upratovanie','Administratíva'] },
   { g: 'Digitálne zručnosti', items: ['React','Tvorba webu','Grafika','Figma','Canva','Photoshop','Video strih','Copywriting','Sociálne siete','Excel','Dátová analýza','AI nástroje'] },
   { g: 'Jazyky', items: ['Angličtina','Nemčina','Španielčina','Francúzština','Taliančina','Ruština','Ukrajinčina','Maďarčina','Poľština','Čínština'] },
-  { g: 'Vlastnosti a iné', items: ['Vodičský preukaz B','Komunikatívnosť','Spoľahlivosť','Práca v tíme','Fyzická kondícia','Flexibilita','Práca pod tlakom','Organizovanosť','Rýchle učenie'] },
+  { g: 'Vlastnosti a iné', items: ['Vodičský preukaz B','Komunikatívnosť','Spoľahlivosť','Práca v tíme','Fyzická kondícia','Flexibilita','Práca pod tlakom','Organizovanosť','Rýchle učenie','Kreativita'] },
 ];
 const SKILLS = GROUPS.flatMap(x => x.items);
 const LANGS  = GROUPS.find(x => x.g === 'Jazyky').items;
@@ -29,6 +29,17 @@ const HOURS  = ['5 h / týždeň', '10 h / týždeň', '20 h / týždeň', 'Full
 const DAYS   = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne'];
 const TIMES  = [['Ráno','6–12 h'], ['Poobede','12–18 h'], ['Večer','18–23 h'], ['Nočné zmeny','23–6 h']];
 const FIELDS = ['Gastro','Retail','Sklad a logistika','Administratíva','Eventy','IT a dizajn','Doučovanie','Manuálna práca'];
+// v4 „Doplniť profil“: simple yes/no questions about the student, after Holland's interest test (RIASEC — the six types in
+// the comments; O*NET Interest Profiler) + one about pace. „Áno“ adds the traits to the skills and counts towards the fields
+// Robiq suggests at the end („Na čo sa hodíš?“). The answers themselves are not saved.
+const QUIZ = [
+  { q: 'Máš rád/a prácu s ľuďmi?',                           traits: ['Komunikatívnosť'],  fields: ['Gastro', 'Retail', 'Eventy'] },            // S social
+  { q: 'Baví ťa fyzická práca, pri ktorej si stále v pohybe?', traits: ['Fyzická kondícia'], fields: ['Sklad a logistika', 'Manuálna práca'] },  // R realistic
+  { q: 'Máš rád/a poriadok a jasné postupy?',                traits: ['Organizovanosť'],   fields: ['Administratíva', 'Sklad a logistika'] },  // C conventional
+  { q: 'Baví ťa zisťovať, ako veci fungujú, a riešiť úlohy?', traits: ['Rýchle učenie'],    fields: ['IT a dizajn', 'Doučovanie'] },           // I investigative
+  { q: 'Baví ťa tvoriť — kresliť, fotiť, písať, strihať videá?', traits: ['Kreativita'],    fields: ['IT a dizajn', 'Eventy'] },               // A artistic
+  { q: 'Zvládaš rýchle tempo, keď je veľa práce naraz?',     traits: ['Práca pod tlakom'], fields: ['Gastro', 'Eventy', 'Retail'] },          // pace (E enterprising-ish)
+];
 const TYPES  = ['Víkendy', 'Poobede', 'Večery', 'Remote', 'Flexibilné'];
 
 // One icon set for the whole app (paths from Lucide, ISC licence) — text symbols like ◐ ❖ ✉ ⋯ ♥ looked different on every phone.

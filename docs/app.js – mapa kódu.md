@@ -38,7 +38,7 @@ flowchart LR
 | — študent | Objavuj, Správy, Profil; upozornenia na nedoplnený profil | `feed`, `jobCard`, `todoNudge`, `feedEnd`, `zhody`, `profile`, `todoCard` → [[Obrazovky hosťa a študenta]] |
 | — firma | Ponuka, Správy, Inzeráty, Nový, Profil | `brig`, `suggCard`, `candCard`, `fspravy`, `ponuky`, `nova`, `fprofil` → [[Obrazovky firmy]] |
 | — spoločné | chat, dock (svietiaca záložka Profil), prekrývacie vrstvy (detail, gate, toast, banner, nahlásenie, mazanie) | `chatUI`, `updateDock`, `todoTab`, `layers`, `bindAppInputs` |
-| OB | registrácia študenta: v2 jedna obrazovka; tá istá obrazovka slúži na „Doplniť profil" po malých krokoch (`obFill`, časti → kroky v `FILL_PARTS`) | `renderOb`, `obJoin` (v2), `joinField` + `offerScreen` (v3), `obStep1–3`, `bindStep1`, `fillStep`/`FILL_STEP`/`FILL_ANSWERED`, `leaveFill`, `registerStudent` → [[Registrácia študenta]] |
+| OB | registrácia študenta: v2 jedna obrazovka; tá istá obrazovka slúži na „Doplniť profil" po malých krokoch (`obFill`, časti → kroky v `FILL_PARTS`) | `renderOb`, `obJoin` (v2), `joinField` + `offerScreen` (v3), `obStep1–3`, `bindStep1`, `fillStep`/`FILL_STEP`/`FILL_ANSWERED`, `quizAnswers`/`quizAnswer`/`quizResult` (v4, otázky Áno / Nie), `leaveFill`, `registerStudent` → [[Registrácia študenta]] |
 | Shared editors | editor zručností, miesta a dostupnosti (onboarding aj profil); dostupnosť aj po kúskoch pre „Doplniť profil" | `skillsEditor`, `placeEditor`, `availabilityEditor` = `hoursEditor` + `daysEditor` + `timesEditor` + miesto (`cityRow` + `commuteRow`), `fieldsEditor` (v3, odvetvie); `skillsEditor(skupina)` = jedna skupina pre otázku |
 | FOB | registrácia firmy, overenie IČO | `renderFob`, `fobStep1–3`, `rpoLookup`, `verifyCompany`, `registerCompany` → [[Registrácia firmy a overenie IČO]] |
 | Helpers | drobnosti (`esc` = ochrana pred vložením HTML) | `bindInput`, `esc` |
@@ -49,7 +49,7 @@ flowchart LR
 | Súbor | Obsah |
 |---|---|
 | `index.html` | kostra stránky, sekcie obrazoviek, načítanie skriptov |
-| `data.js` | pevné zoznamy: zručnosti (`GROUPS`), úrovne, hodiny, dni, časy, odvetvia, typy brigád, záložky; **ikony** (`ICONS` + `icon()`, jedna sada pre celú appku) a farby log firiem |
+| `data.js` | pevné zoznamy: zručnosti (`GROUPS`), úrovne, hodiny, dni, časy, odvetvia, typy brigád, záložky; otázky Áno / Nie pre „Doplniť profil" (`QUIZ`, v4); **ikony** (`ICONS` + `icon()`, jedna sada pre celú appku) a farby log firiem |
 | `config.js` | adresa Supabase + verejný kľúč |
 | `styles.css` | vzhľad (farby ako premenné, tmavý režim cez `.theme-dark`) |
 | `admin.html` | admin panel → [[Admin panel]] |
